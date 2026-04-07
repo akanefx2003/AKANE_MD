@@ -579,4 +579,518 @@ ${CHANNEL_LINK}
 
         return;
 
+    }    // ========== PROFIL ==========
+
+    if (subCommand === 'profile' || !subCommand) {
+
+        const langInfo = languages[user.language];
+
+        const nextLevelXp = user.level * 100;
+
+        const progress = Math.floor((user.xp % 100) / 100 * 10);
+
+        const progressBar = "▓".repeat(progress) + "░".repeat(10 - progress);
+
+        const winRate = user.totalQuestions > 0 ? Math.floor((user.correctAnswers / user.totalQuestions) * 100) : 0;
+
+        
+
+        const profileText = 
+
+`🦉 *DUOLINGO - ${user.name.toUpperCase()}*
+
+━━━━━━━━━━━━━━━━━━━━
+
+*${langInfo.flag} LANGUE :* ${langInfo.name}
+
+*📊 NIVEAU :* ${user.level}
+
+*📈 XP :* ${user.xp}/${nextLevelXp}
+
+*📊 PROGRÈS :* [${progressBar}]
+
+━━━━━━━━━━━━━━━━━━━━
+
+*❤️ CŒURS :* ${'❤️'.repeat(Math.min(user.hearts, 5))}${'🖤'.repeat(Math.max(0, 5 - user.hearts))}
+
+*💰 PIÈCES :* ${user.coins} 🪙
+
+*🔥 SÉRIE :* ${user.streak} jours (max: ${user.bestStreak})
+
+*🎯 PRÉCISION :* ${winRate}%
+
+━━━━━━━━━━━━━━━━━━━━
+
+*${user.premium ? '👑 PREMIUM ACTIF' : '⭐ COMPTE GRATUIT'}*
+
+━━━━━━━━━━━━━━━━━━━━
+
+📢 *REJOINS MA CHAÎNE* 🔥
+
+*${CHANNEL_NAME}*
+
+${CHANNEL_LINK}
+
+> *DEV : AKANE KUROGAWA🌹*`;
+
+        
+
+        await client.sendMessage(remoteJid, { text: profileText });
+
+        return;
+
+    }
+
+    
+
+    // ========== RÉCOMPENSE QUOTIDIENNE ==========
+
+    if (subCommand === 'daily') {
+
+        const now = new Date();
+
+        const today = now.toDateString();
+
+        const lastClaim = user.lastLogin ? new Date(user.lastLogin).toDateString() : null;
+
+        
+
+        if (lastClaim === today && user.dailyRewardClaimed) {
+
+            await client.sendMessage(remoteJid, { text: "⏰ *Récompense déjà réclamée aujourd'hui !*\n\nReviens demain pour une nouvelle récompense !" });
+
+            return;
+
+        }
+
+        
+
+        const reward = getDailyReward(user.streak);
+
+        user.coins += reward.coins;
+
+        user.hearts = Math.min(user.hearts + reward.hearts, 5);
+
+        user.xp += reward.xp;
+
+        user.lastLogin = Date.now();
+
+        user.dailyRewardClaimed = true;
+
+        
+
+        if (user.xp >= user.level * 100) {
+
+            user.level++;
+
+            await client.sendMessage(remoteJid, { text: `🎉 *FÉLICITATIONS !* 🎉\n\nTu es passé au niveau ${user.level} !` });
+
+        }
+
+        
+
+        saveData();
+
+        
+
+        await client.sendMessage(remoteJid, { text: 
+
+`🎁 *RÉCOMPENSE QUOTIDIENNE !*
+
+━━━━━━━━━━━━━━━━━━━━
+
+🔥 *Série :* ${user.streak} jours
+
+💰 *+${reward.coins} pièces* 🪙
+
+❤️ *+${reward.hearts} cœurs* 
+
+📈 *+${reward.xp} XP*
+
+${reward.special ? `✨ *${reward.special} SPÉCIAL !* ✨` : ''}
+
+━━━━━━━━━━━━━━━━━━━━
+
+📢 *REJOINS MA CHAÎNE* 🔥
+
+*${CHANNEL_NAME}*
+
+${CHANNEL_LINK}
+
+> *DEV : AKANE KUROGAWA🌹*` });
+
+        return;
+
+    }
+
+    
+
+    // ========== CHANGER DE LANGUE ==========
+
+    if (subCommand === 'language') {
+
+        const newLang = args[1]?.toLowerCase();
+
+        
+
+        if (!newLang || !languages[newLang]) {
+
+            const langList = Object.keys(languages).map(l => `• *${l}* ${languages[l].flag}`).join('\n');
+
+            await client.sendMessage(remoteJid, { text: 
+
+`🌍 *LANGUES DISPONIBLES*
+
+━━━━━━━━━━━━━━━━━━━━
+
+${langList}
+
+━━━━━━━━━━━━━━━━━━━━
+
+💡 *Utilisation :* \`duo language [nom]\`
+
+Exemple : \`duo language anglais\`` });
+
+            return;
+
+        }
+
+        
+
+        user.language = newLang;
+
+        saveData();
+
+        
+
+        await client.sendMessage(remoteJid, { text: `✅ *Langue changée !*\n\nTu apprends maintenant *${languages[newLang].name}* ${languages[newLang].flag}` });
+
+        return;
+
+    }
+
+    
+
+    // ========== VOIR LANGUES ==========
+
+    if (subCommand === 'languages') {
+
+        let langText = `🌍 *LANGUES DISPONIBLES*\n\n━━━━━━━━━━━━━━━━━━━━\n`;
+
+        for (const [key, lang] of Object.entries(languages)) {
+
+            langText += `• *${key}* ${lang.flag} - ${lang.name}\n`;
+
+        }
+
+        langText += `\n━━━━━━━━━━━━━━━━━━━━\n💡 *Changer :* \`duo language [nom]\``;
+
+        
+
+        await client.sendMessage(remoteJid, { text: langText });
+
+        return;
+
+    }
+
+    
+
+    // ========== STATISTIQUES ==========
+
+    if (subCommand === 'stats') {
+
+        const completedCount = user.lessonsCompleted.length;
+
+        const langInfo = languages[user.language];
+
+        const winRate = user.totalQuestions > 0 ? Math.floor((user.correctAnswers / user.totalQuestions) * 100) : 0;
+
+        
+
+        await client.sendMessage(remoteJid, { text: 
+
+`📊 *STATISTIQUES DUOLINGO*
+
+━━━━━━━━━━━━━━━━━━━━
+
+*👤 UTILISATEUR :* ${user.name}
+
+*${langInfo.flag} LANGUE :* ${langInfo.name}
+
+*📊 NIVEAU :* ${user.level}
+
+*📈 XP TOTAL :* ${user.xp}
+
+*❤️ CŒURS :* ${user.hearts}
+
+*💰 PIÈCES :* ${user.coins}
+
+*🔥 SÉRIE :* ${user.streak} jours (max: ${user.bestStreak})
+
+*📚 LEÇONS :* ${completedCount}
+
+*🎯 PRÉCISION :* ${winRate}%
+
+*✅ BONNES RÉPONSES :* ${user.correctAnswers}
+
+*❌ MAUVAISES :* ${user.totalQuestions - user.correctAnswers}
+
+━━━━━━━━━━━━━━━━━━━━
+
+📢 *REJOINS MA CHAÎNE* 🔥
+
+*${CHANNEL_NAME}*
+
+${CHANNEL_LINK}
+
+> *DEV : AKANE KUROGAWA🌹*` });
+
+        return;
+
+    }// PARTIE 3/5 - Boutique et Achats
+
+    // ========== BOUTIQUE ==========
+
+    if (subCommand === 'shop') {
+
+        let shopText = 
+
+`🛒 *BOUTIQUE DUOLINGO*
+
+━━━━━━━━━━━━━━━━━━━━
+
+💰 *Tes pièces :* ${user.coins} 🪙
+
+━━━━━━━━━━━━━━━━━━━━
+
+*❤️ CŒURS :*
+
+`;
+
+        for (const item of shopItems.hearts) {
+
+            shopText += `${item.id}. *${item.name}* - ${item.price} 🪙\n`;
+
+        }
+
+        
+
+        shopText += `\n*⚡ BOOSTS :*\n`;
+
+        for (const item of shopItems.boosts) {
+
+            shopText += `${item.id}. *${item.name}* - ${item.price} 🪙\n`;
+
+        }
+
+        
+
+        shopText += `\n*💎 SPÉCIAUX :*\n`;
+
+        for (const item of shopItems.special) {
+
+            shopText += `${item.id}. *${item.name}* - ${item.price} 🪙\n`;
+
+        }
+
+        
+
+        shopText += `\n━━━━━━━━━━━━━━━━━━━━
+
+💡 *Acheter :* \`duo buy [id]\`
+
+Exemple : \`duo buy 1\` (5 cœurs)
+
+━━━━━━━━━━━━━━━━━━━━
+
+📢 *REJOINS MA CHAÎNE* 🔥
+
+*${CHANNEL_NAME}*
+
+${CHANNEL_LINK}
+
+> *DEV : AKANE KUROGAWA🌹*`;
+
+        
+
+        await client.sendMessage(remoteJid, { text: shopText });
+
+        return;
+
+    }
+
+    
+
+    // ========== ACHETER ==========
+
+    if (subCommand === 'buy') {
+
+        const itemId = parseInt(args[1]);
+
+        
+
+        if (isNaN(itemId)) {
+
+            await client.sendMessage(remoteJid, { text: "❌ *Utilisation :* `duo buy [id]`\n\nVoir `duo shop` pour les IDs." });
+
+            return;
+
+        }
+
+        
+
+        let item = null;
+
+        let category = null;
+
+        
+
+        for (const cat of ['hearts', 'boosts', 'special']) {
+
+            const found = shopItems[cat].find(i => i.id === itemId);
+
+            if (found) {
+
+                item = found;
+
+                category = cat;
+
+                break;
+
+            }
+
+        }
+
+        
+
+        if (!item) {
+
+            await client.sendMessage(remoteJid, { text: "❌ *Article invalide !*\n\nVoir `duo shop` pour la liste." });
+
+            return;
+
+        }
+
+        
+
+        if (user.coins < item.price) {
+
+            await client.sendMessage(remoteJid, { text: `❌ *Pas assez de pièces !*\n\n💰 Tu as ${user.coins} pièces, il te manque ${item.price - user.coins} pièces.` });
+
+            return;
+
+        }
+
+        
+
+        user.coins -= item.price;
+
+        let message = "";
+
+        
+
+        if (category === 'hearts') {
+
+            user.hearts = Math.min(user.hearts + item.hearts, 99);
+
+            message = `✅ *Tu as acheté ${item.name} !*\n\n❤️ +${item.hearts} cœurs`;
+
+        } else if (category === 'boosts') {
+
+            if (item.boost === 'double_xp') {
+
+                user.xpMultiplier = 2;
+
+                user.xpMultiplierUntil = Date.now() + (item.duration * 1000);
+
+                message = `✅ *Tu as acheté ${item.name} !*\n\n⚡ XP doublé pendant 1 heure !`;
+
+            } else if (item.boost === 'streak_protect') {
+
+                user.streakProtect = true;
+
+                user.streakProtectUntil = Date.now() + (item.duration * 1000);
+
+                message = `✅ *Tu as acheté ${item.name} !*\n\n🛡️ Ta série est protégée pendant 24h !`;
+
+            } else if (item.boost === 'restore_streak') {
+
+                if (user.streak === 0) user.streak = 1;
+
+                message = `✅ *Tu as acheté ${item.name} !*\n\n🔥 Ta série a été rétablie à ${user.streak} jours !`;
+
+            } else if (item.boost === 'streak_freeze') {
+
+                user.boosts.push({ type: 'streak_freeze', active: true });
+
+                message = `✅ *Tu as acheté ${item.name} !*\n\n❄️ Ta prochaine journée manquée ne cassera pas ta série !`;
+
+            }
+
+        } else if (category === 'special') {
+
+            if (item.hearts) user.hearts = Math.min(user.hearts + item.hearts, 999);
+
+            if (item.xp) user.xp += item.xp;
+
+            if (item.coins) user.coins += item.coins;
+
+            if (item.premium) {
+
+                user.premium = true;
+
+                user.premiumUntil = Date.now() + (item.duration * 24 * 60 * 60 * 1000);
+
+                message = `✅ *Tu as acheté ${item.name} !*\n\n👑 Tu es maintenant PREMIUM pour ${item.duration} jours !`;
+
+            } else {
+
+                message = `✅ *Tu as acheté ${item.name} !*\n\n❤️ +${item.hearts || 0} cœurs\n📈 +${item.xp || 0} XP\n💰 +${item.coins || 0} pièces`;
+
+            }
+
+        }
+
+        
+
+        // Monter de niveau
+
+        if (user.xp >= user.level * 100) {
+
+            user.level++;
+
+            message += `\n\n🎉 *FÉLICITATIONS ! NIVEAU ${user.level} !* 🎉`;
+
+        }
+
+        
+
+        saveData();
+
+        
+
+        await client.sendMessage(remoteJid, { text: 
+
+`${message}
+
+━━━━━━━━━━━━━━━━━━━━
+
+❤️ *Cœurs :* ${user.hearts}
+
+💰 *Pièces restantes :* ${user.coins}
+
+🔥 *Série :* ${user.streak} jours
+
+━━━━━━━━━━━━━━━━━━━━
+
+📢 *REJOINS MA CHAÎNE* 🔥
+
+*${CHANNEL_NAME}*
+
+${CHANNEL_LINK}
+
+> *DEV : AKANE KUROGAWA🌹*` });
+
+        return;
+
     }
