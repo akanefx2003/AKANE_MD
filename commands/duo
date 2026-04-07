@@ -1093,4 +1093,856 @@ ${CHANNEL_LINK}
 
         return;
 
+    }    // ========== CLASSEMENT ==========
+
+    if (subCommand === 'ranking' || subCommand === 'rank') {
+
+        if (ranking.length === 0) {
+
+            await client.sendMessage(remoteJid, { text: "📭 *Aucun classement disponible pour le moment.*" });
+
+            return;
+
+        }
+
+        
+
+        let rankText = `🏆 *CLASSEMENT DUOLINGO*\n\n━━━━━━━━━━━━━━━━━━━━\n`;
+
+        
+
+        for (let i = 0; i < Math.min(ranking.length, 20); i++) {
+
+            const r = ranking[i];
+
+            const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i+1}.`;
+
+            const langFlag = languages[r.language]?.flag || "🌍";
+
+            rankText += `${medal} *${r.name}* ${langFlag}\n`;
+
+            rankText += `   📊 Niv.${r.level} | ${r.xp} XP | 🔥${r.streak}j\n\n`;
+
+        }
+
+        
+
+        // Position de l'utilisateur
+
+        const userRank = ranking.findIndex(r => r.id === sender) + 1;
+
+        if (userRank > 0) {
+
+            rankText += `━━━━━━━━━━━━━━━━━━━━\n📍 *TA POSITION :* #${userRank}\n`;
+
+        }
+
+        
+
+        rankText += `\n━━━━━━━━━━━━━━━━━━━━
+
+📢 *REJOINS MA CHAÎNE* 🔥
+
+*${CHANNEL_NAME}*
+
+${CHANNEL_LINK}
+
+> *DEV : AKANE KUROGAWA🌹*`;
+
+        
+
+        await client.sendMessage(remoteJid, { text: rankText });
+
+        return;
+
     }
+
+    
+
+    // ========== ENVOYER DES PIÈCES ==========
+
+    if (subCommand === 'gift') {
+
+        const targetId = args[1]?.replace('@', '') + '@s.whatsapp.net';
+
+        const amount = parseInt(args[2]);
+
+        
+
+        if (!targetId || isNaN(amount) || amount <= 0) {
+
+            await client.sendMessage(remoteJid, { text: "❌ *Utilisation :* `duo gift [@user] [montant]`\n\nExemple : `duo gift @jean 50`" });
+
+            return;
+
+        }
+
+        
+
+        const targetUser = users.get(targetId);
+
+        if (!targetUser) {
+
+            await client.sendMessage(remoteJid, { text: "❌ *Utilisateur non trouvé !*" });
+
+            return;
+
+        }
+
+        
+
+        if (user.coins < amount) {
+
+            await client.sendMessage(remoteJid, { text: `❌ *Pas assez de pièces !*\n\n💰 Tu as ${user.coins} pièces.` });
+
+            return;
+
+        }
+
+        
+
+        user.coins -= amount;
+
+        targetUser.coins += amount;
+
+        saveData();
+
+        
+
+        await client.sendMessage(remoteJid, { text: 
+
+`🎁 *CADEAU ENVOYÉ !*
+
+━━━━━━━━━━━━━━━━━━━━
+
+👤 *De :* ${user.name}
+
+👤 *À :* ${targetUser.name}
+
+💰 *Montant :* ${amount} 🪙
+
+━━━━━━━━━━━━━━━━━━━━
+
+📢 *REJOINS MA CHAÎNE* 🔥
+
+*${CHANNEL_NAME}*
+
+${CHANNEL_LINK}
+
+> *DEV : AKANE KUROGAWA🌹*` });
+
+        return;
+
+    }
+
+    
+
+    // ========== PREMIUM INFO ==========
+
+    if (subCommand === 'premium') {
+
+        const premiumText = 
+
+`👑 *DUOLINGO PREMIUM*
+
+━━━━━━━━━━━━━━━━━━━━
+
+*AVANTAGES PREMIUM :*
+
+• ✨ XP doublé en permanence
+
+• ❤️ Cœurs illimités
+
+• 🎁 Récompenses spéciales
+
+• 🏆 Badges exclusifs
+
+• 🔥 Protection de série automatique
+
+• 💰 500 pièces offertes par mois
+
+━━━━━━━━━━━━━━━━━━━━
+
+*PRIX :* 5000 pièces pour 30 jours
+
+━━━━━━━━━━━━━━━━━━━━
+
+💡 *Acheter :* \`duo buy 12\`
+
+━━━━━━━━━━━━━━━━━━━━
+
+📢 *REJOINS MA CHAÎNE* 🔥
+
+*${CHANNEL_NAME}*
+
+${CHANNEL_LINK}
+
+> *DEV : AKANE KUROGAWA🌹*`;
+
+        
+
+        await client.sendMessage(remoteJid, { text: premiumText });
+
+        return;
+
+    }// PARTIE 4/5 - Match contre IA et Learn
+
+    // ========== MATCH CONTRE L'IA ==========
+
+    if (subCommand === 'match') {
+
+        if (user.hearts <= 0) {
+
+            await client.sendMessage(remoteJid, { text: "💀 *Plus de cœurs !*\n\nUtilise `duo daily` ou `duo shop` pour en obtenir." });
+
+            return;
+
+        }
+
+        
+
+        // Initialiser le match
+
+        user.match = {
+
+            active: true,
+
+            userScore: 0,
+
+            aiScore: 0,
+
+            currentQuestion: null,
+
+            questionsCount: 0,
+
+            maxQuestions: 5,
+
+            startTime: Date.now()
+
+        };
+
+        
+
+        const question = getRandomQuestion(user.language);
+
+        user.match.currentQuestion = question;
+
+        saveData();
+
+        
+
+        const optionsText = question.options.map((opt, i) => `${i + 1}. ${opt}`).join('\n');
+
+        
+
+        await client.sendMessage(remoteJid, { text: 
+
+`⚔️ *MATCH - TOI vs IA*
+
+━━━━━━━━━━━━━━━━━━━━
+
+*SCORE :* 0 - 0
+
+*MANCHE :* 1/5
+
+━━━━━━━━━━━━━━━━━━━━
+
+📝 *QUESTION ${user.match.questionsCount + 1} :*
+
+${question.question}
+
+━━━━━━━━━━━━━━━━━━━━
+
+*RÉPONSES :*
+
+${optionsText}
+
+━━━━━━━━━━━━━━━━━━━━
+
+💡 *Réponds avec le numéro (1, 2, 3 ou 4)*
+
+❤️ *Cœurs :* ${user.hearts}
+
+🔥 *Série :* ${user.streak} jours
+
+━━━━━━━━━━━━━━━━━━━━
+
+📢 *REJOINS MA CHAÎNE* 🔥
+
+*${CHANNEL_NAME}*
+
+${CHANNEL_LINK}
+
+> *DEV : AKANE KUROGAWA🌹*` });
+
+        return;
+
+    }
+
+    
+
+    // ========== APPRENDRE (LEÇON) ==========
+
+    if (subCommand === 'learn') {
+
+        if (user.hearts <= 0) {
+
+            await client.sendMessage(remoteJid, { text: 
+
+`💀 *PLUS DE CŒURS !*
+
+━━━━━━━━━━━━━━━━━━━━
+
+Tu n'as plus de cœurs ! ❤️
+
+💡 *Pour en obtenir :*
+
+• Réclame ta récompense quotidienne : \`duo daily\`
+
+• Achète des cœurs : \`duo shop\`
+
+━━━━━━━━━━━━━━━━━━━━
+
+📢 *REJOINS MA CHAÎNE* 🔥
+
+*${CHANNEL_NAME}*
+
+${CHANNEL_LINK}
+
+> *DEV : AKANE KUROGAWA🌹*` });
+
+            return;
+
+        }
+
+        
+
+        const question = getRandomQuestion(user.language);
+
+        
+
+        user.currentLesson = question;
+
+        saveData();
+
+        
+
+        const optionsText = question.options.map((opt, i) => `${i + 1}. ${opt}`).join('\n');
+
+        
+
+        await client.sendMessage(remoteJid, { text: 
+
+`📚 *LEÇON - ${languages[user.language].name}*
+
+━━━━━━━━━━━━━━━━━━━━
+
+📝 *QUESTION :*
+
+${question.question}
+
+━━━━━━━━━━━━━━━━━━━━
+
+*RÉPONSES POSSIBLES :*
+
+${optionsText}
+
+━━━━━━━━━━━━━━━━━━━━
+
+💡 *Réponds avec le numéro (1, 2, 3 ou 4)*
+
+❤️ *Cœurs restants :* ${user.hearts}
+
+🔥 *Série :* ${user.streak} jours
+
+${user.xpMultiplier > 1 ? `⚡ *XP x${user.xpMultiplier} (actif)*` : ''}
+
+━━━━━━━━━━━━━━━━━━━━
+
+📢 *REJOINS MA CHAÎNE* 🔥
+
+*${CHANNEL_NAME}*
+
+${CHANNEL_LINK}
+
+> *DEV : AKANE KUROGAWA🌹*` });
+
+        return;
+
+    }
+
+    
+
+    await client.sendMessage(remoteJid, { text: "❌ *Commande invalide !*\n\nUtilise `duo help` pour voir les commandes." });
+
+}// PARTIE 5/5 - Gestion des réponses et exports
+
+// ==================== GESTION DES RÉPONSES AUX LEÇONS ET MATCH ====================
+
+export async function handleDuoResponse(client, message, messageBody) {
+
+    const remoteJid = message.key.remoteJid;
+
+    const sender = message.key.participant || message.key.remoteJid;
+
+    const answer = messageBody.trim();
+
+    
+
+    loadData();
+
+    
+
+    const user = users.get(sender);
+
+    if (!user) return false;
+
+    
+
+    // Vérifier si c'est une réponse à un match
+
+    if (user.match && user.match.active) {
+
+        const match = user.match;
+
+        const selectedIndex = parseInt(answer) - 1;
+
+        const question = match.currentQuestion;
+
+        const isCorrect = !isNaN(selectedIndex) && question.options[selectedIndex]?.toUpperCase() === question.answer;
+
+        
+
+        let responseText = "";
+
+        let xpGain = 0;
+
+        let coinsGain = 0;
+
+        
+
+        match.questionsCount++;
+
+        
+
+        if (isCorrect) {
+
+            match.userScore++;
+
+            xpGain = 15;
+
+            coinsGain = 10;
+
+            user.xp += xpGain;
+
+            user.coins += coinsGain;
+
+            user.correctAnswers++;
+
+            responseText = `✅ *BONNE RÉPONSE !* (+1 point)\n`;
+
+        } else {
+
+            match.aiScore++;
+
+            xpGain = 5;
+
+            coinsGain = 2;
+
+            user.xp += xpGain;
+
+            user.coins += coinsGain;
+
+            responseText = `❌ *MAUVAISE RÉPONSE !*\n👉 La bonne réponse était : *${question.answer}*\n`;
+
+        }
+
+        user.totalQuestions++;
+
+        
+
+        responseText += `\n📊 *SCORE :* ${match.userScore} - ${match.aiScore}\n`;
+
+        
+
+        if (match.questionsCount >= match.maxQuestions) {
+
+            // Fin du match
+
+            delete user.match;
+
+            
+
+            let finalText = "";
+
+            if (match.userScore > match.aiScore) {
+
+                const bonusXp = 50;
+
+                const bonusCoins = 30;
+
+                user.xp += bonusXp;
+
+                user.coins += bonusCoins;
+
+                finalText = `\n🎉 *VICTOIRE !* 🎉\n\n🏆 Tu as gagné le match !\n📈 +${bonusXp} XP\n💰 +${bonusCoins} pièces`;
+
+            } else if (match.userScore < match.aiScore) {
+
+                user.hearts = Math.max(user.hearts - 1, 0);
+
+                finalText = `\n💀 *DÉFAITE !*\n\n🤖 L'IA a gagné le match !\n❤️ -1 cœur`;
+
+            } else {
+
+                finalText = `\n🤝 *MATCH NUL !*\n\nPas de gagnant, pas de perdant !`;
+
+            }
+
+            
+
+            responseText += finalText;
+
+            
+
+            // Monter de niveau
+
+            if (user.xp >= user.level * 100) {
+
+                user.level++;
+
+                responseText += `\n\n🎉 *FÉLICITATIONS ! NIVEAU ${user.level} !* 🎉`;
+
+            }
+
+            
+
+            saveData();
+
+            
+
+            await client.sendMessage(remoteJid, { text: 
+
+`⚔️ *MATCH TERMINÉ*
+
+━━━━━━━━━━━━━━━━━━━━
+
+*SCORE FINAL :* ${match.userScore} - ${match.aiScore}
+
+${responseText}
+
+━━━━━━━━━━━━━━━━━━━━
+
+📢 *REJOINS MA CHAÎNE* 🔥
+
+*${CHANNEL_NAME}*
+
+${CHANNEL_LINK}
+
+> *DEV : AKANE KUROGAWA🌹*` });
+
+            return true;
+
+        }
+
+        
+
+        // Question suivante
+
+        const nextQuestion = getRandomQuestion(user.language);
+
+        match.currentQuestion = nextQuestion;
+
+        saveData();
+
+        
+
+        const optionsText = nextQuestion.options.map((opt, i) => `${i + 1}. ${opt}`).join('\n');
+
+        
+
+        await client.sendMessage(remoteJid, { text: 
+
+`${responseText}
+
+━━━━━━━━━━━━━━━━━━━━
+
+📝 *QUESTION ${match.questionsCount + 1}/${match.maxQuestions} :*
+
+${nextQuestion.question}
+
+━━━━━━━━━━━━━━━━━━━━
+
+*RÉPONSES :*
+
+${optionsText}
+
+━━━━━━━━━━━━━━━━━━━━
+
+💡 *Réponds avec le numéro (1, 2, 3 ou 4)*
+
+━━━━━━━━━━━━━━━━━━━━
+
+📢 *REJOINS MA CHAÎNE* 🔥
+
+*${CHANNEL_NAME}*
+
+${CHANNEL_LINK}
+
+> *DEV : AKANE KUROGAWA🌹*` });
+
+        return true;
+
+    }
+
+    
+
+    // Vérifier si c'est une réponse à une leçon normale
+
+    if (user.currentLesson) {
+
+        const lesson = user.currentLesson;
+
+        const selectedIndex = parseInt(answer) - 1;
+
+        const isCorrect = !isNaN(selectedIndex) && lesson.options[selectedIndex]?.toUpperCase() === lesson.answer;
+
+        
+
+        let responseText = "";
+
+        let xpGain = 0;
+
+        let coinsGain = 0;
+
+        
+
+        if (isCorrect) {
+
+            xpGain = 10 * (user.xpMultiplier || 1);
+
+            coinsGain = 5;
+
+            user.xp += xpGain;
+
+            user.coins += coinsGain;
+
+            user.correctAnswers++;
+
+            
+
+            if (!user.lessonsCompleted.includes(lesson.id)) {
+
+                user.lessonsCompleted.push(lesson.id);
+
+            }
+
+            
+
+            // Mettre à jour la série
+
+            const now = new Date();
+
+            const today = now.toDateString();
+
+            const lastLessonDate = user.lastLesson ? new Date(user.lastLesson).toDateString() : null;
+
+            
+
+            if (lastLessonDate !== today) {
+
+                const yesterday = new Date();
+
+                yesterday.setDate(yesterday.getDate() - 1);
+
+                const yesterdayStr = yesterday.toDateString();
+
+                
+
+                if (lastLessonDate === yesterdayStr) {
+
+                    user.streak++;
+
+                    if (user.streak > user.bestStreak) user.bestStreak = user.streak;
+
+                } else if (lastLessonDate !== today) {
+
+                    user.streak = 1;
+
+                }
+
+            }
+
+            
+
+            user.lastLesson = Date.now();
+
+            
+
+            responseText = 
+
+`✅ *BONNE RÉPONSE !*
+
+━━━━━━━━━━━━━━━━━━━━
+
+📝 *${lesson.question}*
+
+👉 *Réponse :* ${lesson.options[selectedIndex]}
+
+━━━━━━━━━━━━━━━━━━━━
+
+🏆 *GAINS :*
+
+• 📈 +${xpGain} XP
+
+• 🪙 +${coinsGain} pièces
+
+━━━━━━━━━━━━━━━━━━━━
+
+❤️ *Cœurs :* ${user.hearts}
+
+💰 *Pièces :* ${user.coins}
+
+🔥 *Série :* ${user.streak} jours`;
+
+            
+
+        } else {
+
+            user.hearts = Math.max(user.hearts - 1, 0);
+
+            user.totalQuestions++;
+
+            
+
+            responseText = 
+
+`❌ *MAUVAISE RÉPONSE !*
+
+━━━━━━━━━━━━━━━━━━━━
+
+📝 *${lesson.question}*
+
+👉 *Bonne réponse :* ${lesson.answer}
+
+━━━━━━━━━━━━━━━━━━━━
+
+❤️ *Cœurs perdus !* (-1)
+
+❤️ *Cœurs restants :* ${user.hearts}
+
+${user.hearts <= 0 ? '\n💀 *PLUS DE CŒURS !* Utilise `duo daily` ou `duo shop` pour en obtenir.\n' : ''}`;
+
+        }
+
+        
+
+        user.totalQuestions++;
+
+        
+
+        // Monter de niveau
+
+        if (user.xp >= user.level * 100) {
+
+            user.level++;
+
+            responseText += `\n\n🎉 *FÉLICITATIONS ! NIVEAU ${user.level} !* 🎉`;
+
+        }
+
+        
+
+        // Supprimer la leçon en cours
+
+        delete user.currentLesson;
+
+        saveData();
+
+        
+
+        responseText += `\n\n━━━━━━━━━━━━━━━━━━━━
+
+📢 *REJOINS MA CHAÎNE* 🔥
+
+*${CHANNEL_NAME}*
+
+${CHANNEL_LINK}
+
+> *DEV : AKANE KUROGAWA🌹*`;
+
+        
+
+        await client.sendMessage(remoteJid, { text: responseText });
+
+        
+
+        // Proposer une nouvelle leçon si l'utilisateur a encore des cœurs
+
+        if (user.hearts > 0 && isCorrect) {
+
+            const newQuestion = getRandomQuestion(user.language);
+
+            user.currentLesson = newQuestion;
+
+            saveData();
+
+            
+
+            const optionsText = newQuestion.options.map((opt, i) => `${i + 1}. ${opt}`).join('\n');
+
+            
+
+            setTimeout(async () => {
+
+                await client.sendMessage(remoteJid, { text: 
+
+`📚 *LEÇON SUIVANTE - ${languages[user.language].name}*
+
+━━━━━━━━━━━━━━━━━━━━
+
+📝 *QUESTION :*
+
+${newQuestion.question}
+
+━━━━━━━━━━━━━━━━━━━━
+
+*RÉPONSES :*
+
+${optionsText}
+
+━━━━━━━━━━━━━━━━━━━━
+
+💡 *Réponds avec le numéro (1, 2, 3 ou 4)*
+
+❤️ *Cœurs restants :* ${user.hearts}
+
+🔥 *Série :* ${user.streak} jours
+
+━━━━━━━━━━━━━━━━━━━━
+
+📢 *REJOINS MA CHAÎNE* 🔥
+
+*${CHANNEL_NAME}*
+
+${CHANNEL_LINK}
+
+> *DEV : AKANE KUROGAWA🌹*` });
+
+            }, 2000);
+
+        }
+
+        
+
+        return true;
+
+    }
+
+    
+
+    return false;
+
+}
+
+export default duolingoCommand;
