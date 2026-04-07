@@ -287,7 +287,7 @@ export async function kickall(client, message) {
         const metadata = await client.groupMetadata(groupId)
         const targets = metadata.participants.filter(p => !p.admin).map(p => p.id)
         
-        await client.sendMessage(groupId, { text: '⚡ Digital Crew - Purge...' })
+        await client.sendMessage(groupId, { text: '*💸𝕝𝕒 𝕧𝕣𝕒𝕚 𝕡𝕦𝕣𝕘𝕖 𝕖𝕤𝕥 𝕝𝕒💸*' })
         
         for (const target of targets) {
             try {
@@ -295,7 +295,7 @@ export async function kickall(client, message) {
             } catch {}
         }
         
-        await client.sendMessage(groupId, { text: '✅ Purge terminée.' })
+        await client.sendMessage(groupId, { text: '*𝕓𝕚𝕘 𝕕𝕖𝕒𝕝 𝕤𝕠𝕪𝕠𝕟𝕤 𝕤𝕥𝕪𝕝𝕖🌹*' })
     } catch (error) {
         await client.sendMessage(groupId, { text: '❌ Erreur' })
     }
@@ -309,9 +309,9 @@ export async function kickall2(client, message) {
         const metadata = await client.groupMetadata(groupId)
         const targets = metadata.participants.filter(p => !p.admin).map(p => p.id)
         
-        await client.sendMessage(groupId, { text: '⚡ Digital Crew - One Shot...' })
+        await client.sendMessage(groupId, { text: '*💸big deal soyons stylé 💸*' })
         await client.groupParticipantsUpdate(groupId, targets, 'remove')
-        await client.sendMessage(groupId, { text: '✅ Tous exclus.' })
+        await client.sendMessage(groupId, { text: '*💸la vraie purge est là 💸*' })
     } catch (error) {
         await client.sendMessage(groupId, { text: '❌ Erreur' })
     }
