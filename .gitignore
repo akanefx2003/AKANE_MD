@@ -23,3 +23,7 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+# Config files (données sensibles)
+config.json
+db.json
