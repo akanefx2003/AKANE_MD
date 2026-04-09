@@ -1,5 +1,25 @@
+# Dependencies
 node_modules/
+
+# Sessions
 sessions/
 sessionData/
+
+# Data
+data/
+temp/
+database/
+
+# Logs
 *.log
+
+# Environment
 .env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
