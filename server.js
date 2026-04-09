@@ -6,11 +6,14 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import handleIncomingMessage from './events/messageHandler.js';
 import configmanager from './utils/configmanager.js';
+import crew from './Digix/crew.js';
+
+const { connectToWhatsapp, restoreSessions } = crew;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // ── Ensure required directories exist on startup ───────────────────
-['sessions', 'database', 'temp'].forEach(dir => {
+['sessions', 'database', 'temp', 'public'].forEach(dir => {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 });
 
@@ -34,80 +37,72 @@ async function connectUser(phoneNumber) {
     const sessionDir = `sessions/${phoneNumber}`;
     if (!fs.existsSync(sessionDir)) fs.mkdirSync(sessionDir, { recursive: true });
 
-    const { version } = await fetchLatestBaileysVersion();
-    const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
+    // Stocker l'état initial
+    activeSessions[phoneNumber] = { status: 'pending', code: null };
 
-    const sock = makeWASocket({
-        version,
-        auth: state,
-        printQRInTerminal: false,
-        syncFullHistory: false,
-        markOnlineOnConnect: true,
-        logger: pino({ level: 'silent' }),
-        keepAliveIntervalMs: 10000,
-        connectTimeoutMs: 60000,
-        generateHighQualityLinkPreview: true,
-    });
-
-    sock.ev.on('creds.update', saveCreds);
-
-    sock.ev.on('connection.update', async (update) => {
-        const { connection, lastDisconnect } = update;
-
-        if (connection === 'close') {
-            const statusCode = lastDisconnect?.error?.output?.statusCode;
-            console.log(`❌ [${phoneNumber}] Disconnected. Status:`, statusCode);
-            const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
-            if (shouldReconnect) {
-                console.log(`🔄 [${phoneNumber}] Reconnecting in 5s...`);
-                setTimeout(() => connectUser(phoneNumber), 5000);
-            } else {
-                delete activeSessions[phoneNumber];
-                console.log(`🚫 [${phoneNumber}] Logged out permanently.`);
-            }
-        } else if (connection === 'open') {
-            console.log(`✅ [${phoneNumber}] Connected!`);
-            activeSessions[phoneNumber] = { sock, status: 'connected' };
-
-            // Setup config for this user
-            if (!configmanager.config.users[phoneNumber]) {
-                configmanager.config.users[phoneNumber] = {
-                    sudoList: [`${phoneNumber}@s.whatsapp.net`],
-                    tagAudioPath: 'tag.mp3',
-                    antilink: true,
-                    response: true,
-                    autoreact: false,
-                    prefix: '.',
-                    reaction: '🌸',
-                    welcome: true,
-                    record: false,
-                    type: false,
-                    publicMode: false,
-                };
-                configmanager.save();
-            }
-
-            sock.ev.on('messages.upsert', async (msg) => handleIncomingMessage(sock, msg));
-        }
-    });
-
-    // Request pairing code after 3 seconds
-    return new Promise((resolve, reject) => {
-        setTimeout(async () => {
-            try {
-                if (!state.creds.registered) {
-                    const code = await sock.requestPairingCode(phoneNumber, 'AKANEMD9');
-                    activeSessions[phoneNumber] = { sock, status: 'pending', code };
-                    resolve(code);
-                } else {
-                    activeSessions[phoneNumber] = { sock, status: 'already_connected' };
-                    resolve('ALREADY_CONNECTED');
+    try {
+        console.log(`📲 Pairing request for: ${phoneNumber}`);
+        
+        // Utiliser la nouvelle fonction connectToWhatsapp avec callbacks
+        const result = await connectToWhatsapp(phoneNumber, handleIncomingMessage, {
+            onCode: (code) => {
+                console.log(`🔑 Code generated for ${phoneNumber}: ${code}`);
+                if (activeSessions[phoneNumber]) {
+                    activeSessions[phoneNumber].code = code;
+                    activeSessions[phoneNumber].status = 'pending';
                 }
-            } catch (err) {
-                reject(err);
+            },
+            onConnected: () => {
+                console.log(`✅ ${phoneNumber} is now connected!`);
+                if (activeSessions[phoneNumber]) {
+                    activeSessions[phoneNumber].status = 'connected';
+                    activeSessions[phoneNumber].code = null;
+                }
+                
+                // Setup config for this user
+                if (!configmanager.config.users[phoneNumber]) {
+                    configmanager.config.users[phoneNumber] = {
+                        sudoList: [`${phoneNumber}@s.whatsapp.net`],
+                        tagAudioPath: 'tag.mp3',
+                        antilink: true,
+                        response: true,
+                        autoreact: false,
+                        prefix: '.',
+                        reaction: '🌸',
+                        welcome: true,
+                        record: false,
+                        type: false,
+                        publicMode: false,
+                    };
+                    configmanager.save();
+                }
+            },
+            onDisconnect: (statusCode) => {
+                console.log(`❌ ${phoneNumber} disconnected. Status: ${statusCode}`);
+                if (statusCode === DisconnectReason.loggedOut) {
+                    if (activeSessions[phoneNumber]) {
+                        activeSessions[phoneNumber].status = 'logged_out';
+                    }
+                }
+            },
+            onQR: (qr) => {
+                console.log(`📱 QR Code generated for ${phoneNumber}`);
+                if (activeSessions[phoneNumber]) {
+                    activeSessions[phoneNumber].qr = qr;
+                }
             }
-        }, 3000);
-    });
+        });
+        
+        if (result && result.code) {
+            return result.code;
+        }
+        
+        return 'ALREADY_CONNECTED';
+    } catch (err) {
+        console.error(`❌ Pairing error for ${phoneNumber}:`, err);
+        delete activeSessions[phoneNumber];
+        throw err;
+    }
 }
 
 // ── Routes ─────────────────────────────────────────────────────────
@@ -145,7 +140,16 @@ app.get('/status/:phone', (req, res) => {
     const number = sanitizeNumber(req.params.phone);
     const session = activeSessions[number];
     if (!session) return res.json({ status: 'not_found' });
-    res.json({ status: session.status });
+    res.json({ status: session.status, code: session.code });
+});
+
+// Health check
+app.get('/health', (req, res) => {
+    res.json({ 
+        status: 'ok', 
+        timestamp: new Date(),
+        activeSessions: Object.keys(activeSessions).length
+    });
 });
 
 // ── Start server ───────────────────────────────────────────────────
@@ -155,17 +159,44 @@ app.listen(PORT, () => {
 });
 
 // Auto-reconnect existing sessions on startup
-function restoreExistingSessions() {
-    const sessionsDir = 'sessions';
-    if (!fs.existsSync(sessionsDir)) return;
-    const folders = fs.readdirSync(sessionsDir);
-    folders.forEach(folder => {
-        const credFile = path.join(sessionsDir, folder, 'creds.json');
-        if (fs.existsSync(credFile)) {
-            console.log(`♻️ Restoring session for: ${folder}`);
-            connectUser(folder).catch(err => console.error(`❌ Failed to restore ${folder}:`, err));
+async function restoreExistingSessions() {
+    console.log('♻️ Restoring existing sessions...');
+    const restored = await restoreSessions(handleIncomingMessage, {
+        onConnected: (phoneNumber) => {
+            console.log(`✅ Restored session for ${phoneNumber}`);
+            if (activeSessions[phoneNumber]) {
+                activeSessions[phoneNumber].status = 'connected';
+            } else {
+                activeSessions[phoneNumber] = { status: 'connected', code: null };
+            }
+            
+            // Setup config for restored user
+            if (!configmanager.config.users[phoneNumber]) {
+                configmanager.config.users[phoneNumber] = {
+                    sudoList: [`${phoneNumber}@s.whatsapp.net`],
+                    tagAudioPath: 'tag.mp3',
+                    antilink: true,
+                    response: true,
+                    autoreact: false,
+                    prefix: '.',
+                    reaction: '🌸',
+                    welcome: true,
+                    record: false,
+                    type: false,
+                    publicMode: false,
+                };
+                configmanager.save();
+            }
+        },
+        onDisconnect: (phoneNumber, statusCode) => {
+            console.log(`❌ Restored session ${phoneNumber} disconnected`);
+            if (activeSessions[phoneNumber]) {
+                activeSessions[phoneNumber].status = 'disconnected';
+            }
         }
     });
+    
+    console.log(`♻️ Restored ${restored.length} sessions`);
 }
 
 restoreExistingSessions();
