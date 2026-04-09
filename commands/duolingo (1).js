@@ -1,4 +1,4 @@
-// @commands/duolingo.js
+// commands/duolingo.js
 
 // @cat: jeu et autres
 
