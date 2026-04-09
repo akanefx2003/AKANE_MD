@@ -1,0 +1,21 @@
+{
+  "users": {
+    "221701165431": {
+      "sudoList": [
+        "221705928204@s.whatsapp.net",
+        "221765757849@s.whatsapp.net",
+        "221701165431@s.whatsapp.net"
+      ],
+      "tagAudioPath": "",
+      "antilink": true,
+      "response": true,
+      "autoreact": false,
+      "prefix": "-",
+      "reaction": "🍒",
+      "welcome": true,
+      "record": false,
+      "type": false,
+      "publicMode": false
+    }
+  }
+}
