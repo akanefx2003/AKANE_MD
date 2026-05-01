@@ -9,105 +9,144 @@ const imagePath = path.join(process.cwd(), 'database', 'dp.jpg');
 export default async function deploie(client, message) {
     const remoteJid = message.key.remoteJid;
     
-    // Code à copier (brut, sans cadre)
-    const deployCode = `// index.js - Déploiement AKANE MD
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { spawn, execSync } from 'child_process';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const USER_NUMBER = '221705928204';
-const GITHUB_REPO = 'https://github.com/akanefx2003/AKANE_MD.git';
-
-function log(msg) { console.log('✅ ' + msg); }
-
-function clean() {
-    const files = fs.readdirSync(__dirname);
-    for (const file of files) {
-        if (file === 'index.js') continue;
-        try {
-            const p = path.join(__dirname, file);
-            if (fs.statSync(p).isDirectory()) {
-                fs.rmSync(p, { recursive: true, force: true });
-            } else {
-                fs.unlinkSync(p);
-            }
-        } catch(e) {}
-    }
-    log('Nettoyage terminé');
-}
-
-function clone() {
-    try {
-        execSync('git clone --depth 1 ' + GITHUB_REPO + ' .', { stdio: 'inherit' });
-        log('Dépôt cloné');
-        return true;
-    } catch(e) { return false; }
-}
-
-function updateCrew() {
-    const p = path.join(__dirname, 'Digix', 'crew.js');
-    if (!fs.existsSync(p)) return;
-    let c = fs.readFileSync(p, 'utf8');
-    c = c.replace(/phoneNumber:\\s*['"]\\d+['"]/, "phoneNumber: '" + USER_NUMBER + "'");
-    fs.writeFileSync(p, c);
-    log('Numéro ajouté');
-}
-
-function createDirs() {
-    ['sessions', 'data', 'temp', 'database'].forEach(d => {
-        const p = path.join(__dirname, d);
-        if (!fs.existsSync(p)) fs.mkdirSync(p, { recursive: true });
-    });
-}
-
-function createConfig() {
-    const p = path.join(__dirname, 'data', 'config.json');
-    if (!fs.existsSync(p)) {
-        const cfg = { prefix: ".", botName: "AKANE MD", owner: USER_NUMBER, reaction: "🌸" };
-        fs.writeFileSync(p, JSON.stringify(cfg, null, 2));
-    }
-}
-
-function install() {
-    return new Promise(r => {
-        const i = spawn('npm', ['install'], { stdio: 'inherit', shell: true });
-        i.on('close', c => r(c === 0));
-    });
-}
-
-async function start() {
-    try {
-        const { default: connect } = await import('./Digix/crew.js');
-        const handler = (await import('./events/messageHandler.js')).default;
-        await connect(handler);
-    } catch(e) { setTimeout(start, 5000); }
-}
-
-async function main() {
-    console.log('🤖 AKANE MD');
-    clean();
-    if (!clone()) return;
-    createDirs();
-    updateCrew();
-    createConfig();
-    if (await install()) start();
-}
-
-main();`;
+    // Code à copier (version sans backticks internes)
+    const deployCode = [
+        '// deploy.js - Script de déploiement AKANE MD',
+        'const fs = require("fs");',
+        'const path = require("path");',
+        'const { spawn, execSync } = require("child_process");',
+        '',
+        'const USER_NUMBER = "221705928204";',
+        'const GITHUB_REPO = "https://github.com/akanefx2003/AKANE_MD.git";',
+        '',
+        'function log(msg) { console.log("✅ " + msg); }',
+        'function logInfo(msg) { console.log("📢 " + msg); }',
+        'function logError(msg) { console.log("❌ " + msg); }',
+        '',
+        'function clean() {',
+        '    logInfo("Nettoyage du dossier...");',
+        '    const files = fs.readdirSync(__dirname);',
+        '    for (const file of files) {',
+        '        if (file === "deploy.js") continue;',
+        '        try {',
+        '            const p = path.join(__dirname, file);',
+        '            if (fs.statSync(p).isDirectory()) {',
+        '                fs.rmSync(p, { recursive: true, force: true });',
+        '            } else {',
+        '                fs.unlinkSync(p);',
+        '            }',
+        '        } catch(e) {}',
+        '    }',
+        '    log("Nettoyage terminé");',
+        '}',
+        '',
+        'function clone() {',
+        '    logInfo("Clonage du dépôt GitHub...");',
+        '    try {',
+        '        execSync(`git clone ${GITHUB_REPO} .`, { stdio: "inherit" });',
+        '        log("Dépôt cloné avec succès");',
+        '        return true;',
+        '    } catch(e) {',
+        '        logError("Échec du clonage");',
+        '        return false;',
+        '    }',
+        '}',
+        '',
+        'function updateCrew() {',
+        '    const crewPath = path.join(__dirname, "Digix", "crew.js");',
+        '    if (!fs.existsSync(crewPath)) {',
+        '        logError("crew.js introuvable");',
+        '        return false;',
+        '    }',
+        '    let content = fs.readFileSync(crewPath, "utf8");',
+        '    content = content.replace(/phoneNumber:\\s*[\'"]\\d+[\'"]/, `phoneNumber: \'${USER_NUMBER}\'`);',
+        '    fs.writeFileSync(crewPath, content);',
+        '    log(`Numéro ${USER_NUMBER} ajouté dans crew.js`);',
+        '    return true;',
+        '}',
+        '',
+        'function createDirs() {',
+        '    const dirs = ["sessions", "data", "temp", "database"];',
+        '    dirs.forEach(dir => {',
+        '        const dirPath = path.join(__dirname, dir);',
+        '        if (!fs.existsSync(dirPath)) {',
+        '            fs.mkdirSync(dirPath, { recursive: true });',
+        '            log(`Dossier ${dir} créé`);',
+        '        }',
+        '    });',
+        '}',
+        '',
+        'function createConfig() {',
+        '    const configPath = path.join(__dirname, "data", "config.json");',
+        '    if (!fs.existsSync(configPath)) {',
+        '        const config = {',
+        '            prefix: ".",',
+        '            botName: "AKANE MD",',
+        '            owner: USER_NUMBER,',
+        '            reaction: "🌸",',
+        '            channelLink: "https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R"',
+        '        };',
+        '        fs.writeFileSync(configPath, JSON.stringify(config, null, 2));',
+        '        log("config.json créé");',
+        '    }',
+        '}',
+        '',
+        'function installDeps() {',
+        '    return new Promise((resolve) => {',
+        '        logInfo("Installation des dépendances...");',
+        '        const install = spawn("npm", ["install"], { stdio: "inherit", shell: true });',
+        '        install.on("close", (code) => {',
+        '            if (code === 0) {',
+        '                log("Dépendances installées");',
+        '                resolve(true);',
+        '            } else {',
+        '                logError("Erreur installation");',
+        '                resolve(false);',
+        '            }',
+        '        });',
+        '    });',
+        '}',
+        '',
+        'async function startBot() {',
+        '    logInfo("Démarrage d\'AKANE MD...");',
+        '    try {',
+        '        const { default: connect } = await import("./Digix/crew.js");',
+        '        const { default: handler } = await import("./events/messageHandler.js");',
+        '        await connect(handler);',
+        '    } catch (err) {',
+        '        logError(`Erreur: ${err.message}`);',
+        '        setTimeout(startBot, 5000);',
+        '    }',
+        '}',
+        '',
+        'async function main() {',
+        '    console.log("\\x1b[35m");',
+        '    console.log("╔═══════════════════════════════════════╗");',
+        '    console.log("║      🤖 AKANE MD - DEPLOYEUR 🤖       ║");',
+        '    console.log("╚═══════════════════════════════════════╝");',
+        '    console.log("\\x1b[0m");',
+        '    logInfo(`Numéro configuré: ${USER_NUMBER}`);',
+        '    clean();',
+        '    if (!clone()) return;',
+        '    createDirs();',
+        '    updateCrew();',
+        '    createConfig();',
+        '    const ok = await installDeps();',
+        '    if (ok) startBot();',
+        '}',
+        '',
+        'main();'
+    ].join('\n');
 
     // Explications avec l'image
-    const instructions = `╭━━━❰ *AKANE MD - DÉPLOIEMENT* ❱━━━╮
+    const instructions = `╭━━━❰ *AKANE MD - DÉPLOIEMENT* ❱
 ┃
 ┃  📝 *ÉTAPES À SUIVRE :*
 ┃
 ┃  1️⃣ Copie le code ci-dessous
-┃  2️⃣ Colle-le dans un fichier index.js
+┃  2️⃣ Colle-le dans un fichier deploy.js
 ┃  3️⃣ Remplace le numéro (ligne 14)
-┃  4️⃣ Lance le serveur
+┃  4️⃣ Lance : node deploy.js
 ┃
 ┃  ⏳ *Après le lancement :*
 ┃     Un CODE DE CONNEXION va s'afficher
@@ -122,7 +161,7 @@ main();`;
 ┃  • LeonoDes : https://leonodes.xyz/login?ref=9bf436d0
 ┃  • Katabump : https://rl.katabump.fr/2def14
 ┃
-╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯
+╰━━━━━━━━━━━━━━━━━━━━━
 
 > *AKANE MD 🍁*`;
 
@@ -136,7 +175,7 @@ main();`;
         await client.sendMessage(remoteJid, { text: instructions });
     }
     
-    // 2. Envoyer le code brut (sans rien écrit dessus)
+    // 2. Envoyer le code brut
     setTimeout(async () => {
         await client.sendMessage(remoteJid, { text: deployCode });
     }, 1500);
