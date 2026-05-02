@@ -3,6 +3,7 @@
 **ÉTAPES À SUIVRE :**
 
 **1. Copie le code ci-dessous**
+
 **2. Colle-le dans un fichier deploy.js**
 **3. Le numéro est déjà pré-configuré (221705928204)**
 **4. Lance : node deploy.js**
