@@ -1,6 +1,15 @@
 ![Logo AKANE MD](database/menu.jpg)
 
-[![Fork](https://img.shields.io/badge/Fork-🍴_AKANE_MD-blue?style=for-the-badge&logo=github)](https://github.com/akanefx2003/AKANE_MD/fork)
+<br>
+
+<div align="center">
+  
+  [![Fork le projet](https://img.shields.io/badge/🍴-FORK_LE_PROJET-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/akanefx2003/AKANE_MD/fork)
+  
+  [![Étoile le projet](https://img.shields.io/badge/⭐-METTRE_UNE_ÉTOILE-ffd700?style=for-the-badge&logo=github&logoColor=black)](https://github.com/akanefx2003/AKANE_MD)
+  
+</div>
+
 **AKANE_MD - DÉPLOIEMENT**
 
 **ÉTAPES À SUIVRE :**
