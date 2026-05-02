@@ -11,3 +11,9 @@
 Pour que le message de bug soit utile, dites à vos utilisateurs de **remplacer** :
 - `[Description courte du problème]` par ce qui ne fonctionne pas
 - `[optionnel]` par un lien vers une capture d'écran (si possible)
+
+## 📱 Me contacter
+
+- 🐞 **Signaler un bug** : [Cliquez ici](https://api.whatsapp.com/send?phone=221705928204&text=🐞%20BUG%20SIGNALÉ%20:%20[Description]%0AProjet%20:%20AKANE_MD)
+
+- 💬 **Me contacter** : [Cliquez ici](https://api.whatsapp.com/send?phone=221705928204&text=Bonjour%20AKANE%2C%20je%20suis%20intéressé%20par%20ton%20projet)
