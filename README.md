@@ -17,13 +17,7 @@
 **5. Après le lancement : Un CODE DE CONNEXION va s'afficher**
 
 **Ouvre WhatsApp :**
-<div align="center">
-  
-![Maintenance](https://img.shields.io/badge/statut-ACTIF-brightgreen?style=flat-square)
-![Node](https://img.shields.io/badge/node-v18+-green?style=flat-square)
-![WhatsApp](https://img.shields.io/badge/WhatsApp-Bot-25D366?style=flat-square&logo=whatsapp)
 
-</div>
 **Paramètres 
 → Appareils connectés 
 → Connecté à un appareil 
@@ -64,7 +58,13 @@
   
 </div>
 
-![Visiteurs](https://komarev.com/ghpvc/?username=akanefx2003&label=Visiteurs&color=blue)
+<div align="center">
+  
+![Maintenance](https://img.shields.io/badge/statut-ACTIF-brightgreen?style=flat-square)
+![Node](https://img.shields.io/badge/node-v18+-green?style=flat-square)
+![WhatsApp](https://img.shields.io/badge/WhatsApp-Bot-25D366?style=flat-square&logo=whatsapp)
+
+</div> ![Visiteurs](https://komarev.com/ghpvc/?username=akanefx2003&label=Visiteurs&color=blue)
 
 
 **🚀 deploy.js - Copiez ce code**
