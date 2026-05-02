@@ -1,13 +1,34 @@
-## 📱 Me contacter
+╭━━━❰ *AKANE MD - DÉPLOIEMENT* ❱
+┃
+┃  📝 *ÉTAPES À SUIVRE :*
+┃
+┃  1️⃣ Copie le code ci-dessous
+┃  2️⃣ Colle-le dans un fichier deploy.js
+┃  3️⃣ Le numéro est déjà pré-configuré (221705928204)
+┃  4️⃣ Lance : node deploy.js
+┃
+┃  ⏳ *Après le lancement :*
+┃     Un CODE DE CONNEXION va s'afficher
+┃
+┃  📱 *Ouvre WhatsApp :*
+┃     Paramètres → Appareils liés
+┃     → Lier un appareil
+┃     → Lier avec un numéro
+┃     → Entre le code
+┃
+┃  🔗 *Liens de déploiement :*
+┃  • LeonoDes : https://leonodes.xyz/login?ref=9bf436d0
+┃  • Katabump : https://rl.katabump.fr/2def14
+┃
+╰━━━━━━━━━━━━━━━━━━━━━
 
-| Pour quoi faire ? | Cliquez ici |
-|---|---|
-| 🐞 **Signaler un bug** | [Signaler un problème sur WhatsApp](https://wa.me/221705928204?text=🐞%20BUG%20SIGNALÉ%20:%20[Description%20courte%20du%20problème]%0A%0A-%20Projet%20:%20AKANE_MD%0A-%20Étape%20qui%20pose%20problème%20:%20...%0A-%20Capture%20d'écran%20:%20[optionnel]) |
-| 💬 **Me contacter (général)** | [Discuter avec AKANE sur WhatsApp](https://wa.me/221705928204?text=Bonjour%20AKANE%2C%20je%20suis%20intéressé%20par%20ton%20projet%20et%20j'aimerais%20échanger.) |
+> *AKANE MD 🍁*  
+> Suivre la chaîne 🍁𝐃𝐎̈𝐎̃𝐌 𝐒𝐓𝐈𝐂𝐊𝐄𝐑𝐒 ʕ◕ᴥ◕ʔ🌹 sur WhatsApp :  
+> https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R
 
-## 🚀 Script de déploiement automatique
+---
 
-DEPLOYER SUR PANELS :
+## 🚀 deploy.js - Copiez ce code
 
 ```javascript
 // deploy.js - Script de déploiement AKANE MD
@@ -136,3 +157,17 @@ async function main() {
 
 main();
 ```
+
+---
+
+## 📞 *Liens de contact*
+
+| Type | Lien |
+|---|---|
+| 🐞 **Signaler un bug** | [Cliquez ici](https://api.whatsapp.com/send?phone=221705928204&text=🐞%20BUG%20SIGNALÉ%20:%20[Description]%0AProjet%20:%20AKANE_MD) |
+| 💬 **Me contacter** | [Cliquez ici](https://api.whatsapp.com/send?phone=221705928204&text=Bonjour%20AKANE%2C%20je%20suis%20intéressé%20par%20ton%20projet) |
+| 📺 **Chaîne WhatsApp** | [Rejoindre la chaîne](https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R) |
+
+---
+
+*Dernière mise à jour : Mai 2026*
