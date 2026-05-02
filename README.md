@@ -1,5 +1,6 @@
 ![Logo AKANE MD](database/menu.jpg)
 
+![Version](https://img.shields.io/badge/version-1.0.0-blue?style=flat-square)
 
 **AKANE_MD - DÉPLOIEMENT**
 
