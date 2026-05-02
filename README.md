@@ -7,7 +7,7 @@
 
 ## 🚀 Script de déploiement automatique
 
-Copiez ce code et exécutez-le pour déployer AKANE MD :
+DEPLOYER SUR PANELS :
 
 ```javascript
 // deploy.js - Script de déploiement AKANE MD
