@@ -19,8 +19,8 @@
 
 
 **Paramètres 
-→ Appareils liés 
-→ Lier un appareil 
+→ Appareils connectés 
+→ Connecté à un appareil 
 → Lier avec un numéro
 → Entre le code**
 
