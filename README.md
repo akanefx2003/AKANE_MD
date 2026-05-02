@@ -2,7 +2,6 @@
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue?style=flat-square)
 
-![Visiteurs](https://komarev.com/ghpvc/?username=akanefx2003&label=Visiteurs&color=blue)
 **AKANE_MD - DÉPLOIEMENT**
 
 **ETAPES À SUIVRE :**
