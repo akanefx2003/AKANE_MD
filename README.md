@@ -1,3 +1,5 @@
+![Logo AKANE MD](database/menu.jpg)
+
 **AKANE_MD - DÉPLOIEMENT**
 
 **ÉTAPES À SUIVRE :**
