@@ -40,7 +40,11 @@
 **channel:**
 **https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R**
 
----
+**✨ MERCI POUR VOTRE SOUTIEN ! ✨**
+
+**N'oubliez pas de mettre une ⭐ étoile sur ce dépôt GitHub**
+
+**🙏 Votre soutien me motive à continuer ! Merci infiniment ! 🙏**
 
 **🚀 deploy.js - Copiez ce code**
 
@@ -170,25 +174,3 @@ async function main() {
 }
 
 main();
-<br>
-
-**✨ MERCI POUR VOTRE SOUTIEN ! ✨**
-
-**N'oubliez pas de mettre une ⭐ étoile sur ce dépôt GitHub**
-
-**🙏 Votre soutien me motive à continuer ! Merci infiniment ! 🙏**
-
-<br>
-
-**AKANE_MD 🍁 ⭐⭐**
-<br>
-
-**✨ MERCI POUR VOTRE SOUTIEN ! ✨**
-
-**N'oubliez pas de mettre une ⭐ étoile sur ce dépôt GitHub**
-
-**🙏 Votre soutien me motive à continuer ! Merci infiniment ! 🙏**
-
-<br>
-
-**AKANE_MD 🍁**
