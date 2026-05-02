@@ -1,23 +1,23 @@
-╭━━━❰ AKANE MD - DÉPLOIEMENT ❱
- 📝 ÉTAPES À SUIVRE :
-1️⃣ Copie le code ci-dessous
-2️⃣ Colle-le dans un fichier deploy.js
-3️⃣ Le numéro est déjà pré-configuré (221705928204)
-4️⃣ Lance : node deploy.js
-⏳ Après le lancement :
-Un CODE DE CONNEXION va s'afficher
-📱 Ouvre WhatsApp :
-Paramètres → Appareils liés
-→ Lier un appareil
-→ Lier avec un numéro
-→ Entre le cod
-🔗 Liens de déploiement :
-•LeonoDes : https://leonodes.xyz/login?ref=9bf436d0
+AKANE_MD - DÉPLOIEMENT
+
+ÉTAPES À SUIVRE :
+
+1. Copie le code ci-dessous
+2. Colle-le dans un fichier deploy.js
+3. Le numéro est déjà pré-configuré (221705928204)
+4. Lance : node deploy.js
+
+Après le lancement : Un CODE DE CONNEXION va s'afficher
+
+Ouvre WhatsApp :
+Paramètres → Appareils liés → Lier un appareil → Lier avec un numéro → Entre le code
+
+⚠️ Liens de déploiement :
+• LeonoDes : https://leonodes.xyz/login?ref=9bf436d0
 • Katabump : https://rl.katabump.fr/2def14
 
-
 AKANE MD 🍁
-Suivre la chaîne 🍁𝐃𝐎̈𝐎̃𝐌 𝐒𝐓𝐈𝐂𝐊𝐄𝐑𝐒 ʕ◕ᴥ◕ʔ🌹 sur WhatsApp :
+Suivre la chaîne 𝐃𝐎̈𝐎̃𝐌 𝐒𝐓𝐈𝐂𝐊𝐄𝐑𝐒 ʕ◕ᴥ◕ʔ🌹 sur WhatsApp :
 https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R
 
 ---
@@ -150,18 +150,3 @@ async function main() {
 }
 
 main();
-```
-
----
-
-📞 Liens de contact
-
-🐞 Signaler un bug : https://api.whatsapp.com/send?phone=221705928204&text=🐞%20BUG%20SIGNALÉ%20:%20[Description]%0AProjet%20:%20AKANE_MD
-
-💬 Me contacter : https://api.whatsapp.com/send?phone=221705928204&text=Bonjour%20AKANE%2C%20je%20suis%20intéressé%20par%20ton%20projet
-
-📺 Chaîne WhatsApp : https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R
-
----
-
-Dernière mise à jour : Mai 2026
