@@ -1,9 +1,5 @@
-&
 ![Logo AKANE MD](database/menu.jpg)
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue?style=flat-square)
-![AKANE MD Demo](database/menu.jpg)
-*(Remplace par ton propre GIF)*
 **AKANE_MD - DÉPLOIEMENT**
 
 **ETAPES À SUIVRE :**
