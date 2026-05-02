@@ -1,27 +1,20 @@
 ╭━━━❰ AKANE MD - DÉPLOIEMENT ❱
-┃
-┃  📝 ÉTAPES À SUIVRE :
-┃
-┃  1️⃣ Copie le code ci-dessous
-┃  2️⃣ Colle-le dans un fichier deploy.js
-┃  3️⃣ Le numéro est déjà pré-configuré (221705928204)
-┃
-┃  4️⃣ Lance : node deploy.js
-┃
-┃  ⏳ Après le lancement :
-┃     Un CODE DE CONNEXION va s'afficher
-┃
-┃  📱 Ouvre WhatsApp :
-┃     Paramètres → Appareils liés
-┃     → Lier un appareil
-┃     → Lier avec un numéro
-┃     → Entre le code
-┃
-┃  🔗 Liens de déploiement :
-┃  • LeonoDes : https://leonodes.xyz/login?ref=9bf436d0
-┃  • Katabump : https://rl.katabump.fr/2def14
-┃
-╰━━━━━━━━━━━━━━━━━━━━━
+ 📝 ÉTAPES À SUIVRE :
+1️⃣ Copie le code ci-dessous
+2️⃣ Colle-le dans un fichier deploy.js
+3️⃣ Le numéro est déjà pré-configuré (221705928204)
+4️⃣ Lance : node deploy.js
+⏳ Après le lancement :
+Un CODE DE CONNEXION va s'afficher
+📱 Ouvre WhatsApp :
+Paramètres → Appareils liés
+→ Lier un appareil
+→ Lier avec un numéro
+→ Entre le cod
+🔗 Liens de déploiement :
+•LeonoDes : https://leonodes.xyz/login?ref=9bf436d0
+• Katabump : https://rl.katabump.fr/2def14
+
 
 AKANE MD 🍁
 Suivre la chaîne 🍁𝐃𝐎̈𝐎̃𝐌 𝐒𝐓𝐈𝐂𝐊𝐄𝐑𝐒 ʕ◕ᴥ◕ʔ🌹 sur WhatsApp :
