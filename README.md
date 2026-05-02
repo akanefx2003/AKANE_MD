@@ -1,28 +1,28 @@
-AKANE_MD - DÉPLOIEMENT
+**AKANE_MD - DÉPLOIEMENT**
 
-ÉTAPES À SUIVRE :
+**ÉTAPES À SUIVRE :**
 
-1. Copie le code ci-dessous
-2. Colle-le dans un fichier deploy.js
-3. Le numéro est déjà pré-configuré (221705928204)
-4. Lance : node deploy.js
+**1. Copie le code ci-dessous**
+**2. Colle-le dans un fichier deploy.js**
+**3. Le numéro est déjà pré-configuré (221705928204)**
+**4. Lance : node deploy.js**
 
-Après le lancement : Un CODE DE CONNEXION va s'afficher
+**Après le lancement : Un CODE DE CONNEXION va s'afficher**
 
-Ouvre WhatsApp :
-Paramètres → Appareils liés → Lier un appareil → Lier avec un numéro → Entre le code
+**Ouvre WhatsApp :**
+**Paramètres → Appareils liés → Lier un appareil → Lier avec un numéro → Entre le code**
 
-⚠️ Liens de déploiement :
-• LeonoDes : https://leonodes.xyz/login?ref=9bf436d0
-• Katabump : https://rl.katabump.fr/2def14
+**⚠️ Liens de déploiement :**
+**• LeonoDes : https://leonodes.xyz/login?ref=9bf436d0**
+**• Katabump : https://rl.katabump.fr/2def14**
 
-AKANE MD 🍁
-Suivre la chaîne 𝐃𝐎̈𝐎̃𝐌 𝐒𝐓𝐈𝐂𝐊𝐄𝐑𝐒 ʕ◕ᴥ◕ʔ🌹 sur WhatsApp :
-https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R
+**AKANE MD 🍁**
+**Suivre la chaîne 𝐃𝐎̈𝐎̃𝐌 𝐒𝐓𝐈𝐂𝐊𝐄𝐑𝐒 ʕ◕ᴥ◕ʔ🌹 sur WhatsApp :**
+**https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R**
 
 ---
 
-🚀 deploy.js - Copiez ce code
+**🚀 deploy.js - Copiez ce code**
 
 ```javascript
 // deploy.js - Script de déploiement AKANE MD
