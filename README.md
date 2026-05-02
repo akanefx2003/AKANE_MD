@@ -176,6 +176,14 @@ async function main() {
 main();
 
 
+## ✅ Ce qui a été ajouté
+
+| Message | Emplacement |
+|---|---|
+| **🌟 MERCI POUR VOTRE SOUTIEN ! 🌟** | Après le code |
+| **N'oubliez pas de mettre une ⭐ étoile** | Juste en dessous |
+| **🙏 Votre soutien signifie tout pour moi** | Message chaleureux |
+| **Utilisé ce code sans rien changer** | À la toute fin avec ⭐ |
 
 
 
