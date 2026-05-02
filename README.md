@@ -1,19 +1,13 @@
----
-## À propos de ce projet
+## 📱 Me contacter
 
-Ajoutez ici une description de votre projet AKANE_MD.
-
-## Comment l'utiliser ?
-
-1. Première étape
-2. Deuxième étape
-
-## Liens utiles
-
-- [Documentation](https://lien-vers-votre-documentation.com)
-- [Signaler un bug](https://github.com/akanefx2003/AKANE_MD/issues)
-- [Me contacter](mailto:https://Wa.me/+221705928204)
+| Pour quoi faire ? | Cliquez ici |
+|---|---|
+| 🐞 **Signaler un bug** | [Signaler un problème sur WhatsApp](https://wa.me/221705928204?text=🐞%20BUG%20SIGNALÉ%20:%20[Description%20courte%20du%20problème]%0A%0A-%20Projet%20:%20AKANE_MD%0A-%20Étape%20qui%20pose%20problème%20:%20...%0A-%20Capture%20d'écran%20:%20[optionnel]) |
+| 💬 **Me contacter (général)** | [Discuter avec AKANE sur WhatsApp](https://wa.me/221705928204?text=Bonjour%20AKANE%2C%20je%20suis%20intéressé%20par%20ton%20projet%20et%20j'aimerais%20échanger.) |
 
 ---
 
-*Dernière mise à jour : Mai 2026*
+### 📝 Note importante
+Pour que le message de bug soit utile, dites à vos utilisateurs de **remplacer** :
+- `[Description courte du problème]` par ce qui ne fonctionne pas
+- `[optionnel]` par un lien vers une capture d'écran (si possible)
