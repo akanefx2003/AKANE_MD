@@ -3,7 +3,7 @@
 
 **AKANE_MD - DÉPLOIEMENT**
 
-**ÉTAPES À SUIVRE :**
+**ETAPES À SUIVRE :**
 
 **1. Copie le code ci-dessous**
 
