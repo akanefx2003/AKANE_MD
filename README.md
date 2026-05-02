@@ -12,7 +12,7 @@ Ajoutez ici une description de votre projet AKANE_MD.
 
 - [Documentation](https://lien-vers-votre-documentation.com)
 - [Signaler un bug](https://github.com/akanefx2003/AKANE_MD/issues)
-- [Me contacter]([https://Wa.me/+221705928204]
+- [Me contacter](mailto:https://Wa.me/+221705928204)
 
 ---
 
