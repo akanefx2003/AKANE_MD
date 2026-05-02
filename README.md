@@ -12,13 +12,9 @@
 
 **4. Lance le serveur puis patientez**
 
-
 **5. Après le lancement : Un CODE DE CONNEXION va s'afficher**
 
-
-
 **Ouvre WhatsApp :**
-
 
 **Paramètres 
 → Appareils connectés 
@@ -32,15 +28,15 @@
 
 **• Katabump : https://rl.katabump.fr/2def14**
 
-
-
 ## 📱 Me contacter
 
 | Pour quoi faire ? | Cliquez ici |
 |---|---|
 | 🐞 **Signaler un bug** | [Signaler un problème sur WhatsApp](https://wa.me/221705928204?text=🐞%20BUG%20SIGNALÉ%20:%20[Description%20courte%20du%20problème]%0A%0A-%20Projet%20:%20AKANE_MD%0A-%20Étape%20qui%20pose%20problème%20:%20...%0A-%20Capture%20d'écran%20:%20[optionnel]) |
 | 💬 **Me contacter (général)** | [Discuter avec AKANE sur WhatsApp](https://wa.me/221705928204?text=Bonjour%20AKANE%2C%20je%20suis%20intéressé%20par%20ton%20projet%20et%20j'aimerais%20échanger.) |
+
 **AKANE MD 🍁**
+
 **channel:**
 **https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R**
 
@@ -174,24 +170,3 @@ async function main() {
 }
 
 main();
-
-
-## ✅ Ce qui a été ajouté
-
-| Message | Emplacement |
-|---|---|
-| **🌟 MERCI POUR VOTRE SOUTIEN ! 🌟** | Après le code |
-| **N'oubliez pas de mettre une ⭐ étoile** | Juste en dessous |
-| **🙏 Votre soutien signifie tout pour moi** | Message chaleureux |
-| **Utilisé ce code sans rien changer** | À la toute fin avec ⭐ |
-
-
-
-
-
-
-
-
-
-
-**AKANE_MD - DÉPLOIEMENT**
