@@ -4,9 +4,11 @@
 
 **1. Copie le code ci-dessous**
 
-**2. Colle-le dans un fichier deploy.js**
-**3. Le numéro est déjà pré-configuré (221705928204)**
-**4. Lance : node deploy.js**
+**Créé un fichier que que tu va nommer index.js et colle le code dedans**
+
+**3. Remplacer le numéro qui est dedans par votre numéro puis enregistré**
+
+**4. Lance le serveur puis patientez**
 
 **Après le lancement : Un CODE DE CONNEXION va s'afficher**
 
