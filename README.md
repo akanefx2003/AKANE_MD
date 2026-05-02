@@ -10,10 +10,19 @@
 
 **4. Lance le serveur puis patientez**
 
-**Après le lancement : Un CODE DE CONNEXION va s'afficher**
+
+**5. Après le lancement : Un CODE DE CONNEXION va s'afficher**
+
+
 
 **Ouvre WhatsApp :**
-**Paramètres → Appareils liés → Lier un appareil → Lier avec un numéro → Entre le code**
+
+
+**Paramètres 
+→ Appareils liés 
+→ Lier un appareil 
+→ Lier avec un numéro
+→ Entre le code**
 
 **⚠️ Liens de déploiement :**
 **• LeonoDes : https://leonodes.xyz/login?ref=9bf436d0**
