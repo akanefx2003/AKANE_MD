@@ -1,14 +1,5 @@
 ![Logo AKANE MD](database/menu.jpg)
 
-<br>
-
-<div align="center">
-  
-  [![Fork le projet](https://img.shields.io/badge/🍴-FORK_LE_PROJET-ffffff?style=for-the-badge&logo=github&logoColor=white&color=blue)](https://github.com/akanefx2003/AKANE_MD/fork)
-  
-  [![Étoile le projet](https://img.shields.io/badge/⭐-METTRE_UNE_ÉTOILE-ffd700?style=for-the-badge&logo=github&logoColor=black)](https://github.com/akanefx2003/AKANE_MD)
-  
-</div>
 
 **AKANE_MD - DÉPLOIEMENT**
 
@@ -55,6 +46,17 @@
 **N'oubliez pas de mettre une ⭐ étoile sur ce dépôt GitHub**
 
 **🙏 Votre soutien me motive à continuer ! Merci infiniment ! 🙏**
+
+<br>
+
+<div align="center">
+  
+  [![Fork le projet](https://img.shields.io/badge/🍴-FORK_LE_PROJET-ffffff?style=for-the-badge&logo=github&logoColor=white&color=blue)](https://github.com/akanefx2003/AKANE_MD/fork)
+  
+  [![Étoile le projet](https://img.shields.io/badge/⭐-METTRE_UNE_ÉTOILE-ffd700?style=for-the-badge&logo=github&logoColor=black)](https://github.com/akanefx2003/AKANE_MD)
+  
+</div>
+
 
 **🚀 deploy.js - Copiez ce code**
 
