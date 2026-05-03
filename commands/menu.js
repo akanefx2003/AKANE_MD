@@ -136,7 +136,7 @@ export default async function info(client, message) {
 
     const day = days[now.getDay()];
 
-    const handlerPath = path.join(__dirname, "../events/messageHandler.js");
+    const handlerPath = path.join(__dirname, "../akane/akanes.js");
 
     const handlerCode = fs.readFileSync(handlerPath, "utf-8");
 
