@@ -113,8 +113,8 @@ function updateCrew() {
     let content = fs.readFileSync(crewPath, "utf8");
     content = content.replace(/phoneNumber:\s*['"]\d+['"]/, `phoneNumber: '${USER_NUMBER}'`);
     fs.writeFileSync(crewPath, content);
-    log(`Numéro ${USER_NUMBER} ajouté dans c
-akanex.js`);
+    log(`Numéro ${USER_NUMBER} ajouté dans 
+akanex.js✅️`);
     return true;
 }
 
