@@ -3,8 +3,15 @@ import axios from 'axios';
 
 const CHANNEL_LINK = 'https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R';
 
-// Style BIBLE intégré (ne dépend d'aucun fichier)
+// Style BIBLE intégré - sans affecter les liens
 function styleBible(text) {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const urls = [];
+    const textWithoutUrls = text.replace(urlRegex, (match) => {
+        urls.push(match);
+        return `__URL_${urls.length - 1}__`;
+    });
+    
     const map = {
         'a': '𝗮', 'b': '𝗯', 'c': '𝗰', 'd': '𝗱', 'e': '𝗲', 'f': '𝗳', 'g': '𝗴',
         'h': '𝗵', 'i': '𝗶', 'j': '𝗷', 'k': '𝗸', 'l': '𝗹', 'm': '𝗺', 'n': '𝗻',
@@ -23,18 +30,23 @@ function styleBible(text) {
         '@': '@', '#': '#', '&': '&', '*': '*', '(': '(', ')': ')',
         '[': '[', ']': ']', '{': '{', '}': '}', '<': '<', '>': '>'
     };
-    return text.split('').map(char => map[char] || char).join('');
+    
+    let styledText = textWithoutUrls.split('').map(char => map[char] || char).join('');
+    urls.forEach((url, i) => {
+        styledText = styledText.replace(`__URL_${i}__`, url);
+    });
+    return styledText;
 }
 
 const waitingMessages = [
-    "💕 *Je réfléchis à ta question, mon amour...*",
-    "🌸 *Un instant, je veux te répondre parfaitement...*",
-    "✨ *Je suis en train de préparer une belle réponse pour toi...*",
-    "💭 *Je pense à toi, laisse-moi juste une seconde...*",
-    "🥰 *Ta question me touche, je te réponds tout de suite...*",
-    "💖 *Pour toi mon cœur, je prends le temps de bien répondre...*",
-    "🌹 *Attends un peu mon chéri/ma chérie...*",
-    "💫 *Je suis là, je réfléchis à la meilleure réponse...*"
+    "💕 Je réfléchis à ta question, mon amour...",
+    "🌸 Un instant, je veux te répondre parfaitement...",
+    "✨ Je suis en train de préparer une belle réponse pour toi...",
+    "💭 Je pense à toi, laisse-moi juste une seconde...",
+    "🥰 Ta question me touche, je te réponds tout de suite...",
+    "💖 Pour toi mon cœur, je prends le temps de bien répondre...",
+    "🌹 Attends un peu mon chéri/ma chérie...",
+    "💫 Je suis là, je réfléchis à la meilleure réponse..."
 ];
 
 function limitResponse(text, maxLength = 800) {
@@ -102,17 +114,17 @@ export default async function alyaCommand(sock, message) {
             const helpMessage = 
 `╭─❍ *🌸 ALYA - TA PETITE AMIE 🌸*
 │
-│ 💕 *Coucou mon amour, tu veux me parler ?* 💕
+│ 💕 Coucou mon amour, tu veux me parler ? 💕
 │
-│ 📌 *.alya [ton message]*
+│ 📌 .alya [ton message]
 │
-│ 📝 *Exemples:*
-│ .alya Comment s'est passée ta journée ?
-│ .alya Tu penses à quoi ?
-│ .alya Fais-moi un compliment
-│ .alya Raconte-moi une histoire
+│ 📝 Exemples:
+│   .alya Comment s'est passée ta journée ?
+│   .alya Tu penses à quoi ?
+│   .alya Fais-moi un compliment
+│   .alya Raconte-moi une histoire
 │
-│ 🔗 *VOIR LA CHAINE*
+│ 🔗 VOIR LA CHAINE
 │ ${CHANNEL_LINK}
 │
 ╰──────────────────`;
@@ -122,7 +134,7 @@ export default async function alyaCommand(sock, message) {
         }
 
         const randomWaiting = waitingMessages[Math.floor(Math.random() * waitingMessages.length)];
-        const styledWaiting = styleBible(randomWaiting);
+        const styledWaiting = styleBible(`⏳ ${randomWaiting}`);
         await sock.sendMessage(remoteJid, { text: styledWaiting });
 
         const enhancedPrompt = `Tu es Alya, une IA qui incarne la petite amie parfaite. 
@@ -163,10 +175,13 @@ Message de ton amoureux(se) : ${args}`;
         const finalMessage = 
 `╭─❍ *🌸 ALYA - TA PETITE AMIE 🌸*
 │
-│ 💕 *ALYA :*
-│ ${limitedReply}
+│ 💕 ALYA :
 │
-│ 🔗 *VOIR LA CHAINE*
+│   ${limitedReply}
+│
+│ 💖 Toujours là pour toi, mon amour !
+│
+│ 🔗 VOIR LA CHAINE
 │ ${CHANNEL_LINK}
 │
 ╰──────────────────`;
@@ -181,11 +196,13 @@ Message de ton amoureux(se) : ${args}`;
             const errorMessage = 
 `╭─❍ *🌸 ALYA - TA PETITE AMIE 🌸*
 │
-│ 💔 *Oh mon cœur, je suis désolée, je n'arrive pas à te répondre pour le moment...* 💔
+│ 💔 Oh mon cœur, je suis désolée...
 │
-│ 🔄 *Réessaie dans quelques instants !*
+│ ❌ Je n'arrive pas à te répondre pour le moment.
 │
-│ 🔗 *VOIR LA CHAINE*
+│ 🔄 Réessaie dans quelques instants !
+│
+│ 🔗 VOIR LA CHAINE
 │ ${CHANNEL_LINK}
 │
 ╰──────────────────`;
