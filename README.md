@@ -1,14 +1,7 @@
 ![Logo AKANE MD](database/menu.jpg)
 
 
-<div align="center">
-  
-  [![Downloads](https://img.shields.io/github/downloads/akanefx2003/AKANE_MD/total?style=for-the-badge&logo=github)](https://github.com/akanefx2003/AKANE_MD/archive/refs/heads/main.zip)
-  
-  [![Télécharger ZIP](https://img.shields.io/badge/📦-TÉLÉCHARGER_ZIP-0078D4?style=for-the-badge&logo=github&logoColor=white)](https://github.com/akanefx2003/AKANE_MD/archive/refs/heads/main.zip)
 
-  
-</div>
 **AKANE_MD - DÉPLOIEMENT**
 
 **ETAPES À SUIVRE :**
