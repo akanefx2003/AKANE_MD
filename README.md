@@ -1,4 +1,6 @@
-![Logo AKANE style=for-the-badge&logo=github)
+![Logo AKANE MD](database/menu.jpg)
+
+
 <div align="center">
   
   [![Downloads](https://img.shields.io/github/downloads/akanefx2003/AKANE_MD/total?style=for-the-badge&logo=github)](https://github.com/akanefx2003/AKANE_MD/archive/refs/heads/main.zip)
