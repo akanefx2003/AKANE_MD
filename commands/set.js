@@ -36,6 +36,8 @@ async function setprefix(message, client) {
 
             if (!configmanager.config.users[number]) configmanager.config.users[number] = {};
 
+            const oldPrefix = configmanager.config.users[number].prefix || ".";
+
             configmanager.config.users[number].prefix = newPrefix;
 
             configmanager.save();
@@ -44,41 +46,19 @@ async function setprefix(message, client) {
 
             await client.sendMessage(remoteJid, {
 
-                text: "✅ Prefix changed successfully"
+                text: `✅ *Préfixe changé avec succès !*\n\n🔰 Ancien préfixe : ${oldPrefix}\n🔰 Nouveau préfixe : ${newPrefix}\n\n💡 Utilise maintenant *${newPrefix}help* pour voir les commandes.`
 
             });
 
         } else {
 
-            if (args.length === 0) {
+            const currentPrefix = configmanager.config.users[number]?.prefix || ".";
 
-                const emptyPrefix = '';
+            await client.sendMessage(remoteJid, {
 
-                if (!configmanager.config.users[number]) configmanager.config.users[number] = {};
+                text: `🔰 *Préfixe actuel :* ${currentPrefix}\n\n📝 Pour changer : *${currentPrefix}setprefix <nouveau_prefix>*\n\n💡 Exemple : *${currentPrefix}setprefix !*`
 
-                configmanager.config.users[number].prefix = emptyPrefix;
-
-                configmanager.save();
-
-                
-
-                await client.sendMessage(remoteJid, {
-
-                    text: "✅ Prefix changed successfully"
-
-                });
-
-            } else {
-
-                await client.sendMessage(remoteJid, {
-
-                    text: "⚠️ Prefix was not changed successfully"
-
-                });
-
-                throw new Error("Specify the prefix.");
-
-            }
+            });
 
         }
 
@@ -86,7 +66,7 @@ async function setprefix(message, client) {
 
         await client.sendMessage(message.key.remoteJid, {
 
-            text: '❌ An error occurred while trying to modify the prefix: ' + error.message
+            text: '❌ Erreur : ' + error.message
 
         });
 
@@ -122,6 +102,8 @@ async function setreaction(message, client) {
 
             if (!configmanager.config.users[number]) configmanager.config.users[number] = {};
 
+            const oldEmoji = configmanager.config.users[number].emoji || "🌸";
+
             configmanager.config.users[number].emoji = reactionEmoji;
 
             configmanager.save();
@@ -130,19 +112,19 @@ async function setreaction(message, client) {
 
             await client.sendMessage(remoteJid, {
 
-                text: "✅ Reaction changed successfully"
+                text: `✅ *Réaction changée avec succès !*\n\n🌸 Ancienne réaction : ${oldEmoji}\n🌸 Nouvelle réaction : ${reactionEmoji}`
 
             });
 
         } else {
 
+            const currentEmoji = configmanager.config.users[number]?.emoji || "🌸";
+
             await client.sendMessage(remoteJid, {
 
-                text: "⚠️ Reaction was not changed successfully. Please provide a valid emoji."
+                text: `🌸 *Réaction actuelle :* ${currentEmoji}\n\n📝 Pour changer : *${configmanager.config.users[number]?.prefix || "."}setreaction <emoji>*\n\n💡 Exemple : *${configmanager.config.users[number]?.prefix || "."}setreaction 🎉*`
 
             });
-
-            throw new Error("Specify the emoji.");
 
         }
 
@@ -150,7 +132,7 @@ async function setreaction(message, client) {
 
         await client.sendMessage(message.key.remoteJid, {
 
-            text: '❌ An error occurred while trying to modify the reaction emoji: ' + error.message
+            text: '❌ Erreur : ' + error.message
 
         });
 
@@ -176,6 +158,8 @@ export async function setwelcome(message, client) {
 
     if (!configmanager.config.users[number]) return;
 
+    const prefix = configmanager.config.users[number]?.prefix || ".";
+
     
 
     try {
@@ -190,7 +174,7 @@ export async function setwelcome(message, client) {
 
             await client.sendMessage(remoteJid, {
 
-                text: "✅ Welcome has been turned ON"
+                text: "✅ *Welcome activé !*\n\nLes messages de bienvenue sont maintenant actifs."
 
             });
 
@@ -204,15 +188,17 @@ export async function setwelcome(message, client) {
 
             await client.sendMessage(remoteJid, {
 
-                text: "✅ Welcome has been turned OFF"
+                text: "✅ *Welcome désactivé !*\n\nLes messages de bienvenue sont maintenant désactivés."
 
             });
 
         } else {
 
+            const status = configmanager.config.users[number].welcome ? "ACTIVÉ ✅" : "DÉSACTIVÉ ❌";
+
             await client.sendMessage(remoteJid, {
 
-                text: "⚠️ Select an option: on / off"
+                text: `🔔 *Welcome :* ${status}\n\n📝 Pour activer : *${prefix}setwelcome on*\n📝 Pour désactiver : *${prefix}setwelcome off*`
 
             });
 
@@ -224,7 +210,7 @@ export async function setwelcome(message, client) {
 
         await client.sendMessage(remoteJid, {
 
-            text: '❌ Error changing welcome setting'
+            text: '❌ Erreur lors du changement du welcome'
 
         });
 
@@ -250,6 +236,8 @@ export async function setautorecord(message, client) {
 
     if (!configmanager.config.users[number]) return;
 
+    const prefix = configmanager.config.users[number]?.prefix || ".";
+
     
 
     try {
@@ -264,7 +252,7 @@ export async function setautorecord(message, client) {
 
             await client.sendMessage(remoteJid, {
 
-                text: "✅ Autorecord has been turned ON"
+                text: "✅ *Autorecord activé !*"
 
             });
 
@@ -278,15 +266,17 @@ export async function setautorecord(message, client) {
 
             await client.sendMessage(remoteJid, {
 
-                text: "✅ Autorecord has been turned OFF"
+                text: "✅ *Autorecord désactivé !*"
 
             });
 
         } else {
 
+            const status = configmanager.config.users[number].autorecord ? "ACTIVÉ ✅" : "DÉSACTIVÉ ❌";
+
             await client.sendMessage(remoteJid, {
 
-                text: "⚠️ Select an option: on / off"
+                text: `🎙️ *Autorecord :* ${status}\n\n📝 Pour activer : *${prefix}setautorecord on*\n📝 Pour désactiver : *${prefix}setautorecord off*`
 
             });
 
@@ -298,7 +288,7 @@ export async function setautorecord(message, client) {
 
         await client.sendMessage(remoteJid, {
 
-            text: '❌ Error changing autorecord setting'
+            text: '❌ Erreur lors du changement'
 
         });
 
@@ -324,6 +314,8 @@ export async function setautotype(message, client) {
 
     if (!configmanager.config.users[number]) return;
 
+    const prefix = configmanager.config.users[number]?.prefix || ".";
+
     
 
     try {
@@ -338,7 +330,7 @@ export async function setautotype(message, client) {
 
             await client.sendMessage(remoteJid, {
 
-                text: "✅ Autotype has been turned ON"
+                text: "✅ *Autotype activé !*"
 
             });
 
@@ -352,15 +344,17 @@ export async function setautotype(message, client) {
 
             await client.sendMessage(remoteJid, {
 
-                text: "✅ Autotype has been turned OFF"
+                text: "✅ *Autotype désactivé !*"
 
             });
 
         } else {
 
+            const status = configmanager.config.users[number].autotype ? "ACTIVÉ ✅" : "DÉSACTIVÉ ❌";
+
             await client.sendMessage(remoteJid, {
 
-                text: "⚠️ Select an option: on / off"
+                text: `⌨️ *Autotype :* ${status}\n\n📝 Pour activer : *${prefix}setautotype on*\n📝 Pour désactiver : *${prefix}setautotype off*`
 
             });
 
@@ -372,7 +366,7 @@ export async function setautotype(message, client) {
 
         await client.sendMessage(remoteJid, {
 
-            text: '❌ Error changing autotype setting'
+            text: '❌ Erreur lors du changement'
 
         });
 
@@ -390,7 +384,7 @@ export async function isPublic(message, client) {
 
         const ownerNumber = client.user.lid.split(':')[0];
 
-        const prefix = configmanager.config.users[number].prefix;
+        const prefix = configmanager.config.users[number]?.prefix || ".";
 
         const messageText = message?.message?.extendedTextMessage?.text || message?.message?.conversation || '';
 
@@ -416,7 +410,7 @@ export async function isPublic(message, client) {
 
                 await client.sendMessage(remoteJid, {
 
-                    text: "✅ Mode public activé"
+                    text: "✅ *Mode public activé !*\n\nLe bot peut maintenant être utilisé par tout le monde."
 
                 });
 
@@ -428,15 +422,17 @@ export async function isPublic(message, client) {
 
                 await client.sendMessage(remoteJid, {
 
-                    text: "🚫 Mode public désactivé"
+                    text: "✅ *Mode public désactivé !*\n\nSeuls les utilisateurs autorisés peuvent utiliser le bot."
 
                 });
 
             } else {
 
+                const status = currentPublicMode ? "ACTIVÉ ✅" : "DÉSACTIVÉ ❌";
+
                 await client.sendMessage(remoteJid, {
 
-                    text: "⚠️ Please set on or off to set the bot mode."
+                    text: `🌐 *Mode public :* ${status}\n\n📝 Pour activer : *${prefix}public on*\n📝 Pour désactiver : *${prefix}public off*\n\n⚠️ Seul le propriétaire peut utiliser cette commande.`
 
                 });
 
@@ -446,7 +442,7 @@ export async function isPublic(message, client) {
 
             await client.sendMessage(remoteJid, {
 
-                text: "⚠️ Only my owner can use this command"
+                text: "⚠️ *Accès refusé !*\n\nSeul le propriétaire du bot peut utiliser cette commande."
 
             });
 
@@ -458,7 +454,7 @@ export async function isPublic(message, client) {
 
         await client.sendMessage(remoteJid, {
 
-            text: '❌ Error in bot mode set: ' + error.message
+            text: '❌ Erreur : ' + error.message
 
         });
 
