@@ -53,7 +53,7 @@
 <div align="center">
   
   [![Fork le projet](https://img.shields.io/badge/🍴-FORK_LE_PROJET-ffffff?style=for-the-badge&logo=github&logoColor=white&color=blue)](https://github.com/akanefx2003/AKANE_MD/fork)
- [![Étoile le projet](https://img.shields.io/badge/⭐-METTRE_UNE_ÉTOILE-ffd700?style=for-the-badge&logo=github&logoColor=black)](https://github.com/akanefx2003/AKANE_MD)
+ [![Étoile le projet](https://img.shields.io/badge/⭐-METTRE_UNE_ÉTOILE-ffd700?style=for-the-badge&logo=github&logoColor=black)](https://github.com/akanefx2003/AKANE_MD) [![Télécharger ZIP](https://img.shields.io/badge/📥-TÉLÉCHARGER_LE_ZIP-0078D4?style=for-the-badge&logo=github&logoColor=white)](https://github.com/akanefx2003/AKANE_MD/archive/refs/heads/main.zip)
   
 </div>
 
