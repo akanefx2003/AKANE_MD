@@ -1,4 +1,4 @@
-import connectToWhatsapp from './Digix/crew.js'
+import connectToWhatsapp from './AKANEX/akanex.js'
 
 import handleIncomingMessage from './events/messageHandler.js'
 
