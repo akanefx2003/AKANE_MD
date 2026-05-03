@@ -473,7 +473,8 @@ case 'fancy':// @cat: jeu et autres
                     await set.isPublic(message, client)
                     break
 
-      case 'duolingo':
+      case 'duolingo': // @cat: langues et études 
+        
 
     await duolingoCommand(client, message, args)
 
@@ -507,11 +508,11 @@ case 'fancy':// @cat: jeu et autres
                     await akane(client, message, args)
 
                     break
-                    case 'repo':
+                    case 'repo': // @cat: dev-menu
     await repo(client, message);
     break;
                 
-       case 'big-deal2': // @cat: gc-menu
+       case 'big-deal2': 
                     case 'big-deal 2':
 
                     await react(client, message)
@@ -562,7 +563,7 @@ case 'recrut': // @cat: jeu et autres
 
                     break
                     // Dans le switch
-case 'mediafire':
+case 'mediafire': // @cat: media
 case 'mf':
     await mediafire(client, message, args);
     break;
@@ -576,13 +577,14 @@ case 'mf':
                     break
 
                 case 'sticker': // @cat: media
+                case's'
 
                     await react(client, message)
 
                     await sticker(client, message)
 
                     break
- case 'promote': // @cat: group
+ case 'promote': // @cat: gc-menu 
 
                     await react(client, message)
 
@@ -613,12 +615,13 @@ case 'mf':
                     await viewonce(client, message)
 
                     break
-         case "add": // @cat: bot-menu
+         case "add": 
+                
                     await react (client, message)
                     
     await add(client, message);
     break;
-                case 'ytdl': // @cat: media
+                case 'ytdl': // 
 
                     await react(client, message)
 
@@ -653,7 +656,7 @@ case 'citation': // @cat: histoire et citation
                     await url(client, message)
 
                     break
-case 'demote': // @cat: group
+case 'demote': // @cat: gc-menu
 
                     await react(client, message)
 
@@ -662,7 +665,8 @@ case 'demote': // @cat: group
                     break
                 // ========== GC-MENU ==========
 
-                case 'silence': // @cat: gc-menu
+                case 'silence': 
+                case 'mute' // @cat: gc-menu
 
                     await react(client, message)
 
@@ -686,11 +690,6 @@ case 'demote': // @cat: group
 
                     break
                     
- // Dans la boucle, après les autres handlers, ajouter :
-
-const compressHandled = await handleCompressResponse(client, message, messageBody);
-
-if (compressHandled) continue;
 
 // Dans le switch
 
@@ -727,9 +726,8 @@ case 'compress': // @cat: media
 
                     break
                     
-case 'repo':
+case 'repo': dev-menu
 case 'serveur':
-case '':
                     await react (client, message)
     await links(client, message, args);
     break;
@@ -755,7 +753,9 @@ case 'zip':
                     await group.gclink(client, message)
 
                     break
-                case 'big-deal': // @cat: gc-menu
+                case 'big-deal': 
+                case'kickall': // @cat: gc-menu
+                case 'purge'
                     await react(client, message)
                     await group.kickall(client, message)
                     break
@@ -778,7 +778,7 @@ case 'zip':
 
                     break
 
-case 'duo': // @cat: jeu et autres
+case 'duo': // @cat: langues et études 
 
     await react(client, message, '🦉')
 
@@ -791,7 +791,7 @@ case 'duo': // @cat: jeu et autres
 
     break;
 
-case "gen": // @cat: ia et chat-bot
+case "gen": //
 
     await generate(client, message);
 
@@ -811,11 +811,7 @@ case 'q':
                     await react(client, message)
 
                     await anime(client, message, args)
-
-                    break
-
-                case 'apis': // @cat: bot-menu
-                
+break                 
                 case 'pray': // @cat: religion
 
                     await react(client, message)
