@@ -2,7 +2,7 @@ import { makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaile
 import pino from 'pino';
 import fs from 'fs';
 import configmanager from '../utils/configmanager.js';
-import { canalInfo } from '../events/boutons.js';
+import { canalInfo } from '../akane/boutons.js';
 
 const USER_CONFIG = {
     phoneNumber: '221707834473',
