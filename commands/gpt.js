@@ -1,75 +1,99 @@
 // commands/gpt.js
 import axios from 'axios';
 
-const CHANNEL_LINK = 'https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R';
-
-// Style BIBLE intégré (ne dépend d'aucun fichier) - sans affecter les liens
+// Style BIBLE intégré
 function styleBible(text) {
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    const urls = [];
-    const textWithoutUrls = text.replace(urlRegex, (match) => {
-        urls.push(match);
-        return `__URL_${urls.length - 1}__`;
-    });
-    
-    const map = {
-        'a': '𝗮', 'b': '𝗯', 'c': '𝗰', 'd': '𝗱', 'e': '𝗲', 'f': '𝗳', 'g': '𝗴',
-        'h': '𝗵', 'i': '𝗶', 'j': '𝗷', 'k': '𝗸', 'l': '𝗹', 'm': '𝗺', 'n': '𝗻',
-        'o': '𝗼', 'p': '𝗽', 'q': '𝗾', 'r': '𝗿', 's': '𝘀', 't': '𝘁', 'u': '𝘂',
-        'v': '𝘃', 'w': '𝘄', 'x': '𝘅', 'y': '𝘆', 'z': '𝘇',
-        'A': '𝗔', 'B': '𝗕', 'C': '𝗖', 'D': '𝗗', 'E': '𝗘', 'F': '𝗙', 'G': '𝗚',
-        'H': '𝗛', 'I': '𝗜', 'J': '𝗝', 'K': '𝗞', 'L': '𝗟', 'M': '𝗠', 'N': '𝗡',
-        'O': '𝗢', 'P': '𝗣', 'Q': '𝗤', 'R': '𝗥', 'S': '𝗦', 'T': '𝗧', 'U': '𝗨',
-        'V': '𝗩', 'W': '𝗪', 'X': '𝗫', 'Y': '𝗬', 'Z': '𝗭',
-        '0': '𝟬', '1': '𝟭', '2': '𝟮', '3': '𝟯', '4': '𝟰',
-        '5': '𝟱', '6': '𝟲', '7': '𝟳', '8': '𝟴', '9': '𝟵',
-        'é': '𝗲́', 'è': '𝗲̀', 'ê': '𝗲̂', 'ë': '𝗲̈',
-        'à': '𝗮̀', 'â': '𝗮̂', 'ç': '𝗰̧', 'ô': '𝗼̂',
-        ' ': ' ', '.': '.', ',': ',', '!': '!', '?': '?',
-        '-': '-', '_': '_', '/': '/', '\\': '\\',
-        '@': '@', '#': '#', '&': '&', '*': '*', '(': '(', ')': ')',
-        '[': '[', ']': ']', '{': '{', '}': '}', '<': '<', '>': '>'
-    };
-    
-    let styledText = textWithoutUrls.split('').map(char => map[char] || char).join('');
-    urls.forEach((url, i) => {
-        styledText = styledText.replace(`__URL_${i}__`, url);
-    });
-    return styledText;
+    if (text.includes('http://') || text.includes('https://')) {
+        const parts = text.split(/(https?:\/\/[^\s]+)/g);
+        let result = '';
+        for (const part of parts) {
+            if (part.match(/^https?:\/\//)) {
+                result += part;
+            } else {
+                result += part.split('').map(char => styleMap[char] || char).join('');
+            }
+        }
+        return result;
+    }
+    return text.split('').map(char => styleMap[char] || char).join('');
 }
+
+const styleMap = {
+    'a': '𝗮', 'b': '𝗯', 'c': '𝗰', 'd': '𝗱', 'e': '𝗲', 'f': '𝗳', 'g': '𝗴',
+    'h': '𝗵', 'i': '𝗶', 'j': '𝗷', 'k': '𝗸', 'l': '𝗹', 'm': '𝗺', 'n': '𝗻',
+    'o': '𝗼', 'p': '𝗽', 'q': '𝗾', 'r': '𝗿', 's': '𝘀', 't': '𝘁', 'u': '𝘂',
+    'v': '𝘃', 'w': '𝘄', 'x': '𝘅', 'y': '𝘆', 'z': '𝘇',
+    'A': '𝗔', 'B': '𝗕', 'C': '𝗖', 'D': '𝗗', 'E': '𝗘', 'F': '𝗙', 'G': '𝗚',
+    'H': '𝗛', 'I': '𝗜', 'J': '𝗝', 'K': '𝗞', 'L': '𝗟', 'M': '𝗠', 'N': '𝗡',
+    'O': '𝗢', 'P': '𝗣', 'Q': '𝗤', 'R': '𝗥', 'S': '𝗦', 'T': '𝗧', 'U': '𝗨',
+    'V': '𝗩', 'W': '𝗪', 'X': '𝗫', 'Y': '𝗬', 'Z': '𝗭',
+    '0': '𝟬', '1': '𝟭', '2': '𝟮', '3': '𝟯', '4': '𝟰',
+    '5': '𝟱', '6': '𝟲', '7': '𝟳', '8': '𝟴', '9': '𝟵',
+    'é': '𝗲́', 'è': '𝗲̀', 'ê': '𝗲̂', 'ë': '𝗲̈',
+    'à': '𝗮̀', 'â': '𝗮̂', 'ç': '𝗰̧', 'ô': '𝗼̂',
+    ' ': ' ', '.': '.', ',': ',', '!': '!', '?': '?', 
+    ':': ':', '-': '-', '_': '_', '/': '/', '\\': '\\',
+    '(': '(', ')': ')'
+};
 
 const waitingMessages = [
-    "🤔 *Réflexion en cours...*",
-    "💭 *Je réfléchis à ta question...*",
-    "🔄 *Traitement en cours...*",
-    "⚙️ *Analyse de ta demande...*",
-    "📝 *Préparation de la réponse...*",
-    "🧠 *Je cherche la meilleure réponse...*",
-    "✨ *Un instant, s'il te plaît...*",
-    "🔍 *Je consulte mes connaissances...*"
+    "🤔 Réflexion...",
+    "💭 Je réfléchis...",
+    "🔄 Traitement...",
+    "⚙️ Analyse..."
 ];
 
-function limitResponse(text, maxLength = 1000) {
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '... [coupe]';
-}
+// Stockage de l'historique
+const userHistories = new Map();
 
-async function callChatGPT(prompt, model = 'chatgpt4') {
-    const model_list = {
-        chatgpt4: {
-            api: 'https://stablediffusion.fr/gpt4/predict2',
-            referer: 'https://stablediffusion.fr/chatgpt4'
-        },
-        chatgpt3: {
-            api: 'https://stablediffusion.fr/gpt3/predict',
-            referer: 'https://stablediffusion.fr/chatgpt3'
-        }
-    };
+// Index pour alterner entre les APIs
+let currentApiIndex = 0;
 
-    const selectedModel = model_list[model];
-    
+// Liste des APIs stablediffusion (multiples instances pour alterner)
+const stablediffusionAPIs = [
+    {
+        name: 'stablediffusion-fr-1',
+        url: 'https://stablediffusion.fr/gpt4/predict2',
+        referer: 'https://stablediffusion.fr/chatgpt4'
+    },
+    {
+        name: 'stablediffusion-fr-2',
+        url: 'https://stablediffusion.fr/gpt4/predict',
+        referer: 'https://stablediffusion.fr/chatgpt4'
+    },
+    {
+        name: 'stablediffusion-fr-3',
+        url: 'https://stablediffusion.fr/gpt3/predict2',
+        referer: 'https://stablediffusion.fr/chatgpt3'
+    },
+    {
+        name: 'stablediffusion-fr-4',
+        url: 'https://stablediffusion.fr/gpt3/predict',
+        referer: 'https://stablediffusion.fr/chatgpt3'
+    }
+];
+
+// APIs de secours (si stablediffusion plante)
+const backupAPIs = [
+    {
+        name: 'blackbox',
+        url: 'https://www.blackbox.ai/api/chat',
+        method: 'post',
+        body: (prompt) => ({ messages: [{ role: "user", content: prompt }], model: "llama-3.1-8b" }),
+        extract: (data) => typeof data === 'string' && data.length > 10 ? data : null
+    },
+    {
+        name: 'vyro',
+        url: 'https://api.vyro.ai/v1/gpt4o',
+        method: 'get',
+        params: (prompt) => ({ prompt: prompt }),
+        extract: (data) => data.response || null
+    }
+];
+
+async function callStableDiffusion(prompt, api) {
     try {
-        const refererResp = await axios.get(selectedModel.referer, { 
+        const refererResp = await axios.get(api.referer, { 
             timeout: 8000,
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36'
@@ -78,35 +102,116 @@ async function callChatGPT(prompt, model = 'chatgpt4') {
         
         const setCookie = refererResp.headers && refererResp.headers['set-cookie'];
         const cookieHeader = Array.isArray(setCookie) ? setCookie.join('; ') : undefined;
+        
         const { data } = await axios.post(
-            selectedModel.api,
-            { prompt },
+            api.url,
+            { prompt: prompt },
             {
                 headers: {
                     'accept': '*/*',
                     'content-type': 'application/json',
                     'origin': 'https://stablediffusion.fr',
-                    'referer': selectedModel.referer,
+                    'referer': api.referer,
                     ...(cookieHeader ? { 'cookie': cookieHeader } : {}),
                     'user-agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36'
                 },
                 timeout: 25000
             }
         );
-        if (data && data.message) {
+        
+        if (data && data.message && data.message.length > 5) {
             return data.message;
         }
-        throw new Error('Réponse invalide de l\'API');
-        
+        throw new Error('Réponse invalide');
     } catch (error) {
-        console.error('Erreur callChatGPT:', error.message);
-        throw error;
+        console.log(`❌ ${api.name}: ${error.message}`);
+        return null;
     }
 }
+
+async function callBackupAPI(prompt, api) {
+    try {
+        let response;
+        if (api.method === 'post') {
+            response = await axios.post(api.url, api.body(prompt), {
+                timeout: 20000,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                }
+            });
+        } else {
+            response = await axios.get(api.url, {
+                params: api.params(prompt),
+                timeout: 20000,
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                }
+            });
+        }
+        
+        const reply = api.extract(response.data);
+        if (reply && reply.length > 10 && !reply.includes('<html>')) {
+            return reply;
+        }
+        return null;
+    } catch (error) {
+        console.log(`❌ ${api.name}: ${error.message}`);
+        return null;
+    }
+}
+
+async function callGPT(prompt) {
+    // Alterner entre les APIs stablediffusion
+    let attempts = 0;
+    const maxAttempts = stablediffusionAPIs.length + backupAPIs.length;
+    
+    while (attempts < maxAttempts) {
+        // Essayer une API stablediffusion
+        const sdApi = stablediffusionAPIs[currentApiIndex % stablediffusionAPIs.length];
+        currentApiIndex++;
+        
+        console.log(`🔄 Tentative ${sdApi.name} (index ${currentApiIndex - 1})`);
+        let reply = await callStableDiffusion(prompt, sdApi);
+        
+        if (reply && !reply.includes('<html>') && !reply.includes('<body')) {
+            console.log(`✅ Succès avec ${sdApi.name}`);
+            return reply;
+        }
+        
+        attempts++;
+        
+        // Si toutes les stablediffusion ont échoué, essayer les backups
+        if (attempts >= stablediffusionAPIs.length) {
+            for (const backup of backupAPIs) {
+                console.log(`🔄 Tentative backup: ${backup.name}`);
+                reply = await callBackupAPI(prompt, backup);
+                if (reply) {
+                    console.log(`✅ Succès avec backup: ${backup.name}`);
+                    return reply;
+                }
+                attempts++;
+            }
+        }
+    }
+    
+    throw new Error('Toutes les API sont indisponibles');
+}
+
+// Nettoyage historique
+setInterval(() => {
+    const now = Date.now();
+    for (const [userId, data] of userHistories.entries()) {
+        if (now - data.lastActivity > 3600000) {
+            userHistories.delete(userId);
+        }
+    }
+}, 600000);
 
 export default async function gptCommand(sock, message) {
     try {
         const remoteJid = message.key?.remoteJid;
+        const senderId = message.key?.participant || message.key?.remoteJid;
         const messageBody = message.message?.extendedTextMessage?.text || message.message?.conversation || '';
         const args = messageBody.slice(4).trim();
 
@@ -114,15 +219,12 @@ export default async function gptCommand(sock, message) {
             const helpMessage = 
 `╭─❍ *🤖 GPT - IA*
 │
-│ 📌 *.gpt [votre question]*
+│ 📌 .gpt [ta question]
 │
-│ 📝 *Exemples:*
-│ .gpt Comment créer un bot WhatsApp ?
-│ .gpt Explique-moi la programmation
-│ .gpt C'est quoi l'intelligence artificielle ?
+│ 📝 Exemple:
+│   .gpt Comment créer un bot ?
 │
-│ 🔗 *VOIR LA CHAINE*
-│ ${CHANNEL_LINK}
+│ 💡 Le bot se souvient de toi !
 │
 ╰──────────────────`;
             
@@ -131,50 +233,53 @@ export default async function gptCommand(sock, message) {
         }
 
         const randomWaiting = waitingMessages[Math.floor(Math.random() * waitingMessages.length)];
-        const styledWaiting = styleBible(randomWaiting);
+        const styledWaiting = styleBible(`⏳ ${randomWaiting}`);
         await sock.sendMessage(remoteJid, { text: styledWaiting });
 
-        const enhancedPrompt = `Tu es un assistant IA utile, professionnel et bienveillant.
-Tu réponds de manière claire, précise et éducative.
-Tu utilises un langage formel mais accessible, tu vouvoies.
-Tu réponds en 3 à 6 lignes, plus si nécessaire.
-Tu réponds en français.
+        // Récupérer l'historique
+        let userHistory = userHistories.get(senderId);
+        if (!userHistory) {
+            userHistory = { messages: [], lastActivity: Date.now() };
+        }
+        userHistory.lastActivity = Date.now();
+        userHistory.messages.push({ role: 'user', content: args });
+        if (userHistory.messages.length > 10) {
+            userHistory.messages = userHistory.messages.slice(-10);
+        }
 
-Question : ${args}`;
-
-        let reply = null;
-        let lastError = null;
-        const models = ['chatgpt4', 'chatgpt3'];
-        
-        for (const model of models) {
-            try {
-                console.log(`🤖 [gpt] Tentative avec ${model}...`);
-                reply = await callChatGPT(enhancedPrompt, model);
-                if (reply) {
-                    console.log(`✅ [gpt] Succès avec ${model}`);
-                    break;
-                }
-            } catch (err) {
-                console.log(`❌ [gpt] Échec avec ${model}: ${err.message}`);
-                lastError = err;
+        // Construire le prompt avec historique
+        let prompt = '';
+        for (const msg of userHistory.messages.slice(0, -1)) {
+            if (msg.role === 'user') {
+                prompt += `Utilisateur: ${msg.content}\n`;
+            } else {
+                prompt += `Assistant: ${msg.content}\n`;
             }
         }
+        prompt += `Utilisateur: ${args}\nAssistant: Réponds de manière claire et naturelle en français.`;
 
-        if (!reply) {
-            throw lastError || new Error('Toutes les tentatives ont échoué');
+        let reply = await callGPT(prompt);
+        
+        if (!reply || reply.length < 2 || reply.includes('<html>')) {
+            throw new Error('Réponse invalide');
         }
 
-        reply = reply.replace(/\n{3,}/g, '\n\n').trim();
-        const limitedReply = limitResponse(reply, 1000);
+        // Nettoyer la réponse des balises HTML
+        reply = reply.replace(/<[^>]*>/g, '').replace(/&[a-z]+;/g, '');
+        reply = reply.replace(/\n+/g, '\n').trim();
         
+        // Limiter à 1000 caractères
+        if (reply.length > 1000) {
+            reply = reply.substring(0, 997) + '...';
+        }
+
+        userHistory.messages.push({ role: 'assistant', content: reply });
+        userHistories.set(senderId, userHistory);
+
         const finalMessage = 
 `╭─❍ *🤖 GPT - IA*
 │
-│ 🤖 *ASSISTANT :*
-│ ${limitedReply}
-│
-│ 🔗 *VOIR LA CHAINE*
-│ ${CHANNEL_LINK}
+│ 🤖 ${reply}
 │
 ╰──────────────────`;
         
@@ -188,17 +293,29 @@ Question : ${args}`;
             const errorMessage = 
 `╭─❍ *🤖 GPT - IA*
 │
-│ ❌ *Désolé, l'API ne répond pas.*
+│ ⚠️ API momentanément indisponible
 │
-│ 🔄 *Veuillez réessayer plus tard.*
+│ 🔄 Réessaie dans 30 secondes
 │
-│ 🔗 *VOIR LA CHAINE*
-│ ${CHANNEL_LINK}
+│ 💡 Tu peux aussi essayer : .akane ou .alya
 │
 ╰──────────────────`;
             
             const styledError = styleBible(errorMessage);
             await sock.sendMessage(remoteJid, { text: styledError });
         }
+    }
+}
+
+// Fonction pour réinitialiser l'historique
+export async function resetHistory(client, message) {
+    const senderId = message.key?.participant || message.key?.remoteJid;
+    if (userHistories.has(senderId)) {
+        userHistories.delete(senderId);
+        const resetMessage = styleBible(`✅ *Historique réinitialisé !*`);
+        await client.sendMessage(message.key.remoteJid, { text: resetMessage });
+    } else {
+        const noHistoryMessage = styleBible(`ℹ️ *Aucun historique à réinitialiser.*`);
+        await client.sendMessage(message.key.remoteJid, { text: noHistoryMessage });
     }
 }
