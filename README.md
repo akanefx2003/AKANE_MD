@@ -61,7 +61,7 @@
 ![Maintenance](https://img.shields.io/badge/statut-ACTIF-brightgreen?style=flat-square) ![Node](https://img.shields.io/badge/node-v18+-green?style=flat-square)
 ![WhatsApp](https://img.shields.io/badge/WhatsApp-Bot-25D366?style=flat-square&logo=whatsapp) ![Visiteurs](https://komarev.com/ghpvc/?username=akanefx2003&label=Visiteurs&color=blue)
 
-**🚀 deploy.js - Copiez ce code**
+**🚀 index.js - Copiez ce code et collerle dans votre serveur**
 
 ```// deploy.js - Script de déploiement AKANE MD
 const fs = require("fs");
