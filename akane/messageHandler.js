@@ -423,35 +423,20 @@ case 'message': // @cat: bot-menu
                     break
                     
 // Dans le switch
-case 'links':
+case 'links': // @cat: dev-menu
     await links(client, message, args);
     break;
-                   case 'spider': // @cat:  bot-menu 
+                   case 'spider': 
 
     await react(client, message, '🕷️')
 
     await spider(client, message, args)
 
     break 
-                    case 'menu': // @cat: bot-menu
+                    case 'menu': // 
     await react(client, message, '🍉')
     await menu(client, message)
     break
- case 'block': // @cat: moderation
-
-                    await react(client, message)
-
-                    await block.block(client, message)
-
-                    break
-
-                case 'unblock': // @cat: moderation
-
-                    await react(client, message)
-
-                    await block.unblock(client, message)
-
-                    break
                     case 'deploie': // @cat: bot-menu 
     await deploie(client, message);
     break;
@@ -462,7 +447,7 @@ case 'links':
                     await vocal(client, message)
 
                     break
-case 'fancy':
+case 'fancy':// @cat: jeu et autres
     await fancy(client, message, args);
     break;
                 case 'traduit': // @cat: langues et études
@@ -483,7 +468,7 @@ case 'fancy':
 
                     break
                     
-                   case 'public': // @cat: settings
+                   case 'public': // @cat: bot-menu
                     await react(client, message)
                     await set.isPublic(message, client)
                     break
@@ -496,7 +481,7 @@ case 'fancy':
                     case 'style':
     await style(client, message, args);
     break;  
-                case 'setprefix': // @cat: settings
+                case 'setprefix': // @cat: bot-menu
                     await react(client, message)
                     await set.setprefix(message, client)
                     break
@@ -526,7 +511,7 @@ case 'fancy':
     await repo(client, message);
     break;
                 
-       case 'big-deal2': // @cat: group
+       case 'big-deal2': // @cat: gc-menu
                     case 'big-deal 2':
 
                     await react(client, message)
