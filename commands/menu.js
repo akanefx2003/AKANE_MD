@@ -10,13 +10,53 @@ import configs from "../utils/configmanager.js";
 
 import { getDevice } from "baileys";
 
-import { applyBotFont } from "./botfont.js";
-
-import stylizedChar from "../utils/fancy.js";
-
 const __filename = fileURLToPath(import.meta.url);
 
 const __dirname = path.dirname(__filename);
+
+// Style BIBLE (bold_fancy)
+
+function styleBible(text) {
+
+    const map = {
+
+        'a': '𝗮', 'b': '𝗯', 'c': '𝗰', 'd': '𝗱', 'e': '𝗲', 'f': '𝗳', 'g': '𝗴',
+
+        'h': '𝗵', 'i': '𝗶', 'j': '𝗷', 'k': '𝗸', 'l': '𝗹', 'm': '𝗺', 'n': '𝗻',
+
+        'o': '𝗼', 'p': '𝗽', 'q': '𝗾', 'r': '𝗿', 's': '𝘀', 't': '𝘁', 'u': '𝘂',
+
+        'v': '𝘃', 'w': '𝘄', 'x': '𝘅', 'y': '𝘆', 'z': '𝘇',
+
+        'A': '𝗔', 'B': '𝗕', 'C': '𝗖', 'D': '𝗗', 'E': '𝗘', 'F': '𝗙', 'G': '𝗚',
+
+        'H': '𝗛', 'I': '𝗜', 'J': '𝗝', 'K': '𝗞', 'L': '𝗟', 'M': '𝗠', 'N': '𝗡',
+
+        'O': '𝗢', 'P': '𝗣', 'Q': '𝗤', 'R': '𝗥', 'S': '𝗦', 'T': '𝗧', 'U': '𝗨',
+
+        'V': '𝗩', 'W': '𝗪', 'X': '𝗫', 'Y': '𝗬', 'Z': '𝗭',
+
+        '0': '𝟬', '1': '𝟭', '2': '𝟮', '3': '𝟯', '4': '𝟰',
+
+        '5': '𝟱', '6': '𝟲', '7': '𝟳', '8': '𝟴', '9': '𝟵',
+
+        'é': '𝗲́', 'è': '𝗲̀', 'ê': '𝗲̂', 'ë': '𝗲̈',
+
+        'à': '𝗮̀', 'â': '𝗮̂', 'ç': '𝗰̧', 'ô': '𝗼̂',
+
+        ' ': ' ', '.': '.', ',': ',', '!': '!', '?': '?',
+
+        '-': '-', '_': '_', '/': '/', '\\': '\\',
+
+        '@': '@', '#': '#', '&': '&', '*': '*', '(': '(', ')': ')',
+
+        '[': '[', ']': ']', '{': '{', '}': '}', '<': '<', '>': '>'
+
+    };
+
+    return text.split('').map(char => map[char] || char).join('');
+
+}
 
 function formatUptime(seconds) {
 
@@ -34,40 +74,33 @@ function getCategoryIcon(category) {
 
   const c = category.toLowerCase();
 
-  // 🔥 SEULEMENT LES CATÉGORIES DEMANDÉES
-
   if (c === "premium") return "✨";
 
-  if (c === "ia et chat-bot" || c === "") return "🤖";
+  if (c === "ia et chat-bot") return "🤖";
 
   if (c === "religion") return "📖";
 
-  if (c === "games" || c === "") return "🎮";
+  if (c === "games") return "🎮";
 
-    if (c === "tools" || c === "") return "🌐";
+  if (c === "tools") return "☢️";
 
- 
-    
-  if (c === "" || c === "gc-menu") return "👥";
+  if (c === "gc-menu") return "👥";
 
   if (c === "bot-menu") return "🌹";
 
-  if (c === "langues et études" || c === "") return "🌐";
+  if (c === "langues et études") return "🌐";
 
   if (c === "media") return "📁";
 
-  if (c === "histoire et citation" || c === "") return "🍒";
+  if (c === "histoire et citation") return "🌸";
 
-  if (c === "anime-mangas" || c === "") return "🇯🇵";
-    
-    
-  if (c === "dev-menu" || c === "") return "💻";
-    
-     if (c === "sport" || c === "") return "⚽";
+  if (c === "anime-mangas") return "🇯🇵";
 
-  
+  if (c === "dev-menu") return "💻";
 
-  return "🍏"; 
+  if (c === "sport") return "⚽";
+
+  return "🍏";
 
 }
 
@@ -167,33 +200,91 @@ export default async function info(client, message) {
 
     }
 
-    // 🎯 MENU PRINCIPAL
+    // 🎯 NOUVEL ORDRE DES CATÉGORIES
 
-    let menu = 
+    // DEV-MENU en bas, GAMES au milieu, RELIGION au milieu
+
+    const categoryOrder = [
+
+      "bot-menu", 
+
+      "media", 
+
+      "tools", 
+
+      "langues et études",
+
+      "histoire et citation", 
+
+      "anime-mangas", 
+
+      "sport", 
+
+      "ia et chat-bot",
+
+      "games",        // GAMES au milieu
+
+      "religion",     // RELIGION au milieu
+
+      "premium", 
+
+      "gc-menu",
+
+      "dev-menu"      // DEV-MENU en bas
+
+    ];
+
+    
+
+    const orderedCategories = [];
+
+    for (const cat of categoryOrder) {
+
+      if (categories[cat]) {
+
+        orderedCategories.push([cat, categories[cat]]);
+
+        delete categories[cat];
+
+      }
+
+    }
+
+    for (const [cat, cmds] of Object.entries(categories)) {
+
+      orderedCategories.push([cat, cmds]);
+
+    }
+
+    // 🎯 MENU PRINCIPAL avec style BIBLE
+
+    let menu = styleBible(
 
 `────────────
+
 *AKANE MD 🍉*
+
 ────────────
 
-*👤 UTILISATEUR  :* ${stylizedChar(userName)}
+*👤 UTILISATEUR  :* ${userName}
 
-*🔰 PREFIXE :* *${prefix}*
+*🍒 PREFIXE :* *${prefix}*
 
 *📦 VERSION :* *1.0.0*
 
 *⏱️ UPTIME :* *${uptime}*
 
-*💾 RAM :* *${usedRam}/${totalRam} MB*
+*🗂 RAM :* *${usedRam}/${totalRam} MB*
 
 *💻 PLATEFORME :* *${platform}*
 
 *📅 DATE :* *${day}* *${date}*
 
-`;
+`);
 
     // Ajout des catégories avec CADRES
 
-    for (const [category, commands] of Object.entries(categories)) {
+    for (const [category, commands] of orderedCategories) {
 
       const icon = getCategoryIcon(category);
 
@@ -201,32 +292,51 @@ export default async function info(client, message) {
 
       
 
-      menu += `┌────────────────────┐\n`;
+      menu += styleBible(`┌────────────────────┐
 
-      menu += `│  ${icon} ${title}  \n`;
+│  ${icon} ${title}  
 
-      menu += `├────────────────────┤\n`;
+├────────────────────┤
+
+`);
 
       
 
       commands.forEach(cmd => {
 
-        menu += `│  ✦ ${stylizedChar(cmd.toUpperCase())}  \n`;
+        menu += styleBible(`│  ✦ ${cmd.toUpperCase()}  
+
+`);
 
       });
 
       
 
-      menu += `└────────────────────┘\n\n`;
+      menu += styleBible(`└────────────────────┘
+
+`);
+
     }
-  // FOOTER
-      menu += `
-> *DEV : 🍁AKANE ʕ◕ᴥ◕ʔ🌹*
-> *© AKANE-MD 🌹*`;
+
+    
+
+    // FOOTER
+
+    menu += styleBible(`
+
+> *DEV : AKANE BIG-DEAL ʕ◕ᴥ◕ʔ🌹*
+
+> *© AKANE-MD 🌹*`);
 
     try {
 
       const device = getDevice(message.key.id);
+
+      
+
+      const channelMessage = `\n*CHANNEL_LINK:*\n🔗 https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R`;
+
+      
 
       if (device === "android") {
 
@@ -234,7 +344,7 @@ export default async function info(client, message) {
 
           image: { url: "database/menu.jpg" },
 
-          caption: stylizedChar(menu),
+          caption: menu + channelMessage,
 
           contextInfo: {
 
@@ -254,43 +364,21 @@ export default async function info(client, message) {
 
       } else {
 
-        await client.sendMessage(
+        await client.sendMessage(remoteJid, {
 
-          remoteJid,
+          text: menu + channelMessage
 
-          {
-
-            video: { url: "database/DigiX.mp3" },
-
-            caption: stylizedChar(menu),
-
-            contextInfo: {
-
-              forwardingScore: 999,
-
-              isForwarded: true
-
-            }
-
-          },
-
-          { quoted: message }
-
-        );
+        });
 
       }
 
     } catch (err) {
 
-      await client.sendMessage(
+      await client.sendMessage(remoteJid, {
 
-        remoteJid,
+        text: "❌ Erreur lors de l'envoi du menu : " + err.message
 
-        { text: "❌ Erreur lors de l'envoi du menu : " + err.message },
-
-        { quoted: message }
-
-      );
+      });
 
     }
 
