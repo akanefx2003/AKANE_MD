@@ -265,7 +265,7 @@ async function main() {
 
     console.log("╔═══════════════════════════════════════╗");
 
-    console.log("║      🤖 AKANE MD - DEPLOYEUR 🤖       ║");
+    console.log("║      🤖 AKANE MD - DEPLOIEMENT 🤖       ║");
 
     console.log("╚═══════════════════════════════════════╝");
 
