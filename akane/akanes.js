@@ -12,8 +12,7 @@ import style from '../commands/style.js';
 import mail from '../commands/mail.js'
 import messageCommand from '../commands/message.js' // @cat: bot-menu
 import histoire from '../commands/histoire.js' // @cat: histoire et citation
-import spider from '../commands/spider.js' // @cat: bot-menu 
-import botfont from '../commands/botfont.js' // @cat: bot-menu
+import spider from '../commands/spider.js' // @cat: bot
 import welcomeCommand from "../commands/welcome.js"; // @cat: gc-menu
 import alya from '../commands/alya.js' 
 import menu from '../commands/menu.js'
