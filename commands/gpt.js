@@ -49,7 +49,7 @@ const userHistories = new Map();
 // Index pour alterner entre les APIs
 let currentApiIndex = 0;
 
-// Liste des APIs stablediffusion (multiples instances pour alterner)
+// Liste des APIs stablediffusion
 const stablediffusionAPIs = [
     {
         name: 'stablediffusion-fr-1',
@@ -73,7 +73,7 @@ const stablediffusionAPIs = [
     }
 ];
 
-// APIs de secours (si stablediffusion plante)
+// APIs de secours
 const backupAPIs = [
     {
         name: 'blackbox',
@@ -96,7 +96,7 @@ async function callStableDiffusion(prompt, api) {
         const refererResp = await axios.get(api.referer, { 
             timeout: 8000,
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36'
+                'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36'
             }
         });
         
@@ -113,7 +113,7 @@ async function callStableDiffusion(prompt, api) {
                     'origin': 'https://stablediffusion.fr',
                     'referer': api.referer,
                     ...(cookieHeader ? { 'cookie': cookieHeader } : {}),
-                    'user-agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36'
+                    'user-agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36'
                 },
                 timeout: 25000
             }
@@ -124,7 +124,7 @@ async function callStableDiffusion(prompt, api) {
         }
         throw new Error('Réponse invalide');
     } catch (error) {
-        console.log(`❌ ${api.name}: ${error.message}`);
+        console.log(`❌ [GPT] ${api.name}: ${error.message}`);
         return null;
     }
 }
@@ -137,16 +137,14 @@ async function callBackupAPI(prompt, api) {
                 timeout: 20000,
                 headers: {
                     'Content-Type': 'application/json',
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                    'User-Agent': 'Mozilla/5.0'
                 }
             });
         } else {
             response = await axios.get(api.url, {
                 params: api.params(prompt),
                 timeout: 20000,
-                headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                }
+                headers: { 'User-Agent': 'Mozilla/5.0' }
             });
         }
         
@@ -156,38 +154,35 @@ async function callBackupAPI(prompt, api) {
         }
         return null;
     } catch (error) {
-        console.log(`❌ ${api.name}: ${error.message}`);
+        console.log(`❌ [GPT] backup ${api.name}: ${error.message}`);
         return null;
     }
 }
 
 async function callGPT(prompt) {
-    // Alterner entre les APIs stablediffusion
     let attempts = 0;
     const maxAttempts = stablediffusionAPIs.length + backupAPIs.length;
     
     while (attempts < maxAttempts) {
-        // Essayer une API stablediffusion
         const sdApi = stablediffusionAPIs[currentApiIndex % stablediffusionAPIs.length];
         currentApiIndex++;
         
-        console.log(`🔄 Tentative ${sdApi.name} (index ${currentApiIndex - 1})`);
+        console.log(`🔄 [GPT] Tentative ${sdApi.name}`);
         let reply = await callStableDiffusion(prompt, sdApi);
         
         if (reply && !reply.includes('<html>') && !reply.includes('<body')) {
-            console.log(`✅ Succès avec ${sdApi.name}`);
+            console.log(`✅ [GPT] Succès avec ${sdApi.name}`);
             return reply;
         }
         
         attempts++;
         
-        // Si toutes les stablediffusion ont échoué, essayer les backups
         if (attempts >= stablediffusionAPIs.length) {
             for (const backup of backupAPIs) {
-                console.log(`🔄 Tentative backup: ${backup.name}`);
+                console.log(`🔄 [GPT] Tentative backup: ${backup.name}`);
                 reply = await callBackupAPI(prompt, backup);
                 if (reply) {
-                    console.log(`✅ Succès avec backup: ${backup.name}`);
+                    console.log(`✅ [GPT] Succès avec backup: ${backup.name}`);
                     return reply;
                 }
                 attempts++;
@@ -208,6 +203,62 @@ setInterval(() => {
     }
 }, 600000);
 
+// ==================== VOIR HISTORIQUE ====================
+export async function showGptHistory(client, message) {
+    const senderId = message.key?.participant || message.key?.remoteJid;
+    const userHistory = userHistories.get(senderId);
+    
+    if (!userHistory || userHistory.messages.length === 0) {
+        const noHistoryMessage = styleBible(
+`╭─❍ *📜 HISTORIQUE GPT*
+│
+│ 📭 Aucun historique trouvé.
+│
+│ 💡 Commence à discuter avec .gpt
+│
+╰──────────────────`
+        );
+        return await client.sendMessage(message.key.remoteJid, { text: noHistoryMessage });
+    }
+    
+    let historyText = `╭─❍ *📜 HISTORIQUE GPT*
+│
+│ 👤 ${userHistory.messages.length} messages échangés
+│ ⏰ Dernière activité: ${Math.floor((Date.now() - userHistory.lastActivity) / 60000)} min
+│
+├─❍ *💬 CONVERSATION :*
+│
+`;
+    
+    for (let i = 0; i < userHistory.messages.length; i++) {
+        const msg = userHistory.messages[i];
+        if (msg.role === 'user') {
+            historyText += `│ 👤 MOI : ${msg.content.substring(0, 50)}${msg.content.length > 50 ? '...' : ''}\n│\n`;
+        } else {
+            historyText += `│ 🤖 GPT : ${msg.content.substring(0, 50)}${msg.content.length > 50 ? '...' : ''}\n│\n`;
+        }
+    }
+    
+    historyText += `╰──────────────────`;
+    
+    const styledHistory = styleBible(historyText);
+    await client.sendMessage(message.key.remoteJid, { text: styledHistory });
+}
+
+// ==================== RESET HISTORIQUE ====================
+export async function resetHistory(client, message) {
+    const senderId = message.key?.participant || message.key?.remoteJid;
+    if (userHistories.has(senderId)) {
+        userHistories.delete(senderId);
+        const resetMessage = styleBible(`✅ *Historique GPT réinitialisé !*`);
+        await client.sendMessage(message.key.remoteJid, { text: resetMessage });
+    } else {
+        const noHistoryMessage = styleBible(`ℹ️ *Aucun historique GPT à réinitialiser.*`);
+        await client.sendMessage(message.key.remoteJid, { text: noHistoryMessage });
+    }
+}
+
+// ==================== COMMANDE PRINCIPALE ====================
 export default async function gptCommand(sock, message) {
     try {
         const remoteJid = message.key?.remoteJid;
@@ -264,11 +315,9 @@ export default async function gptCommand(sock, message) {
             throw new Error('Réponse invalide');
         }
 
-        // Nettoyer la réponse des balises HTML
         reply = reply.replace(/<[^>]*>/g, '').replace(/&[a-z]+;/g, '');
         reply = reply.replace(/\n+/g, '\n').trim();
         
-        // Limiter à 1000 caractères
         if (reply.length > 1000) {
             reply = reply.substring(0, 997) + '...';
         }
@@ -297,25 +346,10 @@ export default async function gptCommand(sock, message) {
 │
 │ 🔄 Réessaie dans 30 secondes
 │
-│ 💡 Tu peux aussi essayer : .akane ou .alya
-│
 ╰──────────────────`;
             
             const styledError = styleBible(errorMessage);
             await sock.sendMessage(remoteJid, { text: styledError });
         }
-    }
-}
-
-// Fonction pour réinitialiser l'historique
-export async function resetHistory(client, message) {
-    const senderId = message.key?.participant || message.key?.remoteJid;
-    if (userHistories.has(senderId)) {
-        userHistories.delete(senderId);
-        const resetMessage = styleBible(`✅ *Historique réinitialisé !*`);
-        await client.sendMessage(message.key.remoteJid, { text: resetMessage });
-    } else {
-        const noHistoryMessage = styleBible(`ℹ️ *Aucun historique à réinitialiser.*`);
-        await client.sendMessage(message.key.remoteJid, { text: noHistoryMessage });
     }
 }
