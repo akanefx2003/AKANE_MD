@@ -47,12 +47,7 @@ const waitingMessages = [
     "😎 T'as de la chance..."
 ];
 
-function limitResponse(text, maxLength = 400) {
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
-}
-
-// Stockage de l'historique pour Akane
+// Stockage de l'historique
 const userHistories = new Map();
 
 // Index pour alterner entre les APIs
@@ -212,6 +207,62 @@ setInterval(() => {
     }
 }, 600000);
 
+// ==================== VOIR HISTORIQUE ====================
+export async function showAkaneHistory(client, message) {
+    const senderId = message.key?.participant || message.key?.remoteJid;
+    const userHistory = userHistories.get(senderId);
+    
+    if (!userHistory || userHistory.messages.length === 0) {
+        const noHistoryMessage = styleBible(
+`╭─❍ *🍒 HISTORIQUE AKANE*
+│
+│ 📭 Rien à voir, loser.
+│
+│ 💡 Parle-moi avec .akane
+│
+╰──────────────────`
+        );
+        return await client.sendMessage(message.key.remoteJid, { text: noHistoryMessage });
+    }
+    
+    let historyText = `╭─❍ *🍒 HISTORIQUE AKANE*
+│
+│ 👤 ${userHistory.messages.length} messages
+│ ⏰ Dernier message: ${Math.floor((Date.now() - userHistory.lastActivity) / 60000)} min
+│
+├─❍ *💬 CONVERSATION :*
+│
+`;
+    
+    for (let i = 0; i < userHistory.messages.length; i++) {
+        const msg = userHistory.messages[i];
+        if (msg.role === 'user') {
+            historyText += `│ 👤 TOI : ${msg.content.substring(0, 50)}${msg.content.length > 50 ? '...' : ''}\n│\n`;
+        } else {
+            historyText += `│ 🍒 AKANE : ${msg.content.substring(0, 50)}${msg.content.length > 50 ? '...' : ''}\n│\n`;
+        }
+    }
+    
+    historyText += `╰──────────────────`;
+    
+    const styledHistory = styleBible(historyText);
+    await client.sendMessage(message.key.remoteJid, { text: styledHistory });
+}
+
+// ==================== RESET HISTORIQUE ====================
+export async function resetAkaneHistory(client, message) {
+    const senderId = message.key?.participant || message.key?.remoteJid;
+    if (userHistories.has(senderId)) {
+        userHistories.delete(senderId);
+        const resetMessage = styleBible(`✅ *Historique Akane réinitialisé !*`);
+        await client.sendMessage(message.key.remoteJid, { text: resetMessage });
+    } else {
+        const noHistoryMessage = styleBible(`ℹ️ *Aucun historique Akane.*`);
+        await client.sendMessage(message.key.remoteJid, { text: noHistoryMessage });
+    }
+}
+
+// ==================== COMMANDE PRINCIPALE ====================
 export default async function akaneCommand(sock, message) {
     try {
         const remoteJid = message.key?.remoteJid;
@@ -251,7 +302,7 @@ export default async function akaneCommand(sock, message) {
             userHistory.messages = userHistory.messages.slice(-10);
         }
 
-        // Construire le prompt avec historique (style Akane)
+        // Construire le prompt avec historique
         let prompt = '';
         for (const msg of userHistory.messages.slice(0, -1)) {
             if (msg.role === 'user') {
@@ -304,17 +355,5 @@ export default async function akaneCommand(sock, message) {
             const styledError = styleBible(errorMessage);
             await sock.sendMessage(remoteJid, { text: styledError });
         }
-    }
-}
-
-export async function resetAkaneHistory(client, message) {
-    const senderId = message.key?.participant || message.key?.remoteJid;
-    if (userHistories.has(senderId)) {
-        userHistories.delete(senderId);
-        const resetMessage = styleBible(`✅ *Historique Akane réinitialisé !*`);
-        await client.sendMessage(message.key.remoteJid, { text: resetMessage });
-    } else {
-        const noHistoryMessage = styleBible(`ℹ️ *Aucun historique Akane.*`);
-        await client.sendMessage(message.key.remoteJid, { text: noHistoryMessage });
     }
 }
