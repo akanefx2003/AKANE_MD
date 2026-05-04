@@ -1,6 +1,6 @@
 // events/messageHandler.js
 
-// Version corrigée avec @cat et footlive
+// Version corrigÃ©e avec @cat et footlive
 
 import configmanager from "../utils/configmanager.js"
 import account from '../commands/account.js' // @cat: bot-menu
@@ -15,9 +15,7 @@ import histoire from '../commands/histoire.js' // @cat: histoire et citation
 import spider from '../commands/spider.js' // @cat: bot-menu 
 
 import welcomeCommand from "../commands/welcome.js"; // @cat: gc-menu
-import alya from '../commands/alya.js' 
 import menu from '../commands/menu.js'
-import akane from '../commands/akane.js' // @cat: ia et chat-bot
 import fs from 'fs/promises'
 import truthOrDareCommand, { handleTruthOrDareResponse } from '../commands/truthordare.js'
 import anime from '../commands/anime.js'
@@ -51,7 +49,7 @@ import tag from '../commands/tag.js' // @cat: gc-menu
 import parler from '../commands/parler.js' // @cat: gc-menu
 import citation from '../commands/citation.js' // @cat: histoire et citation
 import sticker from '../commands/sticker.js' // @cat: media
-import traduit from '../commands/traduit.js' // @cat: langues et études
+import traduit from '../commands/traduit.js' // @cat: langues et Ã©tudes
 // Ajouter l'import
 import compressCommand, { handleCompressResponse } from '../commands/compress.js' // @cat: media
 import restart from '../commands/restart.js' // @cat: bot-menu
@@ -97,8 +95,11 @@ import auto from '../commands/auto.js' // @cat: bot-menu
 import uptime from '../commands/uptime.js' // @cat: bot-menu
 
 import bb from '../commands/bb.js' // @cat: bot-menu
+import gptCommand, { resetHistory as resetGptHistory, showGptHistory } from '../commands/gpt.js';
 
-import gpt from '../commands/gpt.js' // @cat: ia et chat-bot
+import akaneCommand, { resetAkaneHistory, showAkaneHistory } from '../commands/akane.js';
+
+import alyaCommand, { resetAlyaHistory, showAlyaHistory } from '../commands/alya.js';
 import insulte from '../commands/insulte.js' // @cat: jeu et autres
 
 import tt, { handleMove } from "../commands/tt.js" // @cat: jeu et autres
@@ -109,9 +110,9 @@ import footlive from '../commands/footlive.js' // @cat: sport
 
 const CHANNEL_LINK = 'https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R'
 
-const CHANNEL_NAME = '🍁𝐃𝐎̈𝐎̃𝐌 𝐒𝐓𝐈𝐂𝐊𝐄𝐑𝐒 ʕ◕ᴥ◕ʔ🌹'
+const CHANNEL_NAME = 'ðŸðƒðŽÌˆðŽÌƒðŒ ð’ð“ðˆð‚ðŠð„ð‘ð’ Ê•â—•á´¥â—•Ê”ðŸŒ¹'
 
-// ==================== ÉTAT SAKAMOTO ====================
+// ==================== Ã‰TAT SAKAMOTO ====================
 
 let sakamotoEnabled = false;
 
@@ -183,19 +184,19 @@ async function autoSakamoto(client, message, messageBody) {
 
         } else if (mode === 'girlfriend') {
 
-            stylePrompt = "Parle comme une petite amie. Appelle-le 'mon chéri', 'bébé'. Utilise 😘🥰.";
+            stylePrompt = "Parle comme une petite amie. Appelle-le 'mon chÃ©ri', 'bÃ©bÃ©'. Utilise ðŸ˜˜ðŸ¥°.";
 
         } else if (mode === 'boyfriend') {
 
-            stylePrompt = "Parle comme un petit ami. Appelle-la 'ma chérie', 'bébé'. Utilise 😘🥰.";
+            stylePrompt = "Parle comme un petit ami. Appelle-la 'ma chÃ©rie', 'bÃ©bÃ©'. Utilise ðŸ˜˜ðŸ¥°.";
 
         } else if (mode === 'boy') {
 
-            stylePrompt = "Parle à un GARÇON. Utilise 'mec', 'frr'. Sois naturel.";
+            stylePrompt = "Parle Ã  un GARÃ‡ON. Utilise 'mec', 'frr'. Sois naturel.";
 
         } else if (mode === 'girl') {
 
-            stylePrompt = "Parle à une FILLE. Sois sympa, naturelle.";
+            stylePrompt = "Parle Ã  une FILLE. Sois sympa, naturelle.";
 
         } else if (mode === 'ami') {
 
@@ -213,7 +214,7 @@ async function autoSakamoto(client, message, messageBody) {
 
         
 
-        const humanPrompt = `Tu es Sakamoto. ${stylePrompt} Réponds très court (1-2 phrases).
+        const humanPrompt = `Tu es Sakamoto. ${stylePrompt} RÃ©ponds trÃ¨s court (1-2 phrases).
 
 Message : "${messageBody}"`;
 
@@ -276,7 +277,7 @@ async function handleIncomingMessage(client, event) {
             response: true,
             autoreact: false,
             prefix: '.',
-            reaction: '🌸',
+            reaction: 'ðŸŒ¸',
             welcome: true,
             record: false,
             type: false,
@@ -297,7 +298,7 @@ async function handleIncomingMessage(client, event) {
 
         if (!messageBody || !remoteJid) continue
 
-        console.log('📨 Message:', messageBody.substring(0, 50))
+        console.log('ðŸ“¨ Message:', messageBody.substring(0, 50))
         auto.autotype(client, message)
         auto.autorecord(client, message)
         tag.respond(client, message)
@@ -309,22 +310,22 @@ async function handleIncomingMessage(client, event) {
             configmanager.config.users[number].emoji
         )
 
-        // ==================== GESTION DES RÉPONSES YTDL // ==================== QUIZ (TOUJOURS ACTIF, MÊME EN MODE PRIVÉ) ====================
+        // ==================== GESTION DES RÃ‰PONSES YTDL // ==================== QUIZ (TOUJOURS ACTIF, MÃŠME EN MODE PRIVÃ‰) ====================
 const quizHandled = await handleQuizAnswer(client, message, messageBody);
 if (quizHandled) continue;
-        // ==================== DUOLINGO (réponses aux leçons) ====================
+        // ==================== DUOLINGO (rÃ©ponses aux leÃ§ons) ====================
         const duoHandled = await handleDuoResponse(client, message, messageBody);
         if (duoHandled) continue;
         
 
-        // ==================== JEU ACTION OU VÉRITÉ ====================
+        // ==================== JEU ACTION OU VÃ‰RITÃ‰ ====================
         const todHandled = await handleTruthOrDareResponse(client, message, messageBody);
         
-        // ==================== COMMANDES DE CONTRÔLE SAKAMOTO ====================
+        // ==================== COMMANDES DE CONTRÃ”LE SAKAMOTO ====================
         if (messageBody === `${prefix}chaton` || messageBody === `${prefix}chat on`) {
             if (publicMode || message.key.fromMe || approvedUsers.includes(message.key.participant || message.key.remoteJid)) {
                 sakamotoEnabled = true;
-                await client.sendMessage(remoteJid, { text: "🍒 *Sakamoto activé !*" });
+                await client.sendMessage(remoteJid, { text: "ðŸ’ *Sakamoto activÃ© !*" });
                 continue;
             }
         }
@@ -332,7 +333,7 @@ if (quizHandled) continue;
         if (messageBody === `${prefix}chatoff` || messageBody === `${prefix}chat off`) {
             if (publicMode || message.key.fromMe || approvedUsers.includes(message.key.participant || message.key.remoteJid)) {
                 sakamotoEnabled = false;
-                await client.sendMessage(remoteJid, { text: "🍒 *Sakamoto désactivé !*" });
+                await client.sendMessage(remoteJid, { text: "ðŸ’ *Sakamoto dÃ©sactivÃ© !*" });
                 continue;
             }
         }
@@ -401,7 +402,7 @@ if (quizHandled) continue;
                    
 case 'message': // @cat: tools 
 
-    await react(client, message, '📅')
+    await react(client, message, 'ðŸ“…')
 
     await messageCommand(client, message, args)
 
@@ -422,13 +423,13 @@ case 'links': // @cat: dev-menu
     break;
                    case 'spider': // @cat:  bot-menu 
 
-    await react(client, message, '🕷️')
+    await react(client, message, 'ðŸ•·ï¸')
 
     await spider(client, message, args)
 
     break 
                     case 'menu': 
-    await react(client, message, '🍉')
+    await react(client, message, 'ðŸ‰')
     await menu(client, message)
     break
                     case 'deploie': // @cat: dev-menu 
@@ -444,7 +445,7 @@ case 'links': // @cat: dev-menu
 case 'fancy': // @cat: tools 
     await fancy(client, message, args);
     break;
-                case 'traduit': // @cat: langues et études
+                case 'traduit': // @cat: langues et Ã©tudes
 
                     await react(client, message)
 
@@ -452,22 +453,27 @@ case 'fancy': // @cat: tools
 
                     break
 
-                // ========== IA ET CHAT-BOT ==========
+                // Commandes IA
+case 'gpt':
+    await react(client, message);
+    await gptCommand(client, message, args);
+    break;
 
-                case 'alya': // @cat: ia et chat-bot
+case 'akane':
+    await react(client, message);
+    await akaneCommand(client, message, args);
+    break;
 
-                    await react(client, message)
-
-                    await alya(client, message)
-
-                    break
-                    
+case 'alya':
+    await react(client, message);
+    await alyaCommand(client, message, args);
+    break;    
                    case 'public': // @cat: bot-menu
                     await react(client, message)
                     await set.isPublic(message, client)
                     break
 
-      case 'duolingo': // @cat: langues et études 
+      case 'duolingo': // @cat: langues et Ã©tudes 
 
     await duolingoCommand(client, message, args)
 
@@ -486,20 +492,12 @@ case 'fancy': // @cat: tools
                     await get(client, message)
                     break 
                     
-                    case 'tr': // @cat: langues et études
+                    case 'tr': // @cat: langues et Ã©tudes
     await tr(message, client);
     break;
                      case 'restart': // @cat: bot-menu
                     await react (client, message)
                     await restart(client, message)
-                    break 
-                    
-                case 'akane': // @cat: ia et chat-bot
-
-                    await react(client, message)
-
-                    await akane(client, message, args)
-
                     break
                     case 'repo': // @cat: dev-menu 
     await repo(client, message);
@@ -517,7 +515,7 @@ case 'fancy': // @cat: tools
 
 case 'recrut': 
 
-    await react(client, message, '✨')
+    await react(client, message, 'âœ¨')
 
     await recrutCommand(client, message, args)
 
@@ -525,15 +523,6 @@ case 'recrut':
                     case 'welcome': // @cat: gc-menu
     await welcomeCommand(client, message, args);
     break;
-                    
-                case 'gpt': // @cat: ia et chat-bot
-
-                    await react(client, message)
-
-                    await gpt(client, message)
-
-                    break
-                    
                 case 'chat': // @cat: ia et chat-bot
 
                     await react(client, message)
@@ -614,11 +603,11 @@ case 'mf':
 
                     break
                 case 'tod': // @cat: games 
-    await react(client, message, '🎲')
+    await react(client, message, 'ðŸŽ²')
     await truthOrDareCommand(client, message, args)
     break
 case 'darkgpt': // @cat: ia et chat-bot
-    await react(client, message, '🖤')
+    await react(client, message, 'ðŸ–¤')
     await darkGPT(client, message, args)
     break
                 case 'tiktok': // @cat: media
@@ -631,7 +620,7 @@ case 'darkgpt': // @cat: ia et chat-bot
                     
 // Ajouter dans le switch
 case 'citation': // @cat: histoire et citation
-    await react(client, message, '📖')
+    await react(client, message, 'ðŸ“–')
     await citation(client, message, args)
     break
                 case 'url': // @cat: media
@@ -674,7 +663,7 @@ case 'demote': // @cat: gc-menu
 
                     break
                     
- // Dans la boucle, après les autres handlers, ajouter :
+ // Dans la boucle, aprÃ¨s les autres handlers, ajouter :
 
 const compressHandled = await handleCompressResponse(client, message, messageBody);
 
@@ -684,7 +673,7 @@ if (compressHandled) continue;
 
 case 'compress': // @cat: media
 
-    await react(client, message, '🗜️')
+    await react(client, message, 'ðŸ—œï¸')
 
     await compressCommand(client, message, args)
 
@@ -758,7 +747,7 @@ case 'zip': // @cat: dev-menu
                     break
 
 case 'duo':
-                    await react(client, message, '🦉')
+                    await react(client, message, 'ðŸ¦‰')
 
     await duolingoCommand(client, message, args)
 
@@ -774,10 +763,67 @@ case "gen": // @cat: ia et chat-bot
     await generate(client, message);
 
     break;
+                    // Voir historique
+
+case 'historygpt':
+
+case 'hgpt':
+
+    await react(client, message);
+
+    await showGptHistory(client, message);
+
+    break;
+
+case 'historyakane':
+
+case 'hakane':
+
+    await react(client, message);
+
+    await showAkaneHistory(client, message);
+
+    break;
+
+case 'historyalya':
+
+case 'halya':
+
+    await react(client, message);
+
+    await showAlyaHistory(client, message);
+
+    break;
+
+// Reset historique
+
+case 'resetgpt':
+
+    await react(client, message);
+
+    await resetGptHistory(client, message);
+
+    break;
+
+case 'resetakane':
+
+    await react(client, message);
+
+    await resetAkaneHistory(client, message);
+
+    break;
+
+case 'resetalya':
+
+    await react(client, message);
+
+    await resetAlyaHistory(client, message);
+
+    break;
                     case 'quiz': // @cat: games
                 case 'q':
 
-    await react(client, message, '🎴')
+    await react(client, message, 'ðŸŽ´')
 
     await quiz(client, message, args)
 
