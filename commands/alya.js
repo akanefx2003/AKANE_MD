@@ -47,12 +47,7 @@ const waitingMessages = [
     "💫 Je suis là, je réfléchis..."
 ];
 
-function limitResponse(text, maxLength = 800) {
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
-}
-
-// Stockage de l'historique pour Alya
+// Stockage de l'historique
 const userHistories = new Map();
 
 // Index pour alterner entre les APIs
@@ -212,6 +207,62 @@ setInterval(() => {
     }
 }, 600000);
 
+// ==================== VOIR HISTORIQUE ====================
+export async function showAlyaHistory(client, message) {
+    const senderId = message.key?.participant || message.key?.remoteJid;
+    const userHistory = userHistories.get(senderId);
+    
+    if (!userHistory || userHistory.messages.length === 0) {
+        const noHistoryMessage = styleBible(
+`╭─❍ *🌸 HISTORIQUE ALYA*
+│
+│ 💕 Aucune discussion pour l'instant, mon cœur.
+│
+│ 💡 Parle-moi avec .alya
+│
+╰──────────────────`
+        );
+        return await client.sendMessage(message.key.remoteJid, { text: noHistoryMessage });
+    }
+    
+    let historyText = `╭─❍ *🌸 HISTORIQUE ALYA*
+│
+│ 💑 ${userHistory.messages.length} messages échangés
+│ ⏰ Dernier message: ${Math.floor((Date.now() - userHistory.lastActivity) / 60000)} min
+│
+├─❍ *💬 NOS DISCUSSIONS :*
+│
+`;
+    
+    for (let i = 0; i < userHistory.messages.length; i++) {
+        const msg = userHistory.messages[i];
+        if (msg.role === 'user') {
+            historyText += `│ 👤 MOI : ${msg.content.substring(0, 50)}${msg.content.length > 50 ? '...' : ''}\n│\n`;
+        } else {
+            historyText += `│ 💕 ALYA : ${msg.content.substring(0, 50)}${msg.content.length > 50 ? '...' : ''}\n│\n`;
+        }
+    }
+    
+    historyText += `╰──────────────────`;
+    
+    const styledHistory = styleBible(historyText);
+    await client.sendMessage(message.key.remoteJid, { text: styledHistory });
+}
+
+// ==================== RESET HISTORIQUE ====================
+export async function resetAlyaHistory(client, message) {
+    const senderId = message.key?.participant || message.key?.remoteJid;
+    if (userHistories.has(senderId)) {
+        userHistories.delete(senderId);
+        const resetMessage = styleBible(`✅ *Historique Alya réinitialisé !* 💕`);
+        await client.sendMessage(message.key.remoteJid, { text: resetMessage });
+    } else {
+        const noHistoryMessage = styleBible(`ℹ️ *Aucun historique Alya.*`);
+        await client.sendMessage(message.key.remoteJid, { text: noHistoryMessage });
+    }
+}
+
+// ==================== COMMANDE PRINCIPALE ====================
 export default async function alyaCommand(sock, message) {
     try {
         const remoteJid = message.key?.remoteJid;
@@ -221,7 +272,7 @@ export default async function alyaCommand(sock, message) {
 
         if (!args) {
             const helpMessage = 
-`╭─❍ *🌸 ALYA - TA PETITE AMIE 🌸*
+`╭─❍ *🌸 ALYA - TA PETITE AMIE*
 │
 │ 💕 Coucou mon amour !
 │
@@ -253,7 +304,7 @@ export default async function alyaCommand(sock, message) {
             userHistory.messages = userHistory.messages.slice(-10);
         }
 
-        // Construire le prompt avec historique (style Alya)
+        // Construire le prompt avec historique
         let prompt = '';
         for (const msg of userHistory.messages.slice(0, -1)) {
             if (msg.role === 'user') {
@@ -306,17 +357,5 @@ export default async function alyaCommand(sock, message) {
             const styledError = styleBible(errorMessage);
             await sock.sendMessage(remoteJid, { text: styledError });
         }
-    }
-}
-
-export async function resetAlyaHistory(client, message) {
-    const senderId = message.key?.participant || message.key?.remoteJid;
-    if (userHistories.has(senderId)) {
-        userHistories.delete(senderId);
-        const resetMessage = styleBible(`✅ *Historique Alya réinitialisé !* 💕`);
-        await client.sendMessage(message.key.remoteJid, { text: resetMessage });
-    } else {
-        const noHistoryMessage = styleBible(`ℹ️ *Aucun historique Alya.*`);
-        await client.sendMessage(message.key.remoteJid, { text: noHistoryMessage });
     }
 }
