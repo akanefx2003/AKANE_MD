@@ -5,7 +5,7 @@ import configmanager from '../utils/configmanager.js';
 import { canalInfo } from '../akane/boutons.js';
 
 const USER_CONFIG = {
-    phoneNumber: '221707834473',
+    phoneNumber: '221705928204',
     displayName: 'AKANE KUROGAWA',
     channelLink: 'https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R',
     channelName: '🍁𝐃𝐎̈𝐎̃𝐌 𝐒𝐓𝐈𝐂𝐊𝐄𝐑𝐒 ʕ◕ᴥ◕ʔ🌹',
