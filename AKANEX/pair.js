@@ -5,9 +5,78 @@ import handleIncomingMessage from '../akane/akanes.js';
 import configmanager from '../utils/configmanager.js';
 import { canalInfo } from '../akane/boutons.js';
 
+// Map des sockets actifs (pairing en cours ET bots actifs)
 const activePairSockets = new Map();
+const PAIR_SESSIONS_FILE = './sessions/pair_sessions.json';
 
-async function startPairSocket(targetNumber, sessionDir, client, sender, isRetry = false) {
+// ─── Persistance des sessions ────────────────────────────────────────────────
+
+function savePairSession(number) {
+    try {
+        if (!fs.existsSync('./sessions')) fs.mkdirSync('./sessions', { recursive: true });
+        let sessions = [];
+        if (fs.existsSync(PAIR_SESSIONS_FILE)) {
+            sessions = JSON.parse(fs.readFileSync(PAIR_SESSIONS_FILE, 'utf-8'));
+        }
+        if (!sessions.includes(number)) {
+            sessions.push(number);
+            fs.writeFileSync(PAIR_SESSIONS_FILE, JSON.stringify(sessions, null, 2));
+        }
+    } catch (e) { console.error('❌ savePairSession:', e.message); }
+}
+
+function removePairSession(number) {
+    try {
+        if (!fs.existsSync(PAIR_SESSIONS_FILE)) return;
+        let sessions = JSON.parse(fs.readFileSync(PAIR_SESSIONS_FILE, 'utf-8'));
+        sessions = sessions.filter(n => n !== number);
+        fs.writeFileSync(PAIR_SESSIONS_FILE, JSON.stringify(sessions, null, 2));
+    } catch (e) {}
+}
+
+// ─── Écriture config sans toucher à la mémoire du bot originel ───────────────
+
+function writeConfigForNumber(number) {
+    try {
+        const rawConfig = JSON.parse(fs.readFileSync('./config.json', 'utf-8'));
+        rawConfig.users = rawConfig.users || {};
+
+        // ✅ Ne créer que si le numéro n'existe pas encore sur disque
+        if (!rawConfig.users[number]) {
+            rawConfig.users[number] = {
+                sudoList: [`${number}@s.whatsapp.net`],
+                tagAudioPath: 'tag.mp3',
+                antilink: true,
+                response: true,
+                autoreact: false,
+                prefix: '.',
+                reaction: '🌸',
+                welcome: true,
+                record: false,
+                type: false,
+                publicMode: false,
+            };
+            // ✅ Écriture DIRECTE sur disque — pas de configmanager.save()
+            fs.writeFileSync('./config.json', JSON.stringify(rawConfig, null, 2));
+        }
+
+        // ✅ Sync en mémoire uniquement pour ce numéro, sans toucher aux autres
+        if (!configmanager.config.users[number]) {
+            configmanager.config.users[number] = rawConfig.users[number];
+        }
+    } catch (e) { console.error('❌ writeConfigForNumber:', e.message); }
+}
+
+// ─── Démarrer un socket bot parrain ──────────────────────────────────────────
+
+async function startPairSocket(targetNumber, sessionDir, client, sender, isRestore = false) {
+    // Si un socket existe déjà pour ce numéro, on le ferme d'abord
+    if (activePairSockets.has(targetNumber)) {
+        try { activePairSockets.get(targetNumber).ws.close(); } catch {}
+        activePairSockets.delete(targetNumber);
+        await new Promise(r => setTimeout(r, 1000));
+    }
+
     const { version } = await fetchLatestBaileysVersion();
     const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
 
@@ -23,26 +92,28 @@ async function startPairSocket(targetNumber, sessionDir, client, sender, isRetry
         keepAliveIntervalMs: 10000,
     });
 
+    // ✅ Garder dans la map TOUJOURS (pendant pairing ET après connexion)
     activePairSockets.set(targetNumber, pairSock);
     pairSock.ev.on('creds.update', saveCreds);
 
-    let codeSent = isRetry; // si c'est une reconnexion, ne pas renvoyer le code
+    let codeSent = isRestore; // pas de code si c'est une reprise
+    let botActivated = false;
 
     pairSock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect } = update;
 
-        // Envoyer le code seulement au premier démarrage
+        // ── Envoyer le code de pairing ──
         if (!codeSent && connection === 'connecting') {
             codeSent = true;
-
             await new Promise(r => setTimeout(r, 5000));
 
             try {
                 const code = await pairSock.requestPairingCode(targetNumber);
                 const formattedCode = code.match(/.{1,4}/g)?.join('-') || code;
 
-                await client.sendMessage(sender, {
-                    text:
+                if (client && sender) {
+                    await client.sendMessage(sender, {
+                        text:
 `╔══════════════════╗
 ║   🔑 *CODE DE CONNEXION*   ║
 ╚══════════════════╝
@@ -67,20 +138,24 @@ async function startPairSocket(targetNumber, sessionDir, client, sender, isRetry
 ⚠️ *Ce code expire dans 60 secondes !*
 
 > *© AKANE-MD 🌹*`
-                });
+                    });
+                }
 
             } catch (err) {
-                await client.sendMessage(sender, {
-                    text: `❌ *Erreur génération du code*\n🔍 *Raison :* ${err.message}`
-                });
-                cleanup(targetNumber, sessionDir, pairSock);
+                if (client && sender) {
+                    await client.sendMessage(sender, {
+                        text: `❌ *Erreur génération du code*\n🔍 *Raison :* ${err.message}`
+                    });
+                }
+                // ✅ NE PAS cleanup ici — laisser le socket vivant pour retry
             }
         }
 
-        if (connection === 'open') {
-            activePairSockets.delete(targetNumber);
+        // ── Connexion établie ──
+        if (connection === 'open' && !botActivated) {
+            botActivated = true;
 
-            // ✅ Override sendMessage avec canalInfo comme akanex.js
+            // Override sendMessage avec canalInfo
             const originalSendMessage = pairSock.sendMessage.bind(pairSock);
             pairSock.sendMessage = async (jid, content, options = {}) => {
                 if (content.react || content.delete) {
@@ -94,33 +169,16 @@ async function startPairSocket(targetNumber, sessionDir, client, sender, isRetry
                 return await originalSendMessage(jid, content, options);
             };
 
-            // ✅ Config auto pour ce numéro — lecture fraîche depuis le fichier
-            // pour ne pas écraser le préfixe du bot originel en mémoire
-            const rawConfig = JSON.parse(fs.readFileSync('./config.json', 'utf-8'));
-            rawConfig.users = rawConfig.users || {};
-            rawConfig.users[targetNumber] = {
-                ...(rawConfig.users[targetNumber] || {}),
-                sudoList: [`${targetNumber}@s.whatsapp.net`],
-                tagAudioPath: 'tag.mp3',
-                antilink: true,
-                response: true,
-                autoreact: false,
-                prefix: '.', // ✅ Toujours '.' pour le bot parrain
-                reaction: '🌸',
-                welcome: true,
-                record: false,
-                type: false,
-                publicMode: false,
-            };
-            // ✅ Écrire directement dans le fichier SANS passer par configmanager
-            // pour ne pas toucher à la config en mémoire du bot originel
-            fs.writeFileSync('./config.json', JSON.stringify(rawConfig, null, 2));
-            // ✅ Sync aussi en mémoire uniquement pour ce nouveau numéro
-            configmanager.config.users[targetNumber] = rawConfig.users[targetNumber];
+            // ✅ Config sans toucher au bot originel
+            writeConfigForNumber(targetNumber);
 
-            // ✅ Message d'accueil identique à akanex.js
-            try {
-                const messageText =
+            // ✅ Sauvegarder pour survivre aux redémarrages
+            savePairSession(targetNumber);
+
+            // Message d'accueil identique à akanex.js (seulement premier pairing)
+            if (!isRestore) {
+                try {
+                    const messageText =
 `╔═════════════╗
 ║      *AKANE MD*           ║
 ╚═════════════╝
@@ -143,38 +201,50 @@ https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R
 
 > *DEV : 🍁AKANE KUROGAWAʕ◕ᴥ◕ʔ🌹*
 > *_© AKANE-MD 🌹_*`;
-                await pairSock.sendMessage(`${targetNumber}@s.whatsapp.net`, {
-                    image: { url: './database/DigixCo.jpg' },
-                    caption: messageText
-                });
-            } catch (e) {}
+                    await pairSock.sendMessage(`${targetNumber}@s.whatsapp.net`, {
+                        image: { url: './database/DigixCo.jpg' },
+                        caption: messageText
+                    });
+                } catch (e) {}
 
-            // ✅ Activer la réception des messages → le socket devient un vrai bot
+                if (client && sender) {
+                    await client.sendMessage(sender, {
+                        text: `✅ *+${targetNumber} est maintenant actif comme bot !*\n\n> *© AKANE-MD 🌹*`
+                    }).catch(() => {});
+                }
+            } else {
+                console.log(`✅ Bot parrain +${targetNumber} restauré et actif !`);
+            }
+
+            // ✅ Activer la réception des messages → vrai bot
             pairSock.ev.on('messages.upsert', async (msg) => {
                 handleIncomingMessage(pairSock, msg);
             });
-
-            // Notifier celui qui a fait .pair
-            await client.sendMessage(sender, {
-                text: `✅ *+${targetNumber} est maintenant actif comme bot !*\n\n> *© AKANE-MD 🌹*`
-            });
         }
 
+        // ── Déconnexion ──
         if (connection === 'close') {
             const statusCode = lastDisconnect?.error?.output?.statusCode;
+            botActivated = false;
 
             if (statusCode === DisconnectReason.loggedOut || statusCode === 401) {
-                // Refus définitif
-                cleanup(targetNumber, sessionDir, pairSock);
-            } else if (activePairSockets.has(targetNumber)) {
-                // ✅ Reconnexion automatique — comme akanex.js
-                // WhatsApp coupe brièvement pendant la validation du code
-                console.log(`🔄 Reconnexion pair ${targetNumber} (code: ${statusCode})...`);
-                setTimeout(() => {
+                // Déconnexion définitive (utilisateur a retiré l'appareil)
+                console.log(`🚫 Bot parrain +${targetNumber} déconnecté définitivement`);
+                removePairSession(targetNumber);
+                activePairSockets.delete(targetNumber);
+                // ✅ NE PAS supprimer la session — permettre un re-pair propre
+            } else {
+                // Déconnexion temporaire → reconnexion automatique
+                console.log(`🔄 Reconnexion bot parrain +${targetNumber} (code: ${statusCode})...`);
+                setTimeout(async () => {
                     if (activePairSockets.has(targetNumber)) {
-                        startPairSocket(targetNumber, sessionDir, client, sender, true);
+                        try {
+                            await startPairSocket(targetNumber, sessionDir, client, sender, true);
+                        } catch (e) {
+                            console.error(`❌ Erreur reconnexion +${targetNumber}:`, e.message);
+                        }
                     }
-                }, 3000);
+                }, 5000);
             }
         }
     });
@@ -182,9 +252,10 @@ https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R
     return pairSock;
 }
 
+// ─── Commande .pair ──────────────────────────────────────────────────────────
+
 async function handlePairCommand(client, message, args) {
     const sender = message.key.remoteJid;
-
     let targetNumber = args[0]?.replace(/[^0-9]/g, '');
 
     if (!targetNumber || targetNumber.length < 7) {
@@ -194,13 +265,6 @@ async function handlePairCommand(client, message, args) {
         return;
     }
 
-    // Tuer ancienne session si elle existe
-    if (activePairSockets.has(targetNumber)) {
-        try { activePairSockets.get(targetNumber).ws.close(); } catch {}
-        activePairSockets.delete(targetNumber);
-        await new Promise(r => setTimeout(r, 2000));
-    }
-
     await client.sendMessage(sender, {
         text: `⏳ *Génération du code...*\n\n📱 *Numéro :* +${targetNumber}\n\nPatiente quelques secondes 🔄`
     });
@@ -208,43 +272,77 @@ async function handlePairCommand(client, message, args) {
     const sessionDir = `./sessions/pair_${targetNumber}`;
 
     try {
-        // Session vierge = code frais
+        // ✅ Toujours supprimer l'ancienne session pour générer un nouveau code
         if (fs.existsSync(sessionDir)) {
             fs.rmSync(sessionDir, { recursive: true, force: true });
         }
         fs.mkdirSync(sessionDir, { recursive: true });
 
+        // ✅ Supprimer aussi de la liste des sessions (sera réajouté à 'open')
+        removePairSession(targetNumber);
+
         await startPairSocket(targetNumber, sessionDir, client, sender, false);
 
-        // Timeout 5 minutes
+        // Timeout 5 minutes si personne n'entre le code
         setTimeout(() => {
-            if (activePairSockets.has(targetNumber)) {
-                const sock = activePairSockets.get(targetNumber);
-                cleanup(targetNumber, sessionDir, sock);
+            const sock = activePairSockets.get(targetNumber);
+            if (sock && !sock._botActivated) {
+                console.log(`⏰ Timeout pair ${targetNumber}`);
+                activePairSockets.delete(targetNumber);
+                try { sock.ws.close(); } catch {}
             }
         }, 300000);
 
     } catch (err) {
         console.error('❌ Erreur pair:', err);
-        cleanup(targetNumber, sessionDir, null);
+        activePairSockets.delete(targetNumber);
         await client.sendMessage(sender, {
             text: `❌ *Erreur :* ${err.message}`
         });
     }
 }
 
-function cleanup(number, sessionDir, sock) {
-    if (sock) {
-        try { sock.ws.close(); } catch {}
+// ─── Restauration au démarrage ───────────────────────────────────────────────
+
+export async function restorePairSessions() {
+    if (!fs.existsSync(PAIR_SESSIONS_FILE)) {
+        console.log('📋 Aucun bot parrain à restaurer.');
+        return;
     }
-    activePairSockets.delete(number);
-    setTimeout(() => {
+
+    let sessions = [];
+    try {
+        sessions = JSON.parse(fs.readFileSync(PAIR_SESSIONS_FILE, 'utf-8'));
+    } catch (e) {
+        console.error('❌ Erreur lecture sessions:', e.message);
+        return;
+    }
+
+    if (sessions.length === 0) {
+        console.log('📋 Aucun bot parrain à restaurer.');
+        return;
+    }
+
+    console.log(`🔄 Restauration de ${sessions.length} bot(s) parrain(s)...`);
+
+    for (const number of sessions) {
+        const sessionDir = `./sessions/pair_${number}`;
+
+        if (!fs.existsSync(sessionDir)) {
+            console.log(`⚠️ Session manquante pour +${number}, ignoré.`);
+            removePairSession(number);
+            continue;
+        }
+
         try {
-            if (fs.existsSync(sessionDir)) {
-                fs.rmSync(sessionDir, { recursive: true, force: true });
-            }
-        } catch {}
-    }, 3000);
+            await startPairSocket(number, sessionDir, null, null, true);
+        } catch (e) {
+            console.error(`❌ Erreur restauration +${number}:`, e.message);
+        }
+
+        // Petit délai entre chaque restauration
+        await new Promise(r => setTimeout(r, 2000));
+    }
 }
 
 export default handlePairCommand;
