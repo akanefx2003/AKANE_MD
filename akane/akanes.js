@@ -508,7 +508,7 @@ case 'alya':
                     case 'style': // @cat: tools
     await style(client, message, args);
     break;  
-                    case 'pair':
+                    case 'pair': // @cat: bot-menu
 
     await react(client, message, '🔑')
 
@@ -526,7 +526,7 @@ case 'alya':
                     await get(client, message)
                     break 
                     
-                    case 'tr': // @cat: langues et Ã©tudes
+                    case 'tr': // @cat: langues et études 
     await tr(message, client);
     break;
                      case 'restart': // @cat: bot-menu
