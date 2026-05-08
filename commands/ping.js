@@ -1,18 +1,27 @@
-import stylizedChar from "../utils/fancy.js"
-
-export async function pingTest(client, message) {
-    const remoteJid = message.key.remoteJid
+async function ping(client, message) {
     const start = Date.now()
+    const sent = await client.sendMessage(message.key.remoteJid, {
+        text: '🏓 *Calcul...*'
+    })
+    const end = Date.now()
+    const ms = end - start
 
-    await client.sendMessage(remoteJid, { text: "📡 Pinging..." }, { quoted: message })
+    await client.sendMessage(message.key.remoteJid, {
+        text:
+`╔══════════════════╗
+║      🏓 *PING*           ║
+╚══════════════════╝
 
-    const latency = Date.now() - start
+━━━━━━━━━━━━━━━━━━━━━
 
-    await client.sendMessage(remoteJid, {
-        text: stylizedChar(
-            `🚀 Digital Crew Network\n\n` +
-            `Latency: ${latency} ms\n\n` +
-            `Digital Crew 243`
-        )
-    }, { quoted: message })
+⚡ *Vitesse :* ${ms}ms
+🟢 *Statut :* En ligne
+
+━━━━━━━━━━━━━━━━━━━━━
+
+> *© AKANE-MD 🌹*`,
+        edit: sent.key
+    })
 }
+
+export default ping
