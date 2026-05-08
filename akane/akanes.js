@@ -50,9 +50,8 @@ import chatbot, { getAIResponse, setUserMode, getUserMode } from '../commands/ch
 import tag from '../commands/tag.js' // @cat: gc-menu
 import parler from '../commands/parler.js' // @cat: gc-menu
 import citation from '../commands/citation.js' // @cat: histoire et citation
-import ping from '../commands/ping.js' // @cat: bot-menu
 import sticker from '../commands/sticker.js' // @cat: media
-import traduit from '../commands/traduit.js' // @cat: langues et Ã©tudes
+import traduit from '../commands/traduit.js' // @cat: langues et études tudes
 // Ajouter l'import
 import compressCommand, { handleCompressResponse } from '../commands/compress.js' // @cat: media
 import restart from '../commands/restart.js' // @cat: bot-menu
@@ -91,7 +90,7 @@ import react from "../utils/react.js"
 
 import info from "../commands/menu.js" // @cat: bot-menu
 
-import { pingTest } from "../commands/ping.js" // @cat: bot-menu
+import ping from "../commands/ping.js" // @cat: bot-menu
 
 import auto from '../commands/auto.js' // @cat: bot-menu
 
