@@ -31,28 +31,32 @@ async function downloadSticker(fileId) {
     const fileRes = await axios.get(`${TG_FILE}/${filePath}`, {
         responseType: 'arraybuffer', timeout: 30000
     })
-    return Buffer.from(fileRes.data)
+    return { buffer: Buffer.from(fileRes.data), filePath }
 }
 
-async function makeSticker(buffer, isAnimated) {
-    let inputBuffer = buffer
+async function makeWebpSticker(buffer) {
+    const webpBuffer = await sharp(buffer)
+        .resize(512, 512, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+        .webp()
+        .toBuffer()
 
-    // Si sticker statique, convertir en webp avec sharp
-    if (!isAnimated) {
-        inputBuffer = await sharp(buffer)
-            .resize(512, 512, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
-            .webp()
-            .toBuffer()
-    }
-
-    // Ajouter métadonnées pack
-    const sticker = new Sticker(inputBuffer, {
+    const sticker = new Sticker(webpBuffer, {
         pack: PACK_NAME,
         author: PACK_AUTHOR,
-        type: isAnimated ? StickerTypes.FULL : StickerTypes.DEFAULT,
+        type: StickerTypes.DEFAULT,
         quality: 100
     })
+    return await sticker.toBuffer()
+}
 
+async function makeVideoSticker(buffer) {
+    // .webm vidéo → sticker animé WhatsApp
+    const sticker = new Sticker(buffer, {
+        pack: PACK_NAME,
+        author: PACK_AUTHOR,
+        type: StickerTypes.FULL,
+        quality: 100
+    })
     return await sticker.toBuffer()
 }
 
@@ -111,9 +115,9 @@ export default async function tgstickerCommand(client, message, args) {
         const pack = await getStickerPack(packName)
         const stickers = pack.stickers || []
 
-        // Compter les types
         const statiques = stickers.filter(s => !s.is_animated && !s.is_video).length
-        const animes = stickers.filter(s => s.is_animated || s.is_video).length
+        const animes = stickers.filter(s => s.is_animated).length
+        const videos = stickers.filter(s => s.is_video).length
         const total = Math.min(stickers.length, limitArg, 100)
 
         await client.sendMessage(remoteJid, { text:
@@ -125,7 +129,8 @@ export default async function tgstickerCommand(client, message, args) {
 
 ⋆.˚⪩ 𝐒𝐭𝐢𝐜𝐤𝐞𝐫𝐬 ⪨
 ⸙﹝ 🖼️ Statiques : ${statiques} ﹞✴︎
-⸙﹝ 🎬 Animés/Vidéo : ${animes} ﹞✴︎
+⸙﹝ 🎬 Vidéo : ${videos} ﹞✴︎
+⸙﹝ ✨ Animés .tgs : ${animes} (ignorés) ﹞✴︎
 ⸙﹝ 📦 Total envoi : ${total} ﹞✴︎
 
 𖤍⋅‏ ┈─━ ━━ ━ • ˹ ୨ৎ ˼ • ━ ━━ ━─┈ ⋅𖤍
@@ -138,6 +143,7 @@ export default async function tgstickerCommand(client, message, args) {
 
         let success = 0
         let failed = 0
+        let skipped = 0
 
         for (let i = 0; i < total; i++) {
 
@@ -147,6 +153,7 @@ export default async function tgstickerCommand(client, message, args) {
 `⛔ *Arrêté !*
 
 ⸙﹝ ✅ Envoyés : ${success} ﹞✴︎
+⸙﹝ ⏭️ Ignorés : ${skipped} ﹞✴︎
 ⸙﹝ ❌ Échoués : ${failed} ﹞✴︎
 
 > *© AKANE MD 🌹*` })
@@ -155,11 +162,24 @@ export default async function tgstickerCommand(client, message, args) {
             }
 
             const sticker = stickers[i]
-            const isAnimated = sticker.is_animated || sticker.is_video
+
+            // Ignorer les .tgs (Lottie animés) — format non supporté par WhatsApp
+            if (sticker.is_animated) {
+                skipped++
+                continue
+            }
 
             try {
-                const buffer = await downloadSticker(sticker.file_id)
-                const stickerBuffer = await makeSticker(buffer, isAnimated)
+                const { buffer, filePath } = await downloadSticker(sticker.file_id)
+                let stickerBuffer
+
+                if (sticker.is_video) {
+                    // Sticker vidéo .webm → sticker animé WhatsApp
+                    stickerBuffer = await makeVideoSticker(buffer)
+                } else {
+                    // Sticker image → webp statique
+                    stickerBuffer = await makeWebpSticker(buffer)
+                }
 
                 await client.sendMessage(remoteJid, {
                     sticker: stickerBuffer,
@@ -181,6 +201,7 @@ export default async function tgstickerCommand(client, message, args) {
 `✅ *PACK TERMINÉ !*
 
 ⸙﹝ ✅ Envoyés : ${success} ﹞✴︎
+⸙﹝ ⏭️ Ignorés : ${skipped} ﹞✴︎
 ⸙﹝ ❌ Échoués : ${failed} ﹞✴︎
 
 > *© AKANE MD 🌹*` })
