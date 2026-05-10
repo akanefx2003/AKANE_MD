@@ -478,6 +478,11 @@ case 'song': // @cat: media
                     await vocal(client, message)
 
                     break
+case 'tgs': // @cat: media
+    if (args[0]?.toLowerCase() === 'stop') {
+        await tgsticker(client, message, args)
+    }
+    break
 case 'fancy': // @cat: tools 
     await fancy(client, message, args);
     break;
