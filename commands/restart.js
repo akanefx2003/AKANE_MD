@@ -1,43 +1,33 @@
-const CHANNEL_LINK = 'https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R';
-
+// commands/restart.js
 export default async function restartCommand(sock, message) {
-
     try {
-
         const remoteJid = message.key?.remoteJid;
-
         const sender = message.key?.participant || remoteJid;
+        
+        console.log(`📱 Commande .restart reçue de: ${sender}`);
 
-        console.log(`📱 Commande .restart recue de: ${sender}`);
+        const restartMessage = `
+﹝╎🍓 𝐑𝐄𝐒𝐓𝐀𝐑𝐓 ╎˼
+⎔ــﮩ٨ـﮩﮩـ٨ •﹝ 𐰁 🎀 𐰁 ﹞• ٨ـﮩ–ﮩ٨⎔
 
-        const restartMessage = 
+⋆.˚⪩ 𝐒𝐭𝐚𝐭𝐮𝐬 ⪨
+⸙﹝ 🔄 Redémarrage en cours... ﹞✴︎
 
-            "╔════════════╗\n" +
+⋆.˚⪩ 𝐀𝐜𝐭𝐢𝐨𝐧𝐬 ⪨
+⸙﹝ 🧹 Nettoyage du cache ﹞✴︎
 
-            "  *RESTART*  \n" +
+𖤍⋅‏ ┈─━ ━━ ━ • ˹ ୨ৎ ˼ • ━ ━━ ━─┈ ⋅𖤍
 
-            "╚════════════╝\n\n" +
-
-            "🔄 *Redemarrage en cours...*\n\n" +
-
-            "⏳ *Quelques secondes*\n\n" +
-
-            "> *DEV : 🍁AKANE KUROGAWAʕ◕ᴥ◕ʔ🌹*\n\n" +
-
-            `*VOIR LA CHAINE* 🔥\n${CHANNEL_LINK}`;
+> *© AKANE MD 🌹*`;
 
         await sock.sendMessage(remoteJid, { text: restartMessage });
-
+        
         await new Promise(resolve => setTimeout(resolve, 2000));
-
-        console.log('🔄 Redemarrage du bot...');
-
+        
+        console.log('🔄 Redémarrage du bot...');
         process.exit(0);
-
+        
     } catch (error) {
-
         console.error('Erreur restartCommand:', error);
-
     }
-
 }
