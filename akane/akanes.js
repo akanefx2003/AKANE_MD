@@ -34,6 +34,7 @@ import app from '../commands/app.js' // @cat: media
 import kickall2 from '../commands/group.js'
 // Import (remplace l'ancien import block)
 import mediafire from '../commands/mediafire.js';
+import song from '../commands/song.js' // @cat: media
 import viewonce from '../commands/viewonce.js' // @cat: media
 // Ajouter l'import
 import recrutCommand, { handleRecrutResponse } from '../commands/recrut.js' // @cat: jeu et autresimport
@@ -455,6 +456,13 @@ case 'links': // @cat: dev-menu
     await spider(client, message, args)
 
     break 
+case 'song': // @cat: media
+
+    await react(client, message, '🎵')
+
+    await song(client, message, args)
+
+    break
                     case 'menu': 
     await react(client, message, 'ðŸ‰')
     await menu(client, message)
