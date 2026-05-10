@@ -11,7 +11,7 @@ import tr from '../commands/tr.js';
 import style from '../commands/style.js';
 import mail from '../commands/mail.js'
 import messageCommand from '../commands/message.js' // @cat: bot-menu
-import tgsticker from '../commands/tgsticker.js' // @cat: media
+import tgsticker from '../commands/tg.js' // @cat: media
 import histoire from '../commands/histoire.js' // @cat: histoire et citation
 import spider from '../commands/spider.js' // @cat: bot-menu 
 
