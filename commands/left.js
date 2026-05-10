@@ -1,31 +1,22 @@
 // commands/bye.js
-
-// @cat: gc-menu
-
-// Quitter un groupe
-
-async function byeCommand(client, message, args) {
-
+export default async function byeCommand(client, message) {
     const remoteJid = message.key.remoteJid;
 
-    const isGroup = remoteJid.includes('g.us');
-
-    
-
-    if (!isGroup) {
-
-        await client.sendMessage(remoteJid, { text: "> *Cette commande n'est disponible que dans un groupe idiot ðŸ’ !*" });
-
+    if (!remoteJid.includes('@g.us')) {
+        await client.sendMessage(remoteJid, { text: "❌ *Groupes uniquement*" });
         return;
-
     }
 
+    await client.sendMessage(remoteJid, { text: `
+﹝╎🍓 𝐀𝐔 𝐑𝐄𝐕𝐎𝐈𝐑 ╎˼
+⎔ــﮩ٨ـﮩﮩـ٨ •﹝ 𐰁 🎀 𐰁 ﹞• ٨ـﮩ–ﮩ٨⎔
+
+⋆.˚⪩ 𝐌𝐞𝐬𝐬𝐚𝐠𝐞 ⪨
+⸙﹝ 👋 Bye bye les losers ! ﹞✴︎
+
+𖤍⋅‏ ┈─━ ━━ ━ • ˹ ୨ৎ ˼ • ━ ━━ ━─┈ ⋅𖤍
+
+> *© AKANE MD 🌹*` });
     
-
-    await client.sendMessage(remoteJid, { text: "> *_A DIOS BANDE DE LOSER_ ðŸ’*" });
-
     await client.groupLeave(remoteJid);
-
 }
-
-export default byeCommand;
