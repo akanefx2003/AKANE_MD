@@ -1,10 +1,15 @@
 // commands/song.js
+// @cat: media
+
 import yts from 'yt-search'
 import axios from 'axios'
 
 const RAPIDAPI_KEY = '0a52dff07cmshdf55b3f391aee31p1f7cd5jsn44e49ccea12f'
+const CHANNEL_LINK = 'https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R'
+const CHANNEL_NAME = '🍁𝐃𝐎̈𝐎̃𝐌 𝐒𝐓𝐈𝐂𝐊𝐄𝐑𝐒 🌹'
 
 async function downloadMp3(videoId) {
+
     const response = await axios.get('https://youtube-mp36.p.rapidapi.com/dl', {
         params: { id: videoId },
         headers: {
@@ -29,6 +34,7 @@ async function downloadMp3(videoId) {
 }
 
 export default async function songCommand(client, message, args) {
+
     const remoteJid = message.key.remoteJid
     const query = args.join(' ').trim()
 
@@ -43,6 +49,7 @@ export default async function songCommand(client, message, args) {
 ⋆.˚⪩ 𝐄𝐱𝐞𝐦𝐩𝐥𝐞𝐬 ⪨
 ⸙﹝ song Wally Seck ﹞✴︎
 ⸙﹝ song opening oshi no ko ﹞✴︎
+⸙﹝ song faded alan walker ﹞✴︎
 
 𖤍⋅‏ ┈─━ ━━ ━ • ˹ ୨ৎ ˼ • ━ ━━ ━─┈ ⋅𖤍
 
@@ -61,36 +68,90 @@ export default async function songCommand(client, message, args) {
     }
 
     if (!video) {
-        await client.sendMessage(remoteJid, { text: `❌ *Aucune musique trouvée*` })
+        await client.sendMessage(remoteJid, { text: `❌ *Aucune musique trouvée pour :* _"${query}"_\n\n> *© AKANE MD 🌹*` })
         return
     }
 
     const videoId = video.videoId || video.url?.split('v=')[1]?.split('&')[0]
 
     if (!videoId) {
-        await client.sendMessage(remoteJid, { text: `❌ *Impossible de récupérer l'ID*` })
+        await client.sendMessage(remoteJid, { text: `❌ *Impossible de récupérer l'ID*\n\n> *© AKANE MD 🌹*` })
         return
     }
 
+    // Envoyer miniature avec infos + signature
     try {
         await client.sendMessage(remoteJid, {
             image: { url: video.thumbnail },
-            caption: `🎵 *${video.title}*\n⏱️ ${video.timestamp}\n\n⬇️ Téléchargement...`
+            caption:
+`﹝╎🎵 𝐌𝐮𝐬𝐢𝐪𝐮𝐞 𝐭𝐫𝐨𝐮𝐯𝐞́𝐞 ╎˼
+⎔ــﮩ٨ـﮩﮩـ٨ •﹝ 𐰁 🎀 𐰁 ﹞• ٨ـﮩ–ﮩ٨⎔
+
+⋆.˚⪩ 𝐓𝐢𝐭𝐫𝐞 ⪨
+⸙﹝ ${video.title} ﹞✴︎
+
+⋆.˚⪩ 𝐃𝐮𝐫𝐞́𝐞 ⪨
+⸙﹝ ${video.timestamp} ﹞✴︎
+
+⋆.˚⪩ 𝐕𝐮𝐞𝐬 ⪨
+⸙﹝ ${Number(video.views).toLocaleString()} ﹞✴︎
+
+𖤍⋅‏ ┈─━ ━━ ━ • ˹ ୨ৎ ˼ • ━ ━━ ━─┈ ⋅𖤍
+
+⬇️ _Téléchargement en cours..._
+
+> *© AKANE MD 🌹*`
         })
+    } catch (e) {
+        await client.sendMessage(remoteJid, { text: `🎵 *${video.title}*\n⏱️ ${video.timestamp}\n\n⬇️ _Téléchargement..._\n\n> *© AKANE MD 🌹*` })
+    }
+
+    try {
 
         const dl = await downloadMp3(videoId)
 
+        // Essai 1 : télécharger en buffer via RapidAPI directement
+        try {
+            const audioRes = await axios.get(dl.url, {
+                responseType: 'arraybuffer',
+                timeout: 60000,
+                headers: {
+                    'User-Agent': 'Mozilla/5.0',
+                    'x-rapidapi-key': RAPIDAPI_KEY,
+                    'x-rapidapi-host': 'youtube-mp36.p.rapidapi.com'
+                }
+            })
+            const audioBuffer = Buffer.from(audioRes.data)
+            await client.sendMessage(remoteJid, {
+                audio: audioBuffer,
+                mimetype: 'audio/mpeg',
+                ptt: false,
+                fileName: `${video.title}.mp3`
+            })
+            console.log('✅ Song envoyé (buffer) :', video.title)
+            return
+        } catch (bufferErr) {
+            console.error('[SONG BUFFER]', bufferErr.message)
+        }
+
+        // Essai 2 : envoyer via URL directement
         await client.sendMessage(remoteJid, {
             audio: { url: dl.url },
             mimetype: 'audio/mpeg',
             ptt: false,
             fileName: `${video.title}.mp3`
         })
-
-        console.log('✅ Song envoyé :', video.title)
+        console.log('✅ Song envoyé (url) :', video.title)
 
     } catch (e) {
+
         console.error('[SONG ERROR]', e.message)
-        await client.sendMessage(remoteJid, { text: `❌ *Téléchargement impossible*` })
+
+        await client.sendMessage(remoteJid, { text:
+`❌ *Téléchargement impossible*
+
+⸙﹝ _"${video.title}"_ ﹞✴︎
+
+> *© AKANE MD 🌹*` })
     }
 }
