@@ -1,104 +1,184 @@
+// commands/gpt.js
+
 import axios from 'axios';
 
-const CHANNEL_LINK = 'https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R';
+// Style BIBLE intégré
 
-// Messages d'attente neutres
+function styleBible(text) {
 
-const waitingMessages = [
+    if (text.includes('http://') || text.includes('https://')) {
 
-    "🤔 *Réflexion en cours...*",
+        const parts = text.split(/(https?:\/\/[^\s]+)/g);
 
-    "💭 *Je réfléchis à ta question...*",
+        let result = '';
 
-    "🔄 *Traitement en cours...*",
+        for (const part of parts) {
 
-    "⚙️ *Analyse de ta demande...*",
+            if (part.match(/^https?:\/\//)) {
 
-    "📝 *Préparation de la réponse...*",
+                result += part;
 
-    "🧠 *Je cherche la meilleure réponse...*",
+            } else {
 
-    "✨ *Un instant, s'il te plaît...*",
+                result += part.split('').map(char => styleMap[char] || char).join('');
 
-    "🔍 *Je consulte mes connaissances...*"
-
-];
-
-function convertToBold(text) {
-
-    const boldMap = {
-
-        'A': '𝗔', 'B': '𝗕', 'C': '𝗖', 'D': '𝗗', 'E': '𝗘', 'F': '𝗙', 'G': '𝗚',
-
-        'H': '𝗛', 'I': '𝗜', 'J': '𝗝', 'K': '𝗞', 'L': '𝗟', 'M': '𝗠', 'N': '𝗡',
-
-        'O': '𝗢', 'P': '𝗣', 'Q': '𝗤', 'R': '𝗥', 'S': '𝗦', 'T': '𝗧', 'U': '𝗨',
-
-        'V': '𝗩', 'W': '𝗪', 'X': '𝗫', 'Y': '𝗬', 'Z': '𝗭',
-
-        'a': '𝗮', 'b': '𝗯', 'c': '𝗰', 'd': '𝗱', 'e': '𝗲', 'f': '𝗳', 'g': '𝗴',
-
-        'h': '𝗵', 'i': '𝗶', 'j': '𝗷', 'k': '𝗸', 'l': '𝗹', 'm': '𝗺', 'n': '𝗻',
-
-        'o': '𝗼', 'p': '𝗽', 'q': '𝗾', 'r': '𝗿', 's': '𝘀', 't': '𝘁', 'u': '𝘂',
-
-        'v': '𝘃', 'w': '𝘄', 'x': '𝘅', 'y': '𝘆', 'z': '𝘇',
-
-        '0': '𝟬', '1': '𝟭', '2': '𝟮', '3': '𝟯', '4': '𝟰', '5': '𝟱',
-
-        '6': '𝟲', '7': '𝟳', '8': '𝟴', '9': '𝟵'
-
-    };
-
-    return text.split('').map(char => boldMap[char] || char).join('');
-
-}
-
-function limitResponse(text, maxLength = 1000) {
-
-    if (text.length <= maxLength) return text;
-
-    return text.substring(0, maxLength) + '... [coupe]';
-
-}
-
-// Fonction pour appeler l'API ChatGPT gratuite
-
-async function callChatGPT(prompt, model = 'chatgpt4') {
-
-    const model_list = {
-
-        chatgpt4: {
-
-            api: 'https://stablediffusion.fr/gpt4/predict2',
-
-            referer: 'https://stablediffusion.fr/chatgpt4'
-
-        },
-
-        chatgpt3: {
-
-            api: 'https://stablediffusion.fr/gpt3/predict',
-
-            referer: 'https://stablediffusion.fr/chatgpt3'
+            }
 
         }
 
-    };
+        return result;
 
-    const selectedModel = model_list[model];
+    }
 
-    
+    return text.split('').map(char => styleMap[char] || char).join('');
+
+}
+
+const styleMap = {
+
+    'a': '𝗮', 'b': '𝗯', 'c': '𝗰', 'd': '𝗱', 'e': '𝗲', 'f': '𝗳', 'g': '𝗴',
+
+    'h': '𝗵', 'i': '𝗶', 'j': '𝗷', 'k': '𝗸', 'l': '𝗹', 'm': '𝗺', 'n': '𝗻',
+
+    'o': '𝗼', 'p': '𝗽', 'q': '𝗾', 'r': '𝗿', 's': '𝘀', 't': '𝘁', 'u': '𝘂',
+
+    'v': '𝘃', 'w': '𝘄', 'x': '𝘅', 'y': '𝘆', 'z': '𝘇',
+
+    'A': '𝗔', 'B': '𝗕', 'C': '𝗖', 'D': '𝗗', 'E': '𝗘', 'F': '𝗙', 'G': '𝗚',
+
+    'H': '𝗛', 'I': '𝗜', 'J': '𝗝', 'K': '𝗞', 'L': '𝗟', 'M': '𝗠', 'N': '𝗡',
+
+    'O': '𝗢', 'P': '𝗣', 'Q': '𝗤', 'R': '𝗥', 'S': '𝗦', 'T': '𝗧', 'U': '𝗨',
+
+    'V': '𝗩', 'W': '𝗪', 'X': '𝗫', 'Y': '𝗬', 'Z': '𝗭',
+
+    '0': '𝟬', '1': '𝟭', '2': '𝟮', '3': '𝟯', '4': '𝟰',
+
+    '5': '𝟱', '6': '𝟲', '7': '𝟳', '8': '𝟴', '9': '𝟵',
+
+    'é': '𝗲́', 'è': '𝗲̀', 'ê': '𝗲̂', 'ë': '𝗲̈',
+
+    'à': '𝗮̀', 'â': '𝗮̂', 'ç': '𝗰̧', 'ô': '𝗼̂',
+
+    ' ': ' ', '.': '.', ',': ',', '!': '!', '?': '?', 
+
+    ':': ':', '-': '-', '_': '_', '/': '/', '\\': '\\',
+
+    '(': '(', ')': ')'
+
+};
+
+const waitingMessages = [
+
+    "🤔 Réflexion...",
+
+    "💭 Je réfléchis...",
+
+    "🔄 Traitement...",
+
+    "⚙️ Analyse..."
+
+];
+
+// Stockage de l'historique
+
+const userHistories = new Map();
+
+// Index pour alterner entre les APIs
+
+let currentApiIndex = 0;
+
+// Liste des APIs stablediffusion
+
+const stablediffusionAPIs = [
+
+    {
+
+        name: 'stablediffusion-fr-1',
+
+        url: 'https://stablediffusion.fr/gpt4/predict2',
+
+        referer: 'https://stablediffusion.fr/chatgpt4'
+
+    },
+
+    {
+
+        name: 'stablediffusion-fr-2',
+
+        url: 'https://stablediffusion.fr/gpt4/predict',
+
+        referer: 'https://stablediffusion.fr/chatgpt4'
+
+    },
+
+    {
+
+        name: 'stablediffusion-fr-3',
+
+        url: 'https://stablediffusion.fr/gpt3/predict2',
+
+        referer: 'https://stablediffusion.fr/chatgpt3'
+
+    },
+
+    {
+
+        name: 'stablediffusion-fr-4',
+
+        url: 'https://stablediffusion.fr/gpt3/predict',
+
+        referer: 'https://stablediffusion.fr/chatgpt3'
+
+    }
+
+];
+
+// APIs de secours
+
+const backupAPIs = [
+
+    {
+
+        name: 'blackbox',
+
+        url: 'https://www.blackbox.ai/api/chat',
+
+        method: 'post',
+
+        body: (prompt) => ({ messages: [{ role: "user", content: prompt }], model: "llama-3.1-8b" }),
+
+        extract: (data) => typeof data === 'string' && data.length > 10 ? data : null
+
+    },
+
+    {
+
+        name: 'vyro',
+
+        url: 'https://api.vyro.ai/v1/gpt4o',
+
+        method: 'get',
+
+        params: (prompt) => ({ prompt: prompt }),
+
+        extract: (data) => data.response || null
+
+    }
+
+];
+
+async function callStableDiffusion(prompt, api) {
 
     try {
 
-        const refererResp = await axios.get(selectedModel.referer, { 
+        const refererResp = await axios.get(api.referer, { 
 
             timeout: 8000,
 
             headers: {
 
-                'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36'
+                'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36'
 
             }
 
@@ -110,11 +190,13 @@ async function callChatGPT(prompt, model = 'chatgpt4') {
 
         const cookieHeader = Array.isArray(setCookie) ? setCookie.join('; ') : undefined;
 
+        
+
         const { data } = await axios.post(
 
-            selectedModel.api,
+            api.url,
 
-            { prompt },
+            { prompt: prompt },
 
             {
 
@@ -126,11 +208,11 @@ async function callChatGPT(prompt, model = 'chatgpt4') {
 
                     'origin': 'https://stablediffusion.fr',
 
-                    'referer': selectedModel.referer,
+                    'referer': api.referer,
 
                     ...(cookieHeader ? { 'cookie': cookieHeader } : {}),
 
-                    'user-agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Mobile Safari/537.36'
+                    'user-agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36'
 
                 },
 
@@ -140,25 +222,275 @@ async function callChatGPT(prompt, model = 'chatgpt4') {
 
         );
 
-        if (data && data.message) {
+        
+
+        if (data && data.message && data.message.length > 5) {
 
             return data.message;
 
         }
 
-        throw new Error('Réponse invalide de l\'API');
-
-        
+        throw new Error('Réponse invalide');
 
     } catch (error) {
 
-        console.error('Erreur callChatGPT:', error.message);
+        console.log(`❌ [GPT] ${api.name}: ${error.message}`);
 
-        throw error;
+        return null;
 
     }
 
 }
+
+async function callBackupAPI(prompt, api) {
+
+    try {
+
+        let response;
+
+        if (api.method === 'post') {
+
+            response = await axios.post(api.url, api.body(prompt), {
+
+                timeout: 20000,
+
+                headers: {
+
+                    'Content-Type': 'application/json',
+
+                    'User-Agent': 'Mozilla/5.0'
+
+                }
+
+            });
+
+        } else {
+
+            response = await axios.get(api.url, {
+
+                params: api.params(prompt),
+
+                timeout: 20000,
+
+                headers: { 'User-Agent': 'Mozilla/5.0' }
+
+            });
+
+        }
+
+        
+
+        const reply = api.extract(response.data);
+
+        if (reply && reply.length > 10 && !reply.includes('<html>')) {
+
+            return reply;
+
+        }
+
+        return null;
+
+    } catch (error) {
+
+        console.log(`❌ [GPT] backup ${api.name}: ${error.message}`);
+
+        return null;
+
+    }
+
+}
+
+async function callGPT(prompt) {
+
+    let attempts = 0;
+
+    const maxAttempts = stablediffusionAPIs.length + backupAPIs.length;
+
+    
+
+    while (attempts < maxAttempts) {
+
+        const sdApi = stablediffusionAPIs[currentApiIndex % stablediffusionAPIs.length];
+
+        currentApiIndex++;
+
+        
+
+        console.log(`🔄 [GPT] Tentative ${sdApi.name}`);
+
+        let reply = await callStableDiffusion(prompt, sdApi);
+
+        
+
+        if (reply && !reply.includes('<html>') && !reply.includes('<body')) {
+
+            console.log(`✅ [GPT] Succès avec ${sdApi.name}`);
+
+            return reply;
+
+        }
+
+        
+
+        attempts++;
+
+        
+
+        if (attempts >= stablediffusionAPIs.length) {
+
+            for (const backup of backupAPIs) {
+
+                console.log(`🔄 [GPT] Tentative backup: ${backup.name}`);
+
+                reply = await callBackupAPI(prompt, backup);
+
+                if (reply) {
+
+                    console.log(`✅ [GPT] Succès avec backup: ${backup.name}`);
+
+                    return reply;
+
+                }
+
+                attempts++;
+
+            }
+
+        }
+
+    }
+
+    
+
+    throw new Error('Toutes les API sont indisponibles');
+
+}
+
+// Nettoyage historique
+
+setInterval(() => {
+
+    const now = Date.now();
+
+    for (const [userId, data] of userHistories.entries()) {
+
+        if (now - data.lastActivity > 3600000) {
+
+            userHistories.delete(userId);
+
+        }
+
+    }
+
+}, 600000);
+
+// ==================== VOIR HISTORIQUE ====================
+
+export async function showGptHistory(client, message) {
+
+    const senderId = message.key?.participant || message.key?.remoteJid;
+
+    const userHistory = userHistories.get(senderId);
+
+    
+
+    if (!userHistory || userHistory.messages.length === 0) {
+
+        const noHistoryMessage = styleBible(
+
+`╭─❍ *📜 HISTORIQUE GPT*
+
+│
+
+│ 📭 Aucun historique trouvé.
+
+│
+
+│ 💡 Commence à discuter avec .gpt
+
+│
+
+╰──────────────────`
+
+        );
+
+        return await client.sendMessage(message.key.remoteJid, { text: noHistoryMessage });
+
+    }
+
+    
+
+    let historyText = `╭─❍ *📜 HISTORIQUE GPT*
+
+│
+
+│ 👤 ${userHistory.messages.length} messages échangés
+
+│ ⏰ Dernière activité: ${Math.floor((Date.now() - userHistory.lastActivity) / 60000)} min
+
+│
+
+├─❍ *💬 CONVERSATION :*
+
+│
+
+`;
+
+    
+
+    for (let i = 0; i < userHistory.messages.length; i++) {
+
+        const msg = userHistory.messages[i];
+
+        if (msg.role === 'user') {
+
+            historyText += `│ 👤 MOI : ${msg.content.substring(0, 50)}${msg.content.length > 50 ? '...' : ''}\n│\n`;
+
+        } else {
+
+            historyText += `│ 🤖 GPT : ${msg.content.substring(0, 50)}${msg.content.length > 50 ? '...' : ''}\n│\n`;
+
+        }
+
+    }
+
+    
+
+    historyText += `╰──────────────────`;
+
+    
+
+    const styledHistory = styleBible(historyText);
+
+    await client.sendMessage(message.key.remoteJid, { text: styledHistory });
+
+}
+
+// ==================== RESET HISTORIQUE ====================
+
+export async function resetHistory(client, message) {
+
+    const senderId = message.key?.participant || message.key?.remoteJid;
+
+    if (userHistories.has(senderId)) {
+
+        userHistories.delete(senderId);
+
+        const resetMessage = styleBible(`✅ *Historique GPT réinitialisé !*`);
+
+        await client.sendMessage(message.key.remoteJid, { text: resetMessage });
+
+    } else {
+
+        const noHistoryMessage = styleBible(`ℹ️ *Aucun historique GPT à réinitialiser.*`);
+
+        await client.sendMessage(message.key.remoteJid, { text: noHistoryMessage });
+
+    }
+
+}
+
+// ==================== COMMANDE PRINCIPALE ====================
 
 export default async function gptCommand(sock, message) {
 
@@ -166,124 +498,133 @@ export default async function gptCommand(sock, message) {
 
         const remoteJid = message.key?.remoteJid;
 
+        const senderId = message.key?.participant || message.key?.remoteJid;
+
         const messageBody = message.message?.extendedTextMessage?.text || message.message?.conversation || '';
 
-        const args = messageBody.slice(4).trim(); // pour .gpt (4 caractères)
+        const args = messageBody.slice(4).trim();
 
         if (!args) {
 
             const helpMessage = 
 
-                "╔══════════════════╗\n" +
+`╭─❍ *🤖 GPT - IA*
 
-                "     *GPT - IA*     \n" +
+│
 
-                "╚══════════════════╝\n\n" +
+│ 📌 .gpt [ta question]
 
-                "🤖 *Assistant IA - Posez vos questions !*\n\n" +
+│
 
-                "📌 `.gpt [votre question]`\n\n" +
+│ 📝 Exemple:
 
-                "📝 *Exemples:*\n" +
+│   .gpt Comment créer un bot ?
 
-                "`.gpt Comment créer un bot WhatsApp ?`\n" +
+│
 
-                "`.gpt Explique-moi la programmation`\n" +
+│ 💡 Le bot se souvient de toi !
 
-                "`.gpt C'est quoi l'intelligence artificielle ?`\n\n" +
+│
 
-                "> *DEV : 🍁AKANE KUROGAWAʕ◕ᴥ◕ʔ🌹*\n\n" +
+╰──────────────────`;
 
-                `*VOIR LA CHAINE* 🔥\n${CHANNEL_LINK}`;
+            
 
-            return await sock.sendMessage(remoteJid, { text: helpMessage });
+            const styledHelp = styleBible(helpMessage);
+
+            return await sock.sendMessage(remoteJid, { text: styledHelp });
 
         }
 
         const randomWaiting = waitingMessages[Math.floor(Math.random() * waitingMessages.length)];
 
-        await sock.sendMessage(remoteJid, { text: randomWaiting });
+        const styledWaiting = styleBible(`⏳ ${randomWaiting}`);
 
-        // Prompt pour GPT : neutre, professionnel, utile
+        await sock.sendMessage(remoteJid, { text: styledWaiting });
 
-        const enhancedPrompt = `Tu es un assistant IA utile, professionnel et bienveillant.
+        // Récupérer l'historique
 
-Tu réponds de manière claire, précise et éducative.
+        let userHistory = userHistories.get(senderId);
 
-Tu utilises un langage formel mais accessible, tu vouvoies.
+        if (!userHistory) {
 
-Tu donnes des réponses complètes et bien structurées.
+            userHistory = { messages: [], lastActivity: Date.now() };
 
-Tu es patient et toujours prêt à aider.
-TU répond en 3 à 6 ligne plus si la réponse nécessite plus de lignes.
+        }
 
-Tu réponds en français.
+        userHistory.lastActivity = Date.now();
 
-Question : ${args}`;
+        userHistory.messages.push({ role: 'user', content: args });
 
-        let reply = null;
+        if (userHistory.messages.length > 10) {
 
-        let lastError = null;
+            userHistory.messages = userHistory.messages.slice(-10);
 
-        const models = ['chatgpt4', 'chatgpt3'];
+        }
 
-        
+        // Construire le prompt avec historique
 
-        for (const model of models) {
+        let prompt = '';
 
-            try {
+        for (const msg of userHistory.messages.slice(0, -1)) {
 
-                console.log(`🤖 [gpt] Tentative avec ${model}...`);
+            if (msg.role === 'user') {
 
-                reply = await callChatGPT(enhancedPrompt, model);
+                prompt += `Utilisateur: ${msg.content}\n`;
 
-                if (reply) {
+            } else {
 
-                    console.log(`✅ [gpt] Succès avec ${model}`);
-
-                    break;
-
-                }
-
-            } catch (err) {
-
-                console.log(`❌ [gpt] Échec avec ${model}: ${err.message}`);
-
-                lastError = err;
+                prompt += `Assistant: ${msg.content}\n`;
 
             }
 
         }
 
-        if (!reply) {
+        prompt += `Utilisateur: ${args}\nAssistant: Réponds de manière claire et naturelle en français.`;
 
-            throw lastError || new Error('Toutes les tentatives ont échoué');
+        let reply = await callGPT(prompt);
+
+        
+
+        if (!reply || reply.length < 2 || reply.includes('<html>')) {
+
+            throw new Error('Réponse invalide');
 
         }
 
-        // Nettoyer la réponse
+        reply = reply.replace(/<[^>]*>/g, '').replace(/&[a-z]+;/g, '');
 
-        reply = reply.replace(/\n{3,}/g, '\n\n').trim();
+        reply = reply.replace(/\n+/g, '\n').trim();
 
-        const limitedReply = limitResponse(reply, 1000);
+        
 
-        const boldReply = convertToBold(limitedReply);
+        if (reply.length > 1000) {
+
+            reply = reply.substring(0, 997) + '...';
+
+        }
+
+        userHistory.messages.push({ role: 'assistant', content: reply });
+
+        userHistories.set(senderId, userHistory);
 
         const finalMessage = 
 
-            "╔══════════════════╗\n" +
+`╭─❍ *🤖 GPT - IA*
 
-            "     *GPT - IA*     \n" +
+│
 
-            "╚══════════════════╝\n\n" +
+│ 🤖 ${reply}
 
-            `🤖 *ASSISTANT :*\n\n${boldReply}\n\n` +
+│
 
-            "> *DEV : 🍁AKANE KUROGAWAʕ◕ᴥ◕ʔ🌹*\n\n" +
+╰──────────────────`;
 
-            `*VOIR LA CHAINE* 🔥\n${CHANNEL_LINK}`;
+        
 
-        await sock.sendMessage(remoteJid, { text: finalMessage });
+        const styledMessage = styleBible(finalMessage);
+
+        await sock.sendMessage(remoteJid, { text: styledMessage });
 
     } catch (error) {
 
@@ -295,19 +636,25 @@ Question : ${args}`;
 
             const errorMessage = 
 
-                "╔══════════════════╗\n" +
+`╭─❍ *🤖 GPT - IA*
 
-                "       *ERREUR*       \n" +
+│
 
-                "╚══════════════════╝\n\n" +
+│ ⚠️ API momentanément indisponible
 
-                "❌ *Désolé, l'API ne répond pas. Veuillez réessayer plus tard.*\n\n" +
+│
 
-                "> *DEV : 🍁AKANE KUROGAWAʕ◕ᴥ◕ʔ🌹*\n\n" +
+│ 🔄 Réessaie dans 30 secondes
 
-                `*VOIR LA CHAINE* 🔥\n${CHANNEL_LINK}`;
+│
 
-            await sock.sendMessage(remoteJid, { text: errorMessage });
+╰──────────────────`;
+
+            
+
+            const styledError = styleBible(errorMessage);
+
+            await sock.sendMessage(remoteJid, { text: styledError });
 
         }
 
