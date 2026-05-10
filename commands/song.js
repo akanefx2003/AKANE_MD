@@ -3,7 +3,6 @@ import yts from 'yt-search'
 import axios from 'axios'
 
 const RAPIDAPI_KEY = '0a52dff07cmshdf55b3f391aee31p1f7cd5jsn44e49ccea12f'
-const CHANNEL_LINK = 'https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R'
 
 async function downloadMp3(videoId) {
     const response = await axios.get('https://youtube-mp36.p.rapidapi.com/dl', {
