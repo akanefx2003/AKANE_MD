@@ -8,8 +8,6 @@ const RAPIDAPI_KEY = '0a52dff07cmshdf55b3f391aee31p1f7cd5jsn44e49ccea12f'
 const CHANNEL_LINK = 'https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R'
 const CHANNEL_NAME = '🍁𝐃𝐎̈𝐎̃𝐌 𝐒𝐓𝐈𝐂𝐊𝐄𝐑𝐒 🌹'
 
-// ========== DOWNLOAD MP3 VIA youtube-mp36 ==========
-
 async function downloadMp3(videoId) {
 
     const response = await axios.get('https://youtube-mp36.p.rapidapi.com/dl', {
@@ -22,22 +20,18 @@ async function downloadMp3(videoId) {
     })
 
     const data = response.data
-    console.log('[SONG MP36 DEBUG]', JSON.stringify(data).substring(0, 300))
 
     if (data?.status === 'ok' && data?.link) {
         return { url: data.link, title: data.title }
     }
 
-    // Si en cours de conversion, attendre et réessayer
     if (data?.status === 'processing') {
         await new Promise(r => setTimeout(r, 5000))
         return await downloadMp3(videoId)
     }
 
-    throw new Error('Échec: ' + (data?.msg || data?.status || JSON.stringify(data)))
+    throw new Error('Échec: ' + (data?.msg || data?.status))
 }
-
-// ========== COMMANDE PRINCIPALE ==========
 
 export default async function songCommand(client, message, args) {
 
@@ -46,25 +40,20 @@ export default async function songCommand(client, message, args) {
 
     if (!query) {
         await client.sendMessage(remoteJid, { text:
-`🎵 *SONG - TÉLÉCHARGER UNE MUSIQUE*
+`﹝╎🎵 𝐒𝐎𝐍𝐆 ╎˼
+⎔ــﮩ٨ـﮩﮩـ٨ •﹝ 𐰁 🎀 𐰁 ﹞• ٨ـﮩ–ﮩ٨⎔
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⋆.˚⪩ 𝐔𝐭𝐢𝐥𝐢𝐬𝐚𝐭𝐢𝐨𝐧 ⪨
+⸙﹝ song [titre ou artiste] ﹞✴︎
 
-📝 *UTILISATION :*
+⋆.˚⪩ 𝐄𝐱𝐞𝐦𝐩𝐥𝐞𝐬 ⪨
+⸙﹝ song Wally Seck ﹞✴︎
+⸙﹝ song opening oshi no ko ﹞✴︎
+⸙﹝ song faded alan walker ﹞✴︎
 
-• *song [titre ou artiste]*
+𖤍⋅‏ ┈─━ ━━ ━ • ˹ ୨ৎ ˼ • ━ ━━ ━─┈ ⋅𖤍
 
-💡 *EXEMPLES :*
-
-• *song Wally Seck*
-
-• *song opening oshi no ko*
-
-• *song faded alan walker*
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-> *DEV : 🍁AKANE KUROGAWA🌹*` })
+> *© AKANE MD 🌹*` })
         return
     }
 
@@ -79,59 +68,55 @@ export default async function songCommand(client, message, args) {
     }
 
     if (!video) {
-        await client.sendMessage(remoteJid, { text: `❌ *Aucune musique trouvée pour :* _"${query}"_` })
+        await client.sendMessage(remoteJid, { text: `❌ *Aucune musique trouvée pour :* _"${query}"_\n\n> *© AKANE MD 🌹*` })
         return
     }
 
     const videoId = video.videoId || video.url?.split('v=')[1]?.split('&')[0]
 
     if (!videoId) {
-        await client.sendMessage(remoteJid, { text: `❌ *Impossible de récupérer l'ID*` })
+        await client.sendMessage(remoteJid, { text: `❌ *Impossible de récupérer l'ID*\n\n> *© AKANE MD 🌹*` })
         return
     }
 
+    // Envoyer miniature avec infos + signature
     try {
         await client.sendMessage(remoteJid, {
             image: { url: video.thumbnail },
             caption:
-`🎵 *${video.title}*
+`﹝╎🎵 𝐌𝐮𝐬𝐢𝐪𝐮𝐞 𝐭𝐫𝐨𝐮𝐯𝐞́𝐞 ╎˼
+⎔ــﮩ٨ـﮩﮩـ٨ •﹝ 𐰁 🎀 𐰁 ﹞• ٨ـﮩ–ﮩ٨⎔
 
-⏱️ *Durée :* ${video.timestamp}
-👀 *Vues :* ${Number(video.views).toLocaleString()}
+⋆.˚⪩ 𝐓𝐢𝐭𝐫𝐞 ⪨
+⸙﹝ ${video.title} ﹞✴︎
 
-⬇️ _Téléchargement en cours..._`
+⋆.˚⪩ 𝐃𝐮𝐫𝐞́𝐞 ⪨
+⸙﹝ ${video.timestamp} ﹞✴︎
+
+⋆.˚⪩ 𝐕𝐮𝐞𝐬 ⪨
+⸙﹝ ${Number(video.views).toLocaleString()} ﹞✴︎
+
+𖤍⋅‏ ┈─━ ━━ ━ • ˹ ୨ৎ ˼ • ━ ━━ ━─┈ ⋅𖤍
+
+⬇️ _Téléchargement en cours..._
+
+> *© AKANE MD 🌹*`
         })
     } catch (e) {
-        await client.sendMessage(remoteJid, { text: `✅ *Trouvé :* ${video.title}\n⬇️ _Téléchargement..._` })
+        await client.sendMessage(remoteJid, { text: `🎵 *${video.title}*\n⏱️ ${video.timestamp}\n\n⬇️ _Téléchargement..._\n\n> *© AKANE MD 🌹*` })
     }
 
     try {
 
         const dl = await downloadMp3(videoId)
 
+        // Envoyer seulement l'audio, sans message après
         await client.sendMessage(remoteJid, {
             audio: { url: dl.url },
             mimetype: 'audio/mpeg',
             ptt: false,
             fileName: `${video.title}.mp3`
         })
-
-        await client.sendMessage(remoteJid, { text:
-`✅ *MUSIQUE ENVOYÉE !*
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🎵 *${video.title}*
-⏱️ *Durée :* ${video.timestamp}
-🎧 *Format :* MP3
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-📢 *REJOINS MA CHAÎNE* 🔥
-*${CHANNEL_NAME}*
-${CHANNEL_LINK}
-
-> *DEV : 🍁AKANE KUROGAWA🌹*` })
 
         console.log('✅ Song envoyé :', video.title)
 
@@ -142,8 +127,8 @@ ${CHANNEL_LINK}
         await client.sendMessage(remoteJid, { text:
 `❌ *Téléchargement impossible*
 
-😔 _"${video.title}"_
+⸙﹝ _"${video.title}"_ ﹞✴︎
 
-> *DEV : 🍁AKANE KUROGAWA🌹*` })
+> *© AKANE MD 🌹*` })
     }
 }
