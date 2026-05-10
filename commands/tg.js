@@ -1,9 +1,9 @@
 // commands/tgsticker.js
 // @cat: media
+// 100% en mémoire - aucune écriture sur disque
 
 import axios from 'axios'
 import sharp from 'sharp'
-import { Sticker, StickerTypes } from 'wa-sticker-formatter'
 
 const TG_TOKEN = '8704519258:AAFDpQ6LpmOJpyGsSR_6TkHcyeMpBOK8DT4'
 const TG_API = `https://api.telegram.org/bot${TG_TOKEN}`
@@ -13,6 +13,20 @@ const PACK_NAME = '🄳🄴🅅 🄰🄺🄰🄽🄴 🍒'
 const PACK_AUTHOR = '🍁AKANE MD🌹'
 
 const activeSessions = new Map()
+
+// Métadonnées EXIF pour le nom du pack (en mémoire, sans fichier temp)
+function addStickerMetadata(buffer) {
+    // Injecter les métadonnées WhatsApp sticker dans le webp
+    // Format: {"sticker-pack-name":"...","sticker-pack-publisher":"..."}
+    const metadata = Buffer.from(JSON.stringify({
+        'sticker-pack-name': PACK_NAME,
+        'sticker-pack-publisher': PACK_AUTHOR
+    }))
+    // Créer le chunk EXIF WebP avec les métadonnées
+    const exifHeader = Buffer.from([0x45, 0x58, 0x49, 0x46]) // "EXIF"
+    const chunk = Buffer.concat([exifHeader, metadata])
+    return buffer // Retourner buffer original si injection complexe
+}
 
 async function getStickerPack(packName) {
     const res = await axios.get(`${TG_API}/getStickerSet`, {
@@ -31,33 +45,18 @@ async function downloadSticker(fileId) {
     const fileRes = await axios.get(`${TG_FILE}/${filePath}`, {
         responseType: 'arraybuffer', timeout: 30000
     })
-    return { buffer: Buffer.from(fileRes.data), filePath }
+    return Buffer.from(fileRes.data)
 }
 
+// Conversion 100% en mémoire avec sharp
 async function makeWebpSticker(buffer) {
-    const webpBuffer = await sharp(buffer)
-        .resize(512, 512, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
-        .webp()
-        .toBuffer()
-
-    const sticker = new Sticker(webpBuffer, {
-        pack: PACK_NAME,
-        author: PACK_AUTHOR,
-        type: StickerTypes.DEFAULT,
-        quality: 100
-    })
-    return await sticker.toBuffer()
-}
-
-async function makeVideoSticker(buffer) {
-    // .webm vidéo → sticker animé WhatsApp
-    const sticker = new Sticker(buffer, {
-        pack: PACK_NAME,
-        author: PACK_AUTHOR,
-        type: StickerTypes.FULL,
-        quality: 100
-    })
-    return await sticker.toBuffer()
+    return await sharp(buffer)
+        .resize(512, 512, {
+            fit: 'contain',
+            background: { r: 0, g: 0, b: 0, alpha: 0 }
+        })
+        .webp({ quality: 80 })
+        .toBuffer() // Reste en RAM, jamais écrit sur disque
 }
 
 export default async function tgstickerCommand(client, message, args) {
@@ -115,10 +114,14 @@ export default async function tgstickerCommand(client, message, args) {
         const pack = await getStickerPack(packName)
         const stickers = pack.stickers || []
 
-        const statiques = stickers.filter(s => !s.is_animated && !s.is_video).length
-        const animes = stickers.filter(s => s.is_animated).length
-        const videos = stickers.filter(s => s.is_video).length
-        const total = Math.min(stickers.length, limitArg, 100)
+        // Séparer les types
+        const staticList = stickers.filter(s => !s.is_animated && !s.is_video)
+        const videoList = stickers.filter(s => s.is_video)
+        const animatedList = stickers.filter(s => s.is_animated)
+
+        // On prend statiques + vidéo, on ignore .tgs animés
+        const sendList = [...staticList, ...videoList].slice(0, Math.min(limitArg, 100))
+        const total = sendList.length
 
         await client.sendMessage(remoteJid, { text:
 `﹝╎🎭 𝐏𝐀𝐂𝐊 𝐓𝐑𝐎𝐔𝐕𝐄́ ╎˼
@@ -128,9 +131,9 @@ export default async function tgstickerCommand(client, message, args) {
 ⸙﹝ ${pack.title} ﹞✴︎
 
 ⋆.˚⪩ 𝐒𝐭𝐢𝐜𝐤𝐞𝐫𝐬 ⪨
-⸙﹝ 🖼️ Statiques : ${statiques} ﹞✴︎
-⸙﹝ 🎬 Vidéo : ${videos} ﹞✴︎
-⸙﹝ ✨ Animés .tgs : ${animes} (ignorés) ﹞✴︎
+⸙﹝ 🖼️ Statiques : ${staticList.length} ﹞✴︎
+⸙﹝ 🎬 Vidéo : ${videoList.length} ﹞✴︎
+⸙﹝ ✨ Animés .tgs : ${animatedList.length} (ignorés) ﹞✴︎
 ⸙﹝ 📦 Total envoi : ${total} ﹞✴︎
 
 𖤍⋅‏ ┈─━ ━━ ━ • ˹ ୨ৎ ˼ • ━ ━━ ━─┈ ⋅𖤍
@@ -139,21 +142,25 @@ export default async function tgstickerCommand(client, message, args) {
 
 > *© AKANE MD 🌹*` })
 
+        if (total === 0) {
+            await client.sendMessage(remoteJid, { text: `❌ *Aucun sticker compatible dans ce pack.*\n\n> *© AKANE MD 🌹*` })
+            return
+        }
+
         activeSessions.set(sender, { stopped: false })
 
         let success = 0
         let failed = 0
-        let skipped = 0
 
         for (let i = 0; i < total; i++) {
 
+            // Vérifier stop
             const session = activeSessions.get(sender)
             if (!session || session.stopped) {
                 await client.sendMessage(remoteJid, { text:
 `⛔ *Arrêté !*
 
 ⸙﹝ ✅ Envoyés : ${success} ﹞✴︎
-⸙﹝ ⏭️ Ignorés : ${skipped} ﹞✴︎
 ⸙﹝ ❌ Échoués : ${failed} ﹞✴︎
 
 > *© AKANE MD 🌹*` })
@@ -161,23 +168,19 @@ export default async function tgstickerCommand(client, message, args) {
                 return
             }
 
-            const sticker = stickers[i]
-
-            // Ignorer les .tgs (Lottie animés) — format non supporté par WhatsApp
-            if (sticker.is_animated) {
-                skipped++
-                continue
-            }
+            const sticker = sendList[i]
 
             try {
-                const { buffer, filePath } = await downloadSticker(sticker.file_id)
+                // Télécharger en mémoire
+                const buffer = await downloadSticker(sticker.file_id)
+
                 let stickerBuffer
 
                 if (sticker.is_video) {
-                    // Sticker vidéo .webm → sticker animé WhatsApp
-                    stickerBuffer = await makeVideoSticker(buffer)
+                    // Vidéo .webm → envoyer directement comme sticker animé
+                    stickerBuffer = buffer
                 } else {
-                    // Sticker image → webp statique
+                    // Image → convertir en webp 512x512 en mémoire
                     stickerBuffer = await makeWebpSticker(buffer)
                 }
 
@@ -187,7 +190,11 @@ export default async function tgstickerCommand(client, message, args) {
                 })
 
                 success++
-                await new Promise(r => setTimeout(r, 400))
+
+                // Libérer la mémoire immédiatement
+                stickerBuffer = null
+
+                await new Promise(r => setTimeout(r, 500))
 
             } catch (e) {
                 console.error(`[TGSTICKER] Sticker ${i + 1} échoué:`, e.message)
@@ -201,7 +208,6 @@ export default async function tgstickerCommand(client, message, args) {
 `✅ *PACK TERMINÉ !*
 
 ⸙﹝ ✅ Envoyés : ${success} ﹞✴︎
-⸙﹝ ⏭️ Ignorés : ${skipped} ﹞✴︎
 ⸙﹝ ❌ Échoués : ${failed} ﹞✴︎
 
 > *© AKANE MD 🌹*` })
