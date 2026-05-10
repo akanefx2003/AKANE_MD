@@ -554,7 +554,7 @@ case 'alya':
                     await group.kickall2(client, message)
 
                     break 
-case 'tgsticker':
+case 'tg':
     await react(client, message, '🎭')
     await tgsticker(client, message, args)
     break 
