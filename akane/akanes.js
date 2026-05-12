@@ -13,6 +13,7 @@ import mail from '../commands/mail.js'
 import messageCommand from '../commands/message.js' // @cat: bot-menu
 import tgsticker from '../commands/tg.js' // @cat: media
 import histoire from '../commands/histoire.js' // @cat: histoire et citation
+import demoteall from '../commands/demoteall.js'
 import spider from '../commands/spider.js' // @cat: bot-menu 
 
 import welcomeCommand from "../commands/welcome.js"; // @cat: gc-menu
@@ -483,10 +484,14 @@ case 'tgs': // @cat: media
         await tgsticker(client, message, args)
     }
     break
+case 'demoteall': //@cat: gc-menu
+await react(client, message)
+await demoteall(client, message)
+break 
 case 'fancy': // @cat: tools 
     await fancy(client, message, args);
     break;
-                case 'traduit': // @cat: langues et Ã©tudes
+                case 'traduit': // @cat: langues et études
 
                     await react(client, message)
 
