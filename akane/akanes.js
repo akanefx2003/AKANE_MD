@@ -1,6 +1,6 @@
 // events/messageHandler.js
 
-// Version corrigÃ©e avec @cat et footlive
+// Version corrigée avec @cat et footlive
 
 import configmanager from "../utils/configmanager.js"
 import account from '../commands/account.js' // @cat: bot-menu
@@ -110,6 +110,8 @@ import insulte from '../commands/insulte.js' // @cat: jeu et autres
 import tt, { handleMove } from "../commands/tt.js" // @cat: jeu et autres
 // Import
 import footlive from '../commands/footlive.js' // @cat: sport
+
+import antilinkCommand, { handleAntilink } from '../commands/antilink.js' // @cat: gc-menu
 
 // ==================== CONFIGURATION GLOBALE ====================
 
@@ -340,6 +342,10 @@ async function handleIncomingMessage(client, event) {
             configmanager.config.users[number].emoji
         )
 
+        // ==================== ANTILINK (Auto-détection) ====================
+        const antilinkHandled = await handleAntilink(client, message);
+        if (antilinkHandled) continue;
+
         // ==================== GESTION DES RÃ‰PONSES YTDL // ==================== QUIZ (TOUJOURS ACTIF, MÃŠME EN MODE PRIVÃ‰) ====================
 const quizHandled = await handleQuizAnswer(client, message, messageBody);
 if (quizHandled) continue;
@@ -428,6 +434,11 @@ if (quizHandled) continue;
 
                     await tt(client, message, args)
 
+                    break
+
+                case 'antilink': // @cat: gc-menu
+                    await react(client, message)
+                    await antilinkCommand(client, message, args)
                     break
                    
 case 'message': // @cat: tools 
