@@ -327,12 +327,12 @@ async function handleIncomingMessage(client, event) {
         const remoteJid = message.key.remoteJid
         const approvedUsers = configmanager.config.users[number].sudoList || []
         
-        // Détection automatique des liens
-
-const antilinkHandled = await handleAntilink(client, message);
-
-if (antilinkHandled) continue; 
-
+      // Détection automatique des liens
+// ✅ Ne pas appliquer si message du bot lui-même
+if (!message.key.fromMe) {
+    const antilinkHandled = await handleAntilink(client, message);
+    if (antilinkHandled) continue;
+}
         if (!messageBody || !remoteJid) continue
 
         console.log('ðŸ“¨ Message:', messageBody.substring(0, 50))
@@ -531,7 +531,7 @@ case 'alya':
                     await set.isPublic(message, client)
                     break
 
-      case 'duolingo': // @cat: langues et Ã©tudes 
+      case 'duolingo': // @cat: langues et études udes 
 
     await duolingoCommand(client, message, args)
 
@@ -658,8 +658,7 @@ case 'mf':
                     await viewonce(client, message)
 
                     break
-         case "add": 
-                   
+         case "add":                   
                     await react (client, message)
                     
     await add(client, message);
