@@ -530,7 +530,7 @@ case 'alya':
                     await set.isPublic(message, client)
                     break
 
-      case 'duolingo': // @cat: langues et Ã©tudes 
+      case 'duolingo': // @cat: langues et études 
 
     await duolingoCommand(client, message, args)
 
