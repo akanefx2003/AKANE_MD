@@ -24,6 +24,7 @@ import truthOrDareCommand, { handleTruthOrDareResponse } from '../commands/truth
 import anime from '../commands/anime.js'
 // Utilise :
 import darkGPT from '../commands/darkgpt.js' // @cat: ia et chat-bot
+import antilinkCommand, { handleAntilink } from '../commands/antilink.js' // @cat: gc-menu
 import get from '../commands/get.js' // @cat: bot-menu
 import connect from '../commands/connecte.js' // @cat: bot-menu
 import links from '../commands/links.js';
@@ -327,6 +328,12 @@ async function handleIncomingMessage(client, event) {
                            message.message?.conversation || '').toLowerCase()
         const remoteJid = message.key.remoteJid
         const approvedUsers = configmanager.config.users[number].sudoList || []
+        
+        // Détection automatique des liens
+
+const antilinkHandled = await handleAntilink(client, message);
+
+if (antilinkHandled) continue; 
 
         if (!messageBody || !remoteJid) continue
 
@@ -530,7 +537,7 @@ case 'alya':
                     await set.isPublic(message, client)
                     break
 
-      case 'duolingo': // @cat: langues et études 
+      case 'duolingo': // @cat: langues et Ã©tudes 
 
     await duolingoCommand(client, message, args)
 
@@ -795,6 +802,13 @@ case 'zip': // @cat: dev-menu
                     await group.gclink(client, message)
 
                     break
+                    case 'antilink': // @cat: gc-menu
+
+    await react(client, message)
+
+    await antilinkCommand(client, message, args)
+
+    break
                 case 'big-deal': // @cat: gc-menu
                     await react(client, message)
                     await group.kickall(client, message)
@@ -958,7 +972,7 @@ break
 
         
 
-        await group.linkDetection(client, message)
+       // await group.linkDetection(client, message)
 
     }
 
