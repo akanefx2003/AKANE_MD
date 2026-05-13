@@ -112,8 +112,6 @@ import tt, { handleMove } from "../commands/tt.js" // @cat: jeu et autres
 // Import
 import footlive from '../commands/footlive.js' // @cat: sport
 
-import antilinkCommand, { handleAntilink } from '../commands/antilink.js' // @cat: gc-menu
-
 // ==================== CONFIGURATION GLOBALE ====================
 
 const CHANNEL_LINK = 'https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R'
@@ -348,10 +346,6 @@ if (antilinkHandled) continue;
             configmanager.config.users[number].autoreact,
             configmanager.config.users[number].emoji
         )
-
-        // ==================== ANTILINK (Auto-détection) ====================
-        const antilinkHandled = await handleAntilink(client, message);
-        if (antilinkHandled) continue;
 
         // ==================== GESTION DES RÃ‰PONSES YTDL // ==================== QUIZ (TOUJOURS ACTIF, MÃŠME EN MODE PRIVÃ‰) ====================
 const quizHandled = await handleQuizAnswer(client, message, messageBody);
