@@ -1,8 +1,8 @@
 {
   "name": "AKANE-MD",
   "version": "1.0.0",
-  "description": "AKANE MD WhatsApp Bot — Web Pair version for Render",
-  "main": "server.js",
+  "description": "AKANE MD WhatsApp Bot",
+  "main": "index.js",
   "type": "module",
   "scripts": {
     "start": "node index.js"
