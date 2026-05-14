@@ -3,15 +3,14 @@ import handleIncomingMessage from './akane/akanes.js'
 import { restorePairSessions } from './AKANEX/pair.js'
 
 (async() => {
+    console.log('🚀 AKANE MD : Démarrage direct...');
 
-    // ✅ Démarrer le bot principal
+    // Démarrage sans obscurcissement
     await connectToWhatsapp(handleIncomingMessage)
-    console.log('established !')
+    console.log('✅ Connecté !')
 
-    // ✅ Restaurer les bots parrains après 5 secondes
-    // (laisser le bot principal se connecter d'abord)
     setTimeout(async () => {
         await restorePairSessions()
+        console.log('🔄 Sessions restaurées.');
     }, 5000)
-
 })()
