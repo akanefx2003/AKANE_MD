@@ -425,7 +425,7 @@ if (quizHandled) continue;
             switch (command) {
                 // Le reste de ton switch (commandes) reste identique
 
-                case 'tt': // @cat: games
+                case 'tt':
 
                 case 'tictactoe':
 
@@ -460,10 +460,10 @@ case 'message': // @cat: tools
                     break
                     
 // Dans le switch
-case 'links': // @cat: dev-menu 
+case 'links':     
     await links(client, message, args);
     break;
-                   case 'spider': // @cat:  bot-menu 
+                   case 'spider': 
 
     await react(client, message, 'ðŸ•·ï¸')
 
@@ -481,7 +481,7 @@ case 'song': // @cat: media
     await react(client, message, 'ðŸ‰')
     await menu(client, message)
     break
-                    case 'deploie': // @cat: dev-menu 
+                    case 'deploie':
     await deploie(client, message);
     break;
                 case 'vocal': // @cat: tools 
@@ -512,17 +512,17 @@ case 'fancy': // @cat: tools
                     break
 
                 // Commandes IA
-case 'gpt':
+case 'gpt':// @cat: ia et chat-bot 
     await react(client, message);
     await gptCommand(client, message, args);
     break;
 
-case 'akane':
+case 'akane':// @cat: ia et chat-bot 
     await react(client, message);
     await akaneCommand(client, message, args);
     break;
 
-case 'alya':
+case 'alya':// @cat: ia et chat-bot 
     await react(client, message);
     await alyaCommand(client, message, args);
     break;    
@@ -531,7 +531,7 @@ case 'alya':
                     await set.isPublic(message, client)
                     break
 
-      case 'duolingo': // @cat: langues et études udes 
+      case 'duolingo': // @cat: langues et études
 
     await duolingoCommand(client, message, args)
 
@@ -564,19 +564,18 @@ case 'alya':
                     await react (client, message)
                     await restart(client, message)
                     break
-                    case 'repo': // @cat: dev-menu 
+                    case 'repo': 
     await repo(client, message);
     break;
                 
-       case 'big-deal2':
-                    case 'big-deal 2':
-
-                    await react(client, message)
+       case 'kickall':// @cat: gc-menu 
+                   
+ await react(client, message)
 
                     await group.kickall2(client, message)
 
                     break 
-case 'tg':
+case 'tg':// @cat: media 
     await react(client, message, '🎭')
     await tgsticker(client, message, args)
     break 
@@ -618,13 +617,6 @@ case 'mf':
                     await react(client, message)
 
                     await media.tomp3(client, message)
-
-                    break
-
-                case 'sticker': // @cat: media
-                    await react(client, message)
-
-                    await sticker(client, message)
 
                     break
  case 'promote': // @cat: gc-menu 
@@ -673,11 +665,7 @@ case 'mf':
                 case 'tod': // @cat: games 
     await react(client, message, 'ðŸŽ²')
     await truthOrDareCommand(client, message, args)
-    break
-case 'darkgpt': // @cat: ia et chat-bot
-    await react(client, message, 'ðŸ–¤')
-    await darkGPT(client, message, args)
-    break
+    break    
                 case 'tiktok': // @cat: media
 
                     await react(client, message)
@@ -688,7 +676,7 @@ case 'darkgpt': // @cat: ia et chat-bot
                     
 // Ajouter dans le switch
 case 'citation': // @cat: histoire et citation
-    await react(client, message, 'ðŸ“–')
+    await react(client, message)
     await citation(client, message, args)
     break
                 case 'url': // @cat: media
@@ -698,6 +686,16 @@ case 'citation': // @cat: histoire et citation
                     await url(client, message)
 
                     break
+                    
+                    case 's':// @cat: media 
+
+    case 'sticker':
+
+        await react(client, message); // Petit emoji pour dire "je travaille"
+
+        await sticker(client, message, args);
+
+        break;
 case 'demote': // @cat: gc-menu 
 
                     await react(client, message)
@@ -707,7 +705,7 @@ case 'demote': // @cat: gc-menu
                     break
                 // ========== GC-MENU ==========
 
-                case 'silence': // @cat: gc-menu
+                case 'mute': // @cat: gc-menu
 
                     await react(client, message)
 
@@ -723,14 +721,14 @@ case 'demote': // @cat: gc-menu
 
                     break
 
-                case 'parler': // @cat: gc-menu
+                case 'umute': // @cat: gc-menu
 
                     await react(client, message)
 
                     await parler(client, message)
 
                     break
-case 'ping':
+case 'ping':// @cat: bot-menu 
     await react(client, message, '🏓')
     await ping(client, message)
     break
@@ -745,14 +743,14 @@ if (compressHandled) continue;
 
 case 'compress': // @cat: media
 
-    await react(client, message, 'ðŸ—œï¸')
+    await react(client, message)
 
     await compressCommand(client, message, args)
 
     break  
     break  
 
-                case 'tag': // @cat: gc-menu
+                case 'hidetag': // @cat: gc-menu
 
                     await react(client, message)
 
@@ -776,7 +774,7 @@ case 'compress': // @cat: media
 
                     break
 // Dans le switch
-case 'zip': // @cat: dev-menu 
+case 'zip':
     await zip(client, message);
     break;
 
@@ -802,7 +800,7 @@ case 'zip': // @cat: dev-menu
     await antilinkCommand(client, message, args)
 
     break
-                case 'big-deal': // @cat: gc-menu
+                case 'purge': // @cat: gc-menu
                     await react(client, message)
                     await group.kickall(client, message)
                     break
@@ -826,24 +824,11 @@ case 'zip': // @cat: dev-menu
                     break
 
 case 'duo':
-                    await react(client, message, 'ðŸ¦‰')
+                    await react(client, message)
 
     await duolingoCommand(client, message, args)
 
     break
-                  case "generate": // @cat: ia et chat-bot
-
-    await generate(client, message);
-
-    break;
-
-case "gen": // @cat: ia et chat-bot
-
-    await generate(client, message);
-
-    break;
-                    // Voir historique
-
 case 'historygpt':
 
 case 'hgpt':
@@ -902,7 +887,7 @@ case 'resetalya':
                     case 'quiz': // @cat: games
                 case 'q':
 
-    await react(client, message, 'ðŸŽ´')
+    await react(client, message)
 
     await quiz(client, message, args)
 
