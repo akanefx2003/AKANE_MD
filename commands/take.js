@@ -1,86 +1,94 @@
-import { Sticker, createSticker, StickerTypes } from 'wa-sticker-formatter' // ES6
-// const { Sticker, createSticker, StickerTypes } = require('wa-sticker-formatter') // CommonJS
+import { Sticker, StickerTypes } from 'wa-sticker-formatter';
 
 import { downloadMediaMessage } from "baileys";
+
 import fs from "fs";
+
 import path from "path";
-import stylizedChar from '../utils/fancy.js';
 
 export async function take(client, message) {
+
+    const jid = message.key.remoteJid;
+
+    let tempPath;
+
     try {
-        const remoteJid = message.key.remoteJid;
-        const messageBody = message.message?.extendedTextMessage?.text || message.message?.conversation || '';
-        const quotedMessage = message.message?.extendedTextMessage?.contextInfo?.quotedMessage;
 
-        const commandAndArgs = messageBody.slice(1).trim(); // Remove prefix and trim
-        const parts = commandAndArgs.split(/\s+/); // Split command and arguments
+        const quoted = message.message?.extendedTextMessage?.contextInfo?.quotedMessage;
 
-        let username;
-        let text;
-        const args = parts.slice(1); // Extract arguments
+        
 
-        if (args.length <= 0) {
-            username = message.pushName || "Unknown"; // Fallback to sender's name
-            text = username;
-        } else {
-            username = args.join(" "); // Combine all args into one string
-            text = username;
+        // 1. Vérification si c'est bien un sticker
+
+        if (!quoted || !quoted.stickerMessage) {
+
+            return client.sendMessage(jid, { text: 
+
+`﹝╎👑 𝐓𝐀𝐊𝐄 𝐒𝐓𝐈𝐂𝐊𝐄𝐑 ╎˼
+
+⎔ــﮩ٨ـﮩﮩـ٨ •﹝ 𐰁 ⚠️ 𐰁 ﹞• ٨ـﮩ–ﮩ٨⎔
+
+⸙﹝ Répondez à un sticker avec un nom pour le voler ﹞✴︎
+
+Exemple : !take Akane MD
+
+> *© AKANE MD 🌹*` });
+
         }
 
-        if (!quotedMessage || !quotedMessage.stickerMessage) {
-            return client.sendMessage(remoteJid, { text: stylizedChar("❌ Reply to a sticker to modify it!" )});
-        }
+        // 2. Définition du nom (Args ou pushName)
 
-        // Download the original sticker
-        const stickerBuffer = await downloadMediaMessage({message:quotedMessage},
-            'buffer',
-            {},
-            { logger: console } // Ajout du logger pour le débogage (important!)
-        );
+        const text = message.message?.extendedTextMessage?.text || "";
 
-        if (!stickerBuffer) {
-            return client.sendMessage(remoteJid, { text: "❌ Failed to download sticker!" });
-        }
+        const args = text.split(/\s+/).slice(1).join(" ");
 
-        // Save temporary sticker file
-        const tempStickerPath = path.resolve("./temp_sticker.webp");
+        const packName = args || message.pushName || "AKANE MD";
 
-        fs.writeFileSync(tempStickerPath, stickerBuffer);
+        // 3. Téléchargement du sticker original
 
-        // Detect if the sticker is animated
-        const isAnimated = quotedMessage.stickerMessage.isAnimated || false;
+        const buffer = await downloadMediaMessage({ message: quoted }, 'buffer', {}, { logger: console });
 
+        if (!buffer) throw new Error("Téléchargement échoué");
 
-        // Modify metadata with the user's input
-        const sticker = new Sticker(tempStickerPath, {
-            pack: username, // The pack name
-            author: text, // The author name
-            type: StickerTypes.FULL, // The sticker type
-            categories: ['🤩', '🎉'], // The sticker category
-            id: '12345', // The sticker id
-            quality: 50, // The quality of the output file
-            background: '#000000' // The sticker background color (only for full stickers)
-        })
-        
-        const buffer = await sticker.toBuffer() // convert to buffer
-        // or save to file
-        await sticker.toFile('sticker.webp')
-        
-        // or get Baileys-MD Compatible Object
-        client.sendMessage(remoteJid, await sticker.toMessage())
-        
-    
-        // Send sticker
-        // await client.sendMessage(remoteJid, stickerMessage, { quoted: message });
+        // 4. Création d'un fichier temporaire unique (pour ne pas saturer le disque)
 
-        // Cleanup
-        fs.unlinkSync(tempStickerPath);
-        console.log(`✅ Sticker sent successfully with "${username}" metadata!`);
+        tempPath = `./temp_take_${Date.now()}.webp`;
+
+        fs.writeFileSync(tempPath, buffer);
+
+        // 5. Reconstruction du sticker avec tes infos
+
+        const sticker = new Sticker(tempPath, {
+
+            pack: packName, 
+
+            author: "AKANE MD 🌹",
+
+            type: StickerTypes.FULL,
+
+            quality: 70
+
+        });
+
+        // 6. Envoi
+
+        await client.sendMessage(jid, await sticker.toMessage(), { quoted: message });
 
     } catch (error) {
-        console.error("❌ Error:", error);
-        await client.sendMessage(message.key.remoteJid, { text: `⚠️ Error modifying sticker: ${error}` });
+
+        console.error("❌ Error Take:", error);
+
+        await client.sendMessage(jid, { text: "❌ *Erreur lors du vol du sticker.*" });
+
+    } finally {
+
+        // ✅ NETTOYAGE INDISPENSABLE
+
+        if (tempPath && fs.existsSync(tempPath)) fs.unlinkSync(tempPath);
+
     }
+
 }
 
 export default take;
+
