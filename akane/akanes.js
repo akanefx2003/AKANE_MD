@@ -11,6 +11,7 @@ import tr from '../commands/tr.js';
 import style from '../commands/style.js';
 import mail from '../commands/mail.js'
 import messageCommand from '../commands/message.js' // @cat: bot-menu
+import take from  '../commands/take.js'
 import tgsticker from '../commands/tg.js' // @cat: media
 import histoire from '../commands/histoire.js' // @cat: histoire et citation
 import demoteall from '../commands/demoteall.js'
@@ -23,7 +24,7 @@ import fsSync from 'fs'
 import truthOrDareCommand, { handleTruthOrDareResponse } from '../commands/truthordare.js'
 import anime from '../commands/anime.js'
 // Utilise :
-import darkGPT from '../commands/darkgpt.js' // @cat: ia et chat-bot
+import darkgpt from '../commands/darkgpt.js'
 import antilinkCommand, { handleAntilink } from '../commands/antilink.js' // @cat: gc-menu
 import get from '../commands/get.js' // @cat: bot-menu
 import connect from '../commands/connecte.js' // @cat: bot-menu
@@ -66,12 +67,9 @@ import uptade from '../commands/uptade.js' // @cat: bot-menu
 import vocal from '../commands/vocal.js' // @cat: jeu et autres
 
 import img from '../commands/img.js' // @cat: media
-
 import url from '../commands/url.js' // @cat: media
 // IMPORT (vers le haut du fichier)
-import generateCmd from "../commands/generate.js";
-
-const { generate } = generateCmd;
+import generate from '../commands/gen.js'
 import block from '../commands/block.js'
 import sender from '../commands/sender.js'
 import dlt from '../commands/dlt.js' // @cat: bot-menu
@@ -98,7 +96,7 @@ import ping from "../commands/ping.js" // @cat: bot-menu
 
 import auto from '../commands/auto.js' // @cat: bot-menu
 
-import uptime from '../commands/uptime.js' // @cat: bot-menu
+import runtime from '../commands/uptime.js' // @cat: bot-menu
 
 import bb from '../commands/bb.js' // @cat: bot-menu
 import gptCommand, { resetHistory as resetGptHistory, showGptHistory } from '../commands/gpt.js';
@@ -459,6 +457,36 @@ case 'message': // @cat: tools
 
                     break
                     
+                    case 'ping': // @cat: bot-menu
+
+case 'runtime':// @cat: bot-menu 
+
+case 'uptime':// @cat: bot-menu 
+
+      await react(client, message)              
+    await runtime(client, message);
+
+    break;
+                    case 'darkgpt':
+
+case 'dark':
+
+                    
+      await react(client, message)  
+    await darkgpt(client, message);
+
+    break;
+                    case 'gen':
+
+case 'generate':
+
+case 'imagine':
+
+     await react(client, message)                 
+    await generate(client, message);
+
+    break;
+                    
 // Dans le switch
 case 'links':     
     await links(client, message, args);
@@ -515,6 +543,16 @@ case 'fancy': // @cat: tools
 case 'gpt':// @cat: ia et chat-bot 
     await react(client, message);
     await gptCommand(client, message, args);
+    break;
+case 'take': // @cat: media 
+
+case 'steal':
+
+case 'wm':
+
+    await react(client, message);
+              await take(client, message);
+
     break;
 
 case 'akane':// @cat: ia et chat-bot 
@@ -689,7 +727,8 @@ case 'citation': // @cat: histoire et citation
                     
                     case 's':// @cat: media 
 
-    case 'sticker':
+    case 'sticker':// @cat: media 
+
 
         await react(client, message); // Petit emoji pour dire "je travaille"
 
@@ -728,19 +767,6 @@ case 'demote': // @cat: gc-menu
                     await parler(client, message)
 
                     break
-case 'ping':// @cat: bot-menu 
-    await react(client, message, '🏓')
-    await ping(client, message)
-    break
-                    
- // Dans la boucle, aprÃ¨s les autres handlers, ajouter :
-
-const compressHandled = await handleCompressResponse(client, message, messageBody);
-
-if (compressHandled) continue;
-
-// Dans le switch
-
 case 'compress': // @cat: media
 
     await react(client, message)
@@ -804,17 +830,6 @@ case 'zip':
                     await react(client, message)
                     await group.kickall(client, message)
                     break
- 
-                // ========== BOT-MENU ==========
-
-                case 'uptime': // @cat: bot-menu
-
-                    await react(client, message)
-
-                    await uptime(client, message)
-
-                    break
-
                 case 'bb': // @cat: bot-menu
 
                     await react(client, message)
