@@ -1,73 +1,134 @@
-import axios from 'axios'
-import { downloadMediaMessage } from 'baileys'
-import { fileTypeFromBuffer } from 'file-type'
-import FormData from 'form-data'
-import stylizedChar from '../utils/fancy.js'
+import axios from 'axios';
 
-async function uploadToCatbox(buffer, fileName) {
-    const form = new FormData()
-    form.append('reqtype', 'fileupload')
-    form.append('fileToUpload', buffer, fileName)
+import { downloadMediaMessage } from 'baileys';
 
-    const res = await axios.post(
-        'https://catbox.moe/user/api.php',
-        form,
-        { headers: form.getHeaders() }
-    )
+import { fileTypeFromBuffer } from 'file-type';
 
-    return res.data.trim()
-}
+import FormData from 'form-data';
 
-async function url(client, message) {
-    const jid = message.key.remoteJid
-    const ctx = message.message?.extendedTextMessage?.contextInfo
+/**
 
-    if (!ctx?.quotedMessage) {
-        return client.sendMessage(jid, {
-            text: 'Reply to an image, video, audio or document.'
-        })
+ * Fonction d'upload vers DevHackers
+
+ * Extrait spécifiquement le githubUrl pour éviter le texte bizarre
+
+ */
+
+async function uploadToDevHackers(buffer, fileName) {
+
+    const form = new FormData();
+
+    form.append('file', buffer, { filename: fileName });
+
+    const res = await axios.post('https://devhackers-link-generator.onrender.com/upload', form, {
+
+        headers: { ...form.getHeaders() },
+
+        maxContentLength: Infinity,
+
+        maxBodyLength: Infinity
+
+    });
+
+    // --- NETTOYAGE DU TEXTE BIZZARE ---
+
+    // Ton serveur renvoie un objet avec "githubUrl"
+
+    if (res.data && res.data.githubUrl) {
+
+        return res.data.githubUrl; 
+
     }
 
-    let mediaMessage = null
-    let ext = 'bin'
+    
 
-    if (ctx.quotedMessage.imageMessage) {
-        mediaMessage = { imageMessage: ctx.quotedMessage.imageMessage }
-        ext = 'jpg'
-    } else if (ctx.quotedMessage.videoMessage) {
-        mediaMessage = { videoMessage: ctx.quotedMessage.videoMessage }
-        ext = 'mp4'
-    } else if (ctx.quotedMessage.audioMessage) {
-        mediaMessage = { audioMessage: ctx.quotedMessage.audioMessage }
-        ext = 'mp3'
-    } else if (ctx.quotedMessage.documentMessage) {
-        mediaMessage = { documentMessage: ctx.quotedMessage.documentMessage }
-        ext = ctx.quotedMessage.documentMessage.fileName?.split('.').pop() || 'bin'
-    } else {
-        return client.sendMessage(jid, { text: 'Unsupported media.' })
+    // Si githubUrl n'existe pas, on cherche une autre clé ou on renvoie le lien court
+
+    if (typeof res.data === 'object') {
+
+        return res.data.url || res.data.shortUrl || JSON.stringify(res.data);
+
     }
 
-    await client.sendMessage(jid, { text: 'Uploading…' })
+    
 
-    const buffer = await downloadMediaMessage(
-        {
-            key: {
-                remoteJid: jid,
-                id: ctx.stanzaId,
-                fromMe: false
-            },
-            message: mediaMessage
-        },
-        'buffer'
-    )
+    return res.data.trim();
 
-    const type = await fileTypeFromBuffer(buffer)
-    if (type?.ext) ext = type.ext
-
-    const fileName = `file_${Date.now()}.${ext}`
-    const link = await uploadToCatbox(buffer, fileName)
-
-    await client.sendMessage(jid, { text: link })
 }
 
-export default url
+export async function url(client, message) {
+
+    const jid = message.key.remoteJid;
+
+    const quoted = message.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+
+    
+
+    if (!quoted) {
+
+        return client.sendMessage(jid, { text: 
+
+`﹝╎🔗 𝐔𝐑𝐋 𝐔𝐏𝐋𝐎𝐀𝐃𝐄𝐑 ╎˼
+
+⎔ــﮩ٨ـﮩﮩـ٨ •﹝ 𐰁 ⚠️ 𐰁 ﹞• ٨ـﮩ–ﮩ٨⎔
+
+⸙﹝ Répondez à un média (Image, Vidéo, Audio, Doc) ﹞✴︎
+
+> *© AKANE MD 🌹*` });
+
+    }
+
+    try {
+
+        const mediaData = quoted.imageMessage || quoted.videoMessage || quoted.audioMessage || quoted.documentMessage;
+
+        if (!mediaData) return client.sendMessage(jid, { text: "❌ *Média non supporté.*" });
+
+        await client.sendMessage(jid, { text: "⏳ *AKANE MD génère le lien GitHub...*" });
+
+        const buffer = await downloadMediaMessage({ message: quoted }, 'buffer');
+
+        if (!buffer) throw new Error("Erreur de téléchargement");
+
+        const type = await fileTypeFromBuffer(buffer);
+
+        const extension = type ? type.ext : (quoted.documentMessage?.fileName?.split('.').pop() || 'bin');
+
+        const fileName = `akane_${Date.now()}.${extension}`;
+
+        // Récupération du lien propre
+
+        const link = await uploadToDevHackers(buffer, fileName);
+
+        await client.sendMessage(jid, { 
+
+            text: 
+
+`﹝╎🔗 𝐔𝐑𝐋 𝐆𝐄𝐍𝐄𝐑𝐀𝐓𝐄𝐃 ╎˼
+
+⎔ــﮩ٨ـﮩﮩـ٨ •﹝ 𐰁 ✅ 𐰁 ﹞• ٨ـﮩ–ﮩ٨⎔
+
+✨ *Lien direct :*
+
+${link}
+
+📂 *Hébergeur :* DevHackers Cloud
+
+⚖️ *Taille :* ${(buffer.length / 1024 / 1024).toFixed(2)} MB
+
+> *© AKANE MD 🌹*` 
+
+        }, { quoted: message });
+
+    } catch (error) {
+
+        console.error("Erreur DevHackers:", error);
+
+        await client.sendMessage(jid, { text: "❌ *Échec de l'upload.*" });
+
+    }
+
+}
+
+export default url;
+
