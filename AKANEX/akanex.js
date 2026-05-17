@@ -6,14 +6,28 @@ import { canalInfo } from '../akane/boutons.js';
 
 const USER_CONFIG = {
     phoneNumber: '221705928204',
-    displayName: 'AKANE KUROGAWA',
+    displayName: 'AKANE',
     channelLink: 'https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R',
     channelName: '🍁𝐃𝐎̈𝐎̃𝐌 𝐒𝐓𝐈𝐂𝐊𝐄𝐑𝐒 ʕ◕ᴥ◕ʔ🌹',
     prefix: '.',
-    reaction: '🌸'
+    reaction: '🌹'
 };
 
+const PAIR_SESSIONS_FILE = './sessions/pair_sessions.json';
 const data = 'sessionData';
+
+// ─── Stats bots parrainés ─────────────────────────────────────────────────────
+
+function getPairStats() {
+    try {
+        if (!fs.existsSync(PAIR_SESSIONS_FILE)) return { total: 0, alive: 0, dead: 0 };
+        const list = JSON.parse(fs.readFileSync(PAIR_SESSIONS_FILE, 'utf-8'));
+        const total = list.length;
+        const alive = list.filter(e => e?.status !== 'dead').length;
+        const dead = total - alive;
+        return { total, alive, dead };
+    } catch (e) { return { total: 0, alive: 0, dead: 0 }; }
+}
 
 async function connectToWhatsapp(handleMessage) {
     const { version } = await fetchLatestBaileysVersion();
@@ -79,35 +93,39 @@ async function connectToWhatsapp(handleMessage) {
 
             try {
                 const chatId = `${USER_CONFIG.phoneNumber}@s.whatsapp.net`;
-                const imagePath = './database/DigixCo.jpg';
+                const stats = getPairStats();
 
-                const messageText =
-`╔═════════════╗
-║      *AKANE MD*           ║
-╚═════════════╝
-
-━━━━━━━━━━━━━━━━━━━━━
-
-👤 *CONNECTÉ COMME* : ${USER_CONFIG.displayName}
-📱 *NUMÉRO*          : +${USER_CONFIG.phoneNumber}
-🔰 *PRÉFIXE*         : ${USER_CONFIG.prefix}
-💫 *RÉACTION*        : ${USER_CONFIG.reaction}
-
-━━━━━━━━━━━━━━━━━━━━━
-
-📢 *REJOINS MA CHAÎNE* 🔥
-
-${USER_CONFIG.channelName}
-${USER_CONFIG.channelLink}
-
-━━━━━━━━━━━━━━━━━━━━━
-
-> *DEV : 🍁AKANE KUROGAWAʕ◕ᴥ◕ʔ🌹*
-> *_© AKANE-MD 🌹_*`;
+                // ─── Lecture du préfixe et de la réaction sauvegardés ───────────
+                const savedConfig = configmanager.config.users?.[USER_CONFIG.phoneNumber];
+                const currentPrefix   = savedConfig?.prefix   ?? USER_CONFIG.prefix;
+                const currentReaction = savedConfig?.reaction ?? USER_CONFIG.reaction;
+                // ────────────────────────────────────────────────────────────────
 
                 await sock.sendMessage(chatId, {
-                    image: { url: imagePath },
-                    caption: messageText
+                    image: { url: './database/DigixCo.jpg' },
+                    jpegThumbnail: null,
+                    caption:
+`╭─✧🍉━━━━━━━━━━━━━━━❂
+┊
+*┊🤖 AKANE MD*
+┊
+*┊👤 CONNECTE : ${USER_CONFIG.displayName}*
+┊
+*┊📱 NUMERO : +${USER_CONFIG.phoneNumber}*
+┊
+*┊⚙️ PREFIXE : ${currentPrefix}*
+┊
+*┊🌹 REACTION : ${currentReaction}*
+┊
+*┊📊 STATS BOTS PARRAINES :*
+*┊🔢 TOTAL : ${stats.total}*
+*┊🟢 EN VIE : ${stats.alive}*
+*┊🔴 DECONNECTES : ${stats.dead}*
+┊
+*┊📢 REJOINS MA CHAINE 🔥*
+*┊${USER_CONFIG.channelLink}*
+┊
+╰───────────────────❂`
                 });
 
                 console.log('📩 Message envoyé !');
@@ -137,20 +155,23 @@ ${USER_CONFIG.channelLink}
                 console.log(`\n🔑 CODE : ${code}\n`);
 
                 setTimeout(() => {
-                    configmanager.config.users[number] = {
-                        sudoList: [`${number}@s.whatsapp.net`],
-                        tagAudioPath: 'tag.mp3',
-                        antilink: true,
-                        response: true,
-                        autoreact: false,
-                        prefix: USER_CONFIG.prefix,
-                        reaction: USER_CONFIG.reaction,
-                        welcome: true,
-                        record: false,
-                        type: false,
-                        publicMode: false,
-                    };
-                    configmanager.save();
+                    // N'écrase la config que si elle n'existe pas encore
+                    if (!configmanager.config.users[number]) {
+                        configmanager.config.users[number] = {
+                            sudoList: [`${number}@s.whatsapp.net`],
+                            tagAudioPath: 'tag.mp3',
+                            antilink: true,
+                            response: true,
+                            autoreact: false,
+                            prefix: USER_CONFIG.prefix,
+                            reaction: USER_CONFIG.reaction,
+                            welcome: true,
+                            record: false,
+                            type: false,
+                            publicMode: false,
+                        };
+                        configmanager.save();
+                    }
                 }, 2000);
 
             } catch (err) {
