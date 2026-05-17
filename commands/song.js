@@ -1,18 +1,19 @@
 // commands/song.js
+
 // @cat: media
 
 import yts from 'yt-search'
 import axios from 'axios'
 import fs from 'fs'
 
-// Configuration des clés API
 const API_KEYS = [
     '0a52dff07cmshdf55b3f391aee31p1f7cd5jsn44e49ccea12f',
     '8b6e431195msh4bbb0cb84a3abfbp1f02b5jsnfccc2f87aa44'
 ]
+
 const API_HOST = 'youtube-mp36.p.rapidapi.com'
 const COUNTER_FILE = './song_counter.json'
-const HELP_IMAGE_URL = 'https://raw.githubusercontent.com/toge021/Media/main/ab12.jpg'
+const HELP_IMAGE_URL = 'https://raw.githubusercontent.com/toge021/Media/main/c66f.jpg'
 
 function getCounter() {
     if (fs.existsSync(COUNTER_FILE)) {
@@ -42,7 +43,7 @@ function nextKey() {
 export async function getAudioBuffer(videoId) {
     const { apiKey, counter } = getCurrentApiKey()
     const keyNumber = (counter % API_KEYS.length) + 1
-    
+
     console.log(`🔑 CLE ${keyNumber}/${API_KEYS.length}`)
 
     const dlRes = await axios.get('https://youtube-mp36.p.rapidapi.com/dl', {
@@ -55,6 +56,7 @@ export async function getAudioBuffer(videoId) {
     })
 
     const data = dlRes.data
+
     if (data?.status === 'processing') {
         await new Promise(r => setTimeout(r, 3000))
         return await getAudioBuffer(videoId)
@@ -77,57 +79,40 @@ export async function getAudioBuffer(videoId) {
     return { buffer: Buffer.from(audioRes.data), title: data.title }
 }
 
-// Fonction pour mettre en gras (WhatsApp utilise *texte*)
-function bold(text) {
-    return `*${text.toUpperCase()}*`
-}
-
 export default async function songCommand(client, message, args) {
     const remoteJid = message.key.remoteJid
     const query = args.join(' ').trim()
 
-    // SI PAS DE TITRE → ENVOIE L'IMAGE D'AIDE
+    // AIDE
     if (!query) {
         try {
             await client.sendMessage(remoteJid, {
                 image: { url: HELP_IMAGE_URL },
-                caption: `╭─✧🤍⃝⃘̉̉̉━⋆─⋆──❂
+                caption: `╭─✧🍉━━━━━━━━━━━━━━━❂
 ┊
-┊ 🎵 *𝐀𝐊𝐀𝐍𝐄 𝐌𝐃* 🎵
+*┊🎵 AKANE MD*
 ┊
-┊ 📌 *UTILISATION*
-┊ *.SONG [TITRE]*
+*┊🍋 UTILISATION : .SONG [TITRE]*
 ┊
-┊ 📝 *EXEMPLES*
-┊ *.SONG IMAGINE DRAGONS*
-┊ *.SONG OSHI NO KO*
+*┊🍓 EXEMPLE : .SONG OSHI NO KO*
 ┊
-╰────────────────❂
-
-> *© AKANE MD 🌹*`
+╰───────────────────❂`
             })
         } catch (e) {
-            await client.sendMessage(remoteJid, { text: 
-`╭─✧🤍⃝⃘̉̉̉━⋆─⋆──❂
+            await client.sendMessage(remoteJid, { text: `╭─✧🍉━━━━━━━━━━━━━━━❂
 ┊
-┊ 🎵 *𝐀𝐊𝐀𝐍𝐄 𝐌𝐃* 🎵
+*┊🎵 AKANE MD*
 ┊
-┊ 📌 *UTILISATION*
-┊ *.SONG [TITRE]*
+*┊🍋 UTILISATION : .SONG [TITRE]*
 ┊
-┊ 📝 *EXEMPLES*
-┊ *.SONG IMAGINE DRAGONS*
-┊ *.SONG OSHI NO KO*
+*┊🍓 EXEMPLE : .SONG OSHI NO KO*
 ┊
-╰────────────────❂
-
-> *© AKANE MD 🌹*` })
+╰───────────────────❂` })
         }
         return
     }
 
-    // RECHERCHE DE LA MUSIQUE
-    await client.sendMessage(remoteJid, { text: bold(`🔍 RECHERCHE DE "${query}"...`) })
+    await client.sendMessage(remoteJid, { text: `*🔍 RECHERCHE DE "${query.toUpperCase()}"...*` })
 
     let video
     try {
@@ -138,65 +123,43 @@ export default async function songCommand(client, message, args) {
     }
 
     if (!video) {
-        await client.sendMessage(remoteJid, { text: bold(`❌ AUCUN RESULTAT POUR : "${query}"\n\n> © AKANE MD 🌹`) })
+        await client.sendMessage(remoteJid, { text: `*❌ AUCUN RESULTAT : "${query.toUpperCase()}"*` })
         return
     }
 
     const videoId = video.videoId || video.url?.split('v=')[1]?.split('&')[0]
 
     if (!videoId) {
-        await client.sendMessage(remoteJid, { text: bold(`❌ IMPOSSIBLE DE RECUPERER L'ID\n\n> © AKANE MD 🌹`) })
+        await client.sendMessage(remoteJid, { text: `*❌ ID INTROUVABLE*` })
         return
     }
 
-    // FORMATAGE DU TITRE (tronqué si trop long)
     let titleDisplay = video.title.toUpperCase()
-    if (titleDisplay.length > 45) {
-        titleDisplay = titleDisplay.substring(0, 42) + '...'
+    if (titleDisplay.length > 40) {
+        titleDisplay = titleDisplay.substring(0, 37) + '...'
     }
+
+    const caption = `╭─✧🍉━━━━━━━━━━━━━━━❂
+┊
+*┊🎵 AKANE MD*
+┊
+*┊🌹 TITRE : ${titleDisplay}*
+┊
+*┊⏱️ DUREE : ${video.timestamp || '???'}*
+┊
+*┊👀 VUES :* *${Number(video.views).toLocaleString()}*
+┊
+╰───────────────────❂
+
+*⬇️ TELECHARGEMENT EN COURS...*`
 
     try {
         await client.sendMessage(remoteJid, {
             image: { url: video.thumbnail },
-            caption: `╭─✧🤍⃝⃘̉̉̉━⋆─⋆──❂
-┊
-┊ 🎵 *𝐀𝐊𝐀𝐍𝐄 𝐌𝐃* 🎵
-┊
-┊ 📌 *TITRE*
-┊ ${bold(titleDisplay)}
-┊
-┊ ⏱️ *DUREE*
-┊ ${bold(video.timestamp || '???')}
-┊
-┊ 👀 *VUES*
-┊ ${bold(Number(video.views).toLocaleString())}
-┊
-╰────────────────❂
-
-${bold('⬇️ TELECHARGEMENT EN COURS...')}
-
-> *© AKANE MD 🌹*`
+            caption: caption
         })
     } catch (e) {
-        await client.sendMessage(remoteJid, { text: 
-`╭─✧🤍⃝⃘̉̉̉━⋆─⋆──❂
-┊
-┊ 🎵 *𝐀𝐊𝐀𝐍𝐄 𝐌𝐃* 🎵
-┊
-┊ 📌 *TITRE*
-┊ ${bold(titleDisplay)}
-┊
-┊ ⏱️ *DUREE*
-┊ ${bold(video.timestamp || '???')}
-┊
-┊ 👀 *VUES*
-┊ ${bold(Number(video.views).toLocaleString())}
-┊
-╰────────────────❂
-
-${bold('⬇️ TELECHARGEMENT EN COURS...')}
-
-> *© AKANE MD 🌹*` })
+        await client.sendMessage(remoteJid, { text: caption })
     }
 
     try {
@@ -210,6 +173,6 @@ ${bold('⬇️ TELECHARGEMENT EN COURS...')}
         console.log('✅ SONG ENVOYE :', video.title)
     } catch (e) {
         console.error('[SONG ERROR]', e.message)
-        await client.sendMessage(remoteJid, { text: bold(`❌ TELECHARGEMENT IMPOSSIBLE\n\n"${video.title.toUpperCase()}"\n\n> © AKANE MD 🌹`) })
+        await client.sendMessage(remoteJid, { text: `*❌ TELECHARGEMENT IMPOSSIBLE*\n\n*"${video.title.toUpperCase()}"*` })
     }
 }
