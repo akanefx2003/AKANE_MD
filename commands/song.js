@@ -13,7 +13,7 @@ const API_KEYS = [
 
 const API_HOST = 'youtube-mp36.p.rapidapi.com'
 const COUNTER_FILE = './song_counter.json'
-const HELP_IMAGE_URL = 'https://raw.githubusercontent.com/toge021/Media/main/c66f.jpg'
+const HELP_IMAGE_URL = 'https://raw.githubusercontent.com/toge021/Media/main/377a.jpg'
 
 function getCounter() {
     if (fs.existsSync(COUNTER_FILE)) {
