@@ -6,201 +6,143 @@ import yts from 'yt-search'
 
 import axios from 'axios'
 
-// API Keys
+import fs from 'fs'
 
-const RAPIDAPI_KEY = '0a52dff07cmshdf55b3f391aee31p1f7cd5jsn44e49ccea12f'
+// Configuration des clés API pour alternance
 
-// Liste des APIs avec basculement
+const API_KEYS = [
 
-const apis = [
+    '0a52dff07cmshdf55b3f391aee31p1f7cd5jsn44e49ccea12f',
 
-    {
-
-        name: 'rapidapi',
-
-        getLink: async (videoId) => {
-
-            const response = await axios.get('https://youtube-mp36.p.rapidapi.com/dl', {
-
-                params: { id: videoId },
-
-                headers: {
-
-                    'x-rapidapi-key': RAPIDAPI_KEY,
-
-                    'x-rapidapi-host': 'youtube-mp36.p.rapidapi.com'
-
-                },
-
-                timeout: 15000
-
-            })
-
-            return response.data
-
-        }
-
-    },
-
-    {
-
-        name: 'ytjar',
-
-        getLink: async (videoId) => {
-
-            const response = await axios.get(`https://ytjar.com/api/convert?url=https://youtu.be/${videoId}`, {
-
-                timeout: 15000,
-
-                headers: {
-
-                    'User-Agent': 'Mozilla/5.0',
-
-                    'Accept': 'application/json'
-
-                }
-
-            })
-
-            return {
-
-                status: response.data.success ? 'ok' : 'error',
-
-                link: response.data.download_url,
-
-                title: response.data.title,
-
-                msg: response.data.message
-
-            }
-
-        }
-
-    },
-
-    {
-
-        name: 'y2mate',
-
-        getLink: async (videoId) => {
-
-            const response = await axios.get(`https://y2mate.is/api/convert?url=https://youtu.be/${videoId}&format=mp3`, {
-
-                timeout: 15000,
-
-                headers: {
-
-                    'User-Agent': 'Mozilla/5.0',
-
-                    'Accept': 'application/json'
-
-                }
-
-            })
-
-            return {
-
-                status: response.data.status === 'success' ? 'ok' : 'error',
-
-                link: response.data.download_url,
-
-                title: response.data.title,
-
-                msg: response.data.message
-
-            }
-
-        }
-
-    }
+    '8b6e431195msh4bbb0cb84a3abfbp1f02b5jsnfccc2f87aa44'
 
 ]
 
-let currentApiIndex = 0
+const API_HOST = 'youtube-mp36.p.rapidapi.com'
 
-// Télécharge ET retourne le buffer avec basculement automatique
+const COUNTER_FILE = './song_counter.json'
 
-async function getAudioBuffer(videoId) {
+// Lire ou créer le compteur
 
-    let lastError = null
+function getCounter() {
 
-    
+    if (fs.existsSync(COUNTER_FILE)) {
 
-    for (let attempt = 0; attempt < apis.length; attempt++) {
+        const data = JSON.parse(fs.readFileSync(COUNTER_FILE, 'utf-8'))
 
-        const api = apis[currentApiIndex % apis.length]
-
-        currentApiIndex++
-
-        
-
-        console.log(`🔄 [SONG] Tentative avec ${api.name}...`)
-
-        
-
-        try {
-
-            const data = await api.getLink(videoId)
-
-            
-
-            if (data?.status === 'processing') {
-
-                await new Promise(r => setTimeout(r, 3000))
-
-                return await getAudioBuffer(videoId)
-
-            }
-
-            
-
-            if (data?.status !== 'ok' || !data?.link) {
-
-                throw new Error('Pas de lien: ' + (data?.msg || data?.status))
-
-            }
-
-            
-
-            console.log(`✅ [SONG] Succès avec ${api.name}`)
-
-            
-
-            const audioRes = await axios.get(data.link, {
-
-                responseType: 'arraybuffer',
-
-                timeout: 60000,
-
-                headers: {
-
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-
-                    'Referer': 'https://youtube-mp36.p.rapidapi.com/'
-
-                }
-
-            })
-
-            
-
-            return { buffer: Buffer.from(audioRes.data), title: data.title || videoId }
-
-            
-
-        } catch (error) {
-
-            console.error(`❌ [SONG] Échec avec ${api.name}:`, error.message)
-
-            lastError = error
-
-        }
+        return data.index || 0
 
     }
 
+    return 0
+
+}
+
+// Sauvegarder le compteur
+
+function saveCounter(index) {
+
+    fs.writeFileSync(COUNTER_FILE, JSON.stringify({ index: index }, null, 2))
+
+}
+
+// Obtenir la clé API à utiliser (alternance)
+
+function getCurrentApiKey() {
+
+    const counter = getCounter()
+
+    const apiKey = API_KEYS[counter % API_KEYS.length]
+
+    return { apiKey, counter }
+
+}
+
+// Passer à la clé suivante pour la prochaine requête
+
+function nextKey() {
+
+    const counter = getCounter()
+
+    const nextIndex = counter + 1
+
+    saveCounter(nextIndex)
+
+    return API_KEYS[nextIndex % API_KEYS.length]
+
+}
+
+// Télécharge ET retourne le buffer
+
+async function getAudioBuffer(videoId) {
+
+    const { apiKey, counter } = getCurrentApiKey()
+
+    const keyNumber = (counter % API_KEYS.length) + 1
+
     
 
-    throw lastError || new Error('Toutes les APIs ont échoué')
+    console.log(`🔑 Utilisation de la clé ${keyNumber}/${API_KEYS.length} (${apiKey.substring(0, 10)}...)`)
+
+    // Étape 1 : Récupérer le lien de téléchargement
+
+    const dlRes = await axios.get('https://youtube-mp36.p.rapidapi.com/dl', {
+
+        params: { id: videoId },
+
+        headers: {
+
+            'x-rapidapi-key': apiKey,
+
+            'x-rapidapi-host': API_HOST
+
+        },
+
+        timeout: 30000
+
+    })
+
+    const data = dlRes.data
+
+    if (data?.status === 'processing') {
+
+        await new Promise(r => setTimeout(r, 3000))
+
+        return await getAudioBuffer(videoId)
+
+    }
+
+    if (data?.status !== 'ok' || !data?.link) {
+
+        throw new Error('Pas de lien: ' + (data?.msg || data?.status))
+
+    }
+
+    // Télécharger le fichier audio
+
+    const audioRes = await axios.get(data.link, {
+
+        responseType: 'arraybuffer',
+
+        timeout: 60000,
+
+        headers: {
+
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+
+            'Referer': 'https://youtube-mp36.p.rapidapi.com/'
+
+        }
+
+    })
+
+    // ✅ Succès : passer à la clé suivante pour la prochaine requête
+
+    const nextApiKey = nextKey()
+
+    console.log(`✅ Succès avec clé ${keyNumber}. Prochaine requête utilisera clé ${((counter + 1) % API_KEYS.length) + 1}`)
+
+    return { buffer: Buffer.from(audioRes.data), title: data.title }
 
 }
 
