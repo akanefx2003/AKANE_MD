@@ -1,3 +1,7 @@
+// commands/pair.js
+
+// @cat: tools
+
 import { makeWASocket, useMultiFileAuthState, fetchLatestBaileysVersion, DisconnectReason, Browsers } from 'baileys';
 import pino from 'pino';
 import fs from 'fs';
@@ -10,13 +14,28 @@ const PAIR_SESSIONS_FILE = './sessions/pair_sessions.json';
 
 // ─── Persistance sessions ─────────────────────────────────────────────────────
 
-function savePairSession(number) {
+function savePairSession(number, pairedBy) {
     try {
         if (!fs.existsSync('./sessions')) fs.mkdirSync('./sessions', { recursive: true });
         let list = fs.existsSync(PAIR_SESSIONS_FILE)
             ? JSON.parse(fs.readFileSync(PAIR_SESSIONS_FILE, 'utf-8')) : [];
-        if (!list.includes(number)) {
-            list.push(number);
+        const idx = list.findIndex(e => (typeof e === 'object' ? e.number : e) === number);
+        if (idx === -1) {
+            list.push({ number, pairedBy: pairedBy || null, status: 'alive' });
+        } else {
+            list[idx] = { number, pairedBy: list[idx]?.pairedBy || pairedBy || null, status: 'alive' };
+        }
+        fs.writeFileSync(PAIR_SESSIONS_FILE, JSON.stringify(list, null, 2));
+    } catch (e) {}
+}
+
+function markSessionDead(number) {
+    try {
+        if (!fs.existsSync(PAIR_SESSIONS_FILE)) return;
+        let list = JSON.parse(fs.readFileSync(PAIR_SESSIONS_FILE, 'utf-8'));
+        const idx = list.findIndex(e => (typeof e === 'object' ? e.number : e) === number);
+        if (idx !== -1) {
+            list[idx].status = 'dead';
             fs.writeFileSync(PAIR_SESSIONS_FILE, JSON.stringify(list, null, 2));
         }
     } catch (e) {}
@@ -26,9 +45,18 @@ function removePairSession(number) {
     try {
         if (!fs.existsSync(PAIR_SESSIONS_FILE)) return;
         let list = JSON.parse(fs.readFileSync(PAIR_SESSIONS_FILE, 'utf-8'));
-        list = list.filter(n => n !== number);
+        list = list.filter(e => (typeof e === 'object' ? e.number : e) !== number);
         fs.writeFileSync(PAIR_SESSIONS_FILE, JSON.stringify(list, null, 2));
     } catch (e) {}
+}
+
+function getPairedBy(number) {
+    try {
+        if (!fs.existsSync(PAIR_SESSIONS_FILE)) return null;
+        const list = JSON.parse(fs.readFileSync(PAIR_SESSIONS_FILE, 'utf-8'));
+        const entry = list.find(e => (typeof e === 'object' ? e.number : e) === number);
+        return entry?.pairedBy || null;
+    } catch (e) { return null; }
 }
 
 function writeConfigForNumber(number) {
@@ -64,9 +92,25 @@ function getPrefix(number) {
     } catch (e) { return '.'; }
 }
 
+// ─── Stats bots parrainés ─────────────────────────────────────────────────────
+
+function getPairStats() {
+    try {
+        if (!fs.existsSync(PAIR_SESSIONS_FILE)) return { total: 0, alive: 0, dead: 0 };
+        const list = JSON.parse(fs.readFileSync(PAIR_SESSIONS_FILE, 'utf-8'));
+        const total = list.length;
+        const alive = list.filter(e => {
+            const num = typeof e === 'object' ? e.number : e;
+            return activePairSockets.has(num) && e?.status !== 'dead';
+        }).length;
+        const dead = total - alive;
+        return { total, alive, dead };
+    } catch (e) { return { total: 0, alive: 0, dead: 0 }; }
+}
+
 // ─── Démarrer le socket bot parrain ──────────────────────────────────────────
 
-async function startBotSocket(number, sessionDir, notifyClient, notifySender, isRestore) {
+async function startBotSocket(number, sessionDir, notifyClient, notifySender, isRestore, pairedBy) {
 
     if (activePairSockets.has(number)) {
         try { activePairSockets.get(number).ws.close(); } catch {}
@@ -86,7 +130,7 @@ async function startBotSocket(number, sessionDir, notifyClient, notifySender, is
         syncFullHistory: false,
         markOnlineOnConnect: true,
         connectTimeoutMs: 60000,
-        keepAliveIntervalMs: 15000, // ✅ Augmenté à 15s pour plus de stabilité
+        keepAliveIntervalMs: 15000,
         retryRequestDelayMs: 2000,
     });
 
@@ -95,7 +139,7 @@ async function startBotSocket(number, sessionDir, notifyClient, notifySender, is
 
     let codeSent = isRestore;
     let msgHandlerAttached = false;
-    let firstOpen = !isRestore;
+    let confirmationSent = false;
     let reconnectAttempts = 0;
 
     sock.ev.on('connection.update', async (update) => {
@@ -109,35 +153,34 @@ async function startBotSocket(number, sessionDir, notifyClient, notifySender, is
                 const code = await sock.requestPairingCode(number);
                 const fmt = code.match(/.{1,4}/g)?.join('-') || code;
                 if (notifyClient && notifySender) {
-                    await notifyClient.sendMessage(notifySender, { text:
-`﹝╎🔑 𝐂𝐎𝐃𝐄 𝐃𝐄 𝐂𝐎𝐍𝐍𝐄𝐗𝐈𝐎𝐍 ╎˼
-⎔ــﮩ٨ـﮩﮩـ٨ •﹝ 𐰁 🎀 𐰁 ﹞• ٨ـﮩ–ﮩ٨⎔
-
-⋆.˚⪩ 𝐍𝐮𝐦𝐞́𝐫𝐨 ⪨
-⸙﹝ +${number} ﹞✴︎
-
-⋆.˚⪩ 𝐂𝐨𝐝𝐞 ⪨
-⸙﹝ *${fmt}* ﹞✴︎
-
-𖤍⋅‏ ┈─━ ━━ ━ • ˹ ୨ৎ ˼ • ━ ━━ ━─┈ ⋅𖤍
-
-📌 *Comment l'utiliser :*
-1️⃣ Ouvre WhatsApp sur +${number}
-2️⃣ *Paramètres* → *Appareils liés*
-3️⃣ *Lier un appareil* → *Lier avec un numéro*
-4️⃣ Entre le code ci-dessus
-
-⚠️ _Code expire dans 60 secondes !_
-
-> *© AKANE MD 🌹*` });
-
-                    // Code brut pour copier facilement
+                    await notifyClient.sendMessage(notifySender, {
+                        image: { url: 'https://raw.githubusercontent.com/toge021/Media/main/8fd5.jpg' },
+                        jpegThumbnail: null,
+                        caption:
+`╭─✧🍉━━━━━━━━━━━━━━━❂
+┊
+*┊🎵 AKANE MD*
+┊
+*┊🔑 NUMERO : +${number}*
+┊
+*┊🔐 CODE : ${fmt}*
+┊
+*┊📌 COMMENT L'UTILISER :*
+*┊1️⃣ OUVRE WHATSAPP SUR +${number}*
+*┊2️⃣ PARAMETRES → APPAREILS LIES*
+*┊3️⃣ LIER UN APPAREIL → LIER AVEC UN NUMERO*
+*┊4️⃣ ENTRE LE CODE CI-DESSUS*
+┊
+*┊⚠️ CODE EXPIRE DANS 60 SECONDES !*
+┊
+╰───────────────────❂`
+                    });
                     await notifyClient.sendMessage(notifySender, { text: fmt });
                 }
             } catch (err) {
                 if (notifyClient && notifySender) {
                     await notifyClient.sendMessage(notifySender, {
-                        text: `❌ *Erreur génération du code*\n\n⸙﹝ ${err.message} ﹞✴︎\n\n> *© AKANE MD 🌹*`
+                        text: `*❌ ERREUR GENERATION DU CODE*\n\n*${err.message.toUpperCase()}*`
                     }).catch(() => {});
                 }
             }
@@ -145,7 +188,7 @@ async function startBotSocket(number, sessionDir, notifyClient, notifySender, is
 
         // ── Connexion établie ──
         if (connection === 'open') {
-            reconnectAttempts = 0; // ✅ Reset compteur à chaque connexion réussie
+            reconnectAttempts = 0;
             console.log(`✅ Bot parrain +${number} connecté`);
 
             const orig = sock.sendMessage.bind(sock);
@@ -156,7 +199,7 @@ async function startBotSocket(number, sessionDir, notifyClient, notifySender, is
             };
 
             writeConfigForNumber(number);
-            savePairSession(number);
+            savePairSession(number, pairedBy);
 
             if (!msgHandlerAttached) {
                 msgHandlerAttached = true;
@@ -165,45 +208,96 @@ async function startBotSocket(number, sessionDir, notifyClient, notifySender, is
                 });
             }
 
-            // ✅ Message de bienvenue UNIQUEMENT à la première vraie connexion
-            if (firstOpen) {
-                firstOpen = false;
+            // ── Confirmation envoyée À CHAQUE connexion open (première + reconnexions) ──
+            if (!confirmationSent) {
+                confirmationSent = true;
                 const prefix = getPrefix(number);
+                const stats = getPairStats();
 
+                // 1) Message au bot lui-même
                 try {
                     await sock.sendMessage(`${number}@s.whatsapp.net`, {
                         image: { url: './database/DigixCo.jpg' },
                         caption:
-`﹝╎🤖 𝐀𝐊𝐀𝐍𝐄 𝐌𝐃 ╎˼
-⎔ــﮩ٨ـﮩﮩـ٨ •﹝ 𐰁 🎀 𐰁 ﹞• ٨ـﮩ–ﮩ٨⎔
-
-⋆.˚⪩ 𝐂𝐨𝐧𝐧𝐞𝐜𝐭𝐞́ ⪨
-⸙﹝ +${number} ﹞✴︎
-
-⋆.˚⪩ 𝐏𝐫𝐞́𝐟𝐢𝐱𝐞 ⪨
-⸙﹝ ${prefix} ﹞✴︎
-
-⋆.˚⪩ 𝐑𝐞́𝐚𝐜𝐭𝐢𝐨𝐧 ⪨
-⸙﹝ 🌸 ﹞✴︎
-
-𖤍⋅‏ ┈─━ ━━ ━ • ˹ ୨ৎ ˼ • ━ ━━ ━─┈ ⋅𖤍
-
-📢 *REJOINS MA CHAÎNE* 🔥
-https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R
-
-> *© AKANE MD 🌹*`
+`╭─✧🍉━━━━━━━━━━━━━━━❂
+┊
+*┊🤖 AKANE MD*
+┊
+*┊✅ TON BOT EST CONNECTE !*
+┊
+*┊📱 NUMERO : +${number}*
+┊
+*┊⚙️ PREFIXE : ${prefix}*
+┊
+*┊🌸 REACTION : 🌸*
+┊
+*┊📊 STATS BOTS :*
+*┊🔢 TOTAL PARRAINES : ${stats.total}*
+*┊🟢 EN VIE : ${stats.alive}*
+*┊🔴 DECONNECTES : ${stats.dead}*
+┊
+*┊📢 REJOINS MA CHAINE 🔥*
+*┊https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R*
+┊
+╰───────────────────❂`
                     });
-                } catch (e) {}
+                    console.log(`📩 Message de bienvenue envoyé à +${number}`);
+                } catch (e) { console.error('❌ Msg bot:', e.message); }
 
+                // 2) Confirmation à celui qui a tapé la commande pair
                 if (notifyClient && notifySender) {
-                    notifyClient.sendMessage(notifySender, {
-                        text:
-`✅ *Bot parrain connecté !*
+                    try {
+                        await notifyClient.sendMessage(notifySender, {
+                            image: { url: 'https://raw.githubusercontent.com/toge021/Media/main/8fd5.jpg' },
+                            jpegThumbnail: null,
+                            caption:
+`╭─✧🍉━━━━━━━━━━━━━━━❂
+┊
+*┊🤖 AKANE MD*
+┊
+*┊✅ BOT PARRAIN CONNECTE !*
+┊
+*┊📱 NUMERO : +${number}*
+┊
+*┊🟢 STATUT : ACTIF*
+┊
+*┊📊 STATS BOTS :*
+*┊🔢 TOTAL PARRAINES : ${stats.total}*
+*┊🟢 EN VIE : ${stats.alive}*
+*┊🔴 DECONNECTES : ${stats.dead}*
+┊
+╰───────────────────❂`
+                        });
+                        console.log(`📩 Confirmation envoyée au sender`);
+                    } catch (e) { console.error('❌ Msg sender:', e.message); }
+                }
 
-⸙﹝ +${number} est maintenant actif ﹞✴︎
-
-> *© AKANE MD 🌹*`
-                    }).catch(() => {});
+                // 3) Notification au parrain si différent du sender
+                const pairedByJid = pairedBy ? `${pairedBy}@s.whatsapp.net` : null;
+                if (pairedByJid && pairedByJid !== notifySender && notifyClient) {
+                    try {
+                        await notifyClient.sendMessage(pairedByJid, {
+                            image: { url: 'https://raw.githubusercontent.com/toge021/Media/main/8fd5.jpg' },
+                            jpegThumbnail: null,
+                            caption:
+`╭─✧🍉━━━━━━━━━━━━━━━❂
+┊
+*┊🤖 AKANE MD*
+┊
+*┊🎉 UN BOT A ETE PARRAINE PAR TOI !*
+┊
+*┊📱 NUMERO CONNECTE : +${number}*
+┊
+*┊🟢 STATUT : ACTIF*
+┊
+*┊📊 STATS BOTS :*
+*┊🔢 TOTAL PARRAINES : ${stats.total}*
+*┊🟢 EN VIE : ${stats.alive}*
+*┊🔴 DECONNECTES : ${stats.dead}*
+┊
+╰───────────────────❂`
+                        });
+                    } catch (e) {}
                 }
             }
         }
@@ -211,26 +305,82 @@ https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R
         // ── Déconnexion ──
         if (connection === 'close') {
             const code = lastDisconnect?.error?.output?.statusCode;
-            console.log(`❌ Bot parrain +${number} déconnecté (code: ${code})`);
+            const reason = lastDisconnect?.error?.message || '';
+            console.log(`❌ Bot parrain +${number} déconnecté (code: ${code}, raison: ${reason})`);
             msgHandlerAttached = false;
+            confirmationSent = false;
 
-            if (code === DisconnectReason.loggedOut || code === 401) {
-                console.log(`🚫 Bot parrain +${number} logout définitif`);
-                removePairSession(number);
+            // ── Logout définitif : suppression appareil lié OU code 401/440/loggedOut ──
+            const isLoggedOut =
+                code === DisconnectReason.loggedOut ||
+                code === 401 ||
+                code === 440 ||
+                reason.toLowerCase().includes('logged out') ||
+                reason.toLowerCase().includes('conflict');
+
+            if (isLoggedOut) {
+                console.log(`🚫 Bot parrain +${number} logout définitif (appareil supprimé)`);
+                markSessionDead(number);
                 activePairSockets.delete(number);
+
+                // Nettoyage du dossier session
+                const sessDir = `./sessions/pair_${number}`;
+                try {
+                    if (fs.existsSync(sessDir)) fs.rmSync(sessDir, { recursive: true, force: true });
+                } catch (e) {}
+
+                // Notifier les concernés
+                const savedPairedBy = getPairedBy(number);
+                const stats = getPairStats();
+                const notifTargets = [];
+                if (notifySender) notifTargets.push(notifySender);
+                if (savedPairedBy) {
+                    const jid = `${savedPairedBy}@s.whatsapp.net`;
+                    if (!notifTargets.includes(jid)) notifTargets.push(jid);
+                }
+
+                for (const target of notifTargets) {
+                    try {
+                        if (notifyClient) {
+                            await notifyClient.sendMessage(target, {
+                                text:
+`╭─✧🍉━━━━━━━━━━━━━━━❂
+┊
+*┊🤖 AKANE MD*
+┊
+*┊🔴 BOT DECONNECTE !*
+┊
+*┊📱 NUMERO : +${number}*
+┊
+*┊⚠️ RAISON : APPAREIL SUPPRIME / LOGOUT*
+┊
+*┊📊 STATS BOTS :*
+*┊🔢 TOTAL PARRAINES : ${stats.total}*
+*┊🟢 EN VIE : ${stats.alive}*
+*┊🔴 DECONNECTES : ${stats.dead}*
+┊
+*┊🔄 TAPE PAIR ${number} POUR RECONNECTER*
+┊
+╰───────────────────❂`
+                            });
+                        }
+                    } catch (e) {}
+                }
+
             } else {
-                // ✅ Reconnexion avec délai progressif (max 30s)
+                // ── Reconnexion automatique avec délai progressif ──
                 reconnectAttempts++;
                 const delay = Math.min(5000 * reconnectAttempts, 30000);
-                console.log(`🔄 Reconnexion bot parrain +${number} dans ${delay/1000}s... (tentative ${reconnectAttempts})`);
+                console.log(`🔄 Reconnexion bot parrain +${number} dans ${delay / 1000}s... (tentative ${reconnectAttempts})`);
 
                 const currentSock = sock;
+                const sessDir = `./sessions/pair_${number}`;
                 setTimeout(async () => {
                     if (activePairSockets.get(number) === currentSock) {
                         activePairSockets.delete(number);
                         try {
-                            // ✅ isRestore=true → pas de message de bienvenue
-                            await startBotSocket(number, sessionDir, notifyClient, notifySender, true);
+                            const savedPairedBy = getPairedBy(number);
+                            await startBotSocket(number, sessDir, notifyClient, notifySender, true, savedPairedBy);
                         } catch (e) {
                             console.error(`❌ Reconnexion +${number}:`, e.message);
                         }
@@ -247,24 +397,33 @@ https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R
 
 async function handlePairCommand(client, message, args) {
     const sender = message.key.remoteJid;
+    const senderNumber = sender.replace('@s.whatsapp.net', '').replace('@g.us', '');
     let targetNumber = args[0]?.replace(/[^0-9]/g, '');
 
+    // ── Aide (sans numéro) ──
     if (!targetNumber || targetNumber.length < 7) {
-        await client.sendMessage(sender, { text:
-`﹝╎🔑 𝐏𝐀𝐈𝐑 ╎˼
-⎔ــﮩ٨ـﮩﮩـ٨ •﹝ 𐰁 🎀 𐰁 ﹞• ٨ـﮩ–ﮩ٨⎔
-
-⋆.˚⪩ 𝐔𝐭𝐢𝐥𝐢𝐬𝐚𝐭𝐢𝐨𝐧 ⪨
-⸙﹝ pair [numéro complet] ﹞✴︎
-
-⋆.˚⪩ 𝐄𝐱𝐞𝐦𝐩𝐥𝐞 ⪨
-⸙﹝ pair 221705928204 ﹞✴︎
-
-⚠️ _Numéro complet avec indicatif pays, sans + ni espaces_
-
-𖤍⋅‏ ┈─━ ━━ ━ • ˹ ୨ৎ ˼ • ━ ━━ ━─┈ ⋅𖤍
-
-> *© AKANE MD 🌹*` });
+        const stats = getPairStats();
+        await client.sendMessage(sender, {
+            image: { url: 'https://raw.githubusercontent.com/toge021/Media/main/b9f6.jpg' },
+            jpegThumbnail: null,
+            caption:
+`╭─✧🍉━━━━━━━━━━━━━━━❂
+┊
+*┊🤖 AKANE MD*
+┊
+*┊🔑 UTILISATION : PAIR [NUMERO]*
+┊
+*┊📋 EXEMPLE : PAIR 221705928204*
+┊
+*┊⚠️ NUMERO COMPLET AVEC INDICATIF PAYS, SANS + NI ESPACES*
+┊
+*┊📊 STATISTIQUES BOTS :*
+*┊🔢 TOTAL PARRAINES : ${stats.total}*
+*┊🟢 EN VIE : ${stats.alive}*
+*┊🔴 DECONNECTES : ${stats.dead}*
+┊
+╰───────────────────❂`
+        });
         return;
     }
 
@@ -274,14 +433,18 @@ async function handlePairCommand(client, message, args) {
         await new Promise(r => setTimeout(r, 2000));
     }
 
-    await client.sendMessage(sender, { text:
-`⏳ *Génération du code...*
-
-⸙﹝ +${targetNumber} ﹞✴︎
-
-🔄 _Patiente quelques secondes..._
-
-> *© AKANE MD 🌹*` });
+    await client.sendMessage(sender, {
+        text:
+`╭─✧🍉━━━━━━━━━━━━━━━❂
+┊
+*┊⏳ GENERATION DU CODE...*
+┊
+*┊📱 NUMERO : +${targetNumber}*
+┊
+*┊🔄 PATIENTE QUELQUES SECONDES...*
+┊
+╰───────────────────❂`
+    });
 
     const sessionDir = `./sessions/pair_${targetNumber}`;
 
@@ -292,13 +455,18 @@ async function handlePairCommand(client, message, args) {
         fs.mkdirSync(sessionDir, { recursive: true });
         removePairSession(targetNumber);
 
-        await startBotSocket(targetNumber, sessionDir, client, sender, false);
+        await startBotSocket(targetNumber, sessionDir, client, sender, false, senderNumber);
 
     } catch (err) {
         console.error('❌ Erreur pair:', err);
         activePairSockets.delete(targetNumber);
         await client.sendMessage(sender, {
-            text: `❌ *Erreur :* ${err.message}\n\n> *© AKANE MD 🌹*`
+            text:
+`╭─✧🍉━━━━━━━━━━━━━━━❂
+┊
+*┊❌ ERREUR : ${err.message.toUpperCase()}*
+┊
+╰───────────────────❂`
         });
     }
 }
@@ -311,13 +479,16 @@ export async function restorePairSessions() {
     try { list = JSON.parse(fs.readFileSync(PAIR_SESSIONS_FILE, 'utf-8')); } catch (e) { return; }
     if (list.length === 0) return;
 
-    console.log(`🔄 Restauration de ${list.length} bot(s) parrain(s)...`);
-    for (const number of list) {
+    const aliveList = list.filter(e => e?.status !== 'dead');
+    console.log(`🔄 Restauration de ${aliveList.length} bot(s) parrain(s)...`);
+
+    for (const entry of aliveList) {
+        const number = typeof entry === 'object' ? entry.number : entry;
+        const pairedBy = typeof entry === 'object' ? entry.pairedBy : null;
         const sessionDir = `./sessions/pair_${number}`;
-        if (!fs.existsSync(sessionDir)) { removePairSession(number); continue; }
+        if (!fs.existsSync(sessionDir)) { markSessionDead(number); continue; }
         try {
-            // ✅ isRestore=true → pas de message, juste reconnecter
-            await startBotSocket(number, sessionDir, null, null, true);
+            await startBotSocket(number, sessionDir, null, null, true, pairedBy);
             await new Promise(r => setTimeout(r, 2000));
         } catch (e) {
             console.error(`❌ Restauration +${number}:`, e.message);
