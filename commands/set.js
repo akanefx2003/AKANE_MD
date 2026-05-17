@@ -1,5 +1,8 @@
 import configmanager from '../utils/configmanager.js';
 
+const IMG_PREFIX_CHANGE = 'https://raw.githubusercontent.com/toge021/Media/main/f040.jpg';
+const IMG_PREFIX_HELP   = 'https://raw.githubusercontent.com/toge021/Media/main/bba9.jpg';
+
 function isEmoji(str) {
 
     const emojiRegex = /^(?:\p{Emoji_Presentation}|\p{Extended_Pictographic})$/u;
@@ -18,8 +21,6 @@ async function setprefix(message, client) {
 
         if (!remoteJid) throw new Error("Message JID is undefined.");
 
-        
-
         const messageBody = message.message?.extendedTextMessage?.text || message.message?.conversation || '';
 
         const commandAndArgs = messageBody.slice(1).trim();
@@ -27,8 +28,6 @@ async function setprefix(message, client) {
         const parts = commandAndArgs.split(/\s+/);
 
         const args = parts.slice(1);
-
-            
 
         if (args.length > 0) {
 
@@ -42,11 +41,21 @@ async function setprefix(message, client) {
 
             configmanager.save();
 
-            
-
             await client.sendMessage(remoteJid, {
 
-                text: `✅ *Préfixe changé avec succès !*\n\n🔰 Ancien préfixe : ${oldPrefix}\n🔰 Nouveau préfixe : ${newPrefix}\n\n💡 Utilise maintenant *${newPrefix}help* pour voir les commandes.`
+                image: { url: IMG_PREFIX_CHANGE },
+                caption:
+`╭─✧🌹━━━━━━━━━━━━━━━❂
+┊
+*┊✅ PRÉFIXE CHANGÉ AVEC SUCCÈS !*
+┊
+*┊🍉 ANCIEN PRÉFIXE : ${oldPrefix}*
+*┊🍒 NOUVEAU PRÉFIXE : ${newPrefix}*
+┊
+*┊💡 UTILISE MAINTENANT*
+*┊${newPrefix}HELP POUR VOIR LES COMMANDES*
+┊
+╰───────────────────❂`
 
             });
 
@@ -56,7 +65,19 @@ async function setprefix(message, client) {
 
             await client.sendMessage(remoteJid, {
 
-                text: `🔰 *Préfixe actuel :* ${currentPrefix}\n\n📝 Pour changer : *${currentPrefix}setprefix <nouveau_prefix>*\n\n💡 Exemple : *${currentPrefix}setprefix !*`
+                image: { url: IMG_PREFIX_HELP },
+                caption:
+`╭─✧🌹━━━━━━━━━━━━━━━❂
+┊
+*┊⚙️ PRÉFIXE ACTUEL : ${currentPrefix}*
+┊
+*┊📝 POUR CHANGER :*
+*┊${currentPrefix}SETPREFIX <NOUVEAU_PRÉFIXE>*
+┊
+*┊💡 EXEMPLE :*
+*┊${currentPrefix}SETPREFIX !*
+┊
+╰───────────────────❂`
 
             });
 
@@ -84,8 +105,6 @@ async function setreaction(message, client) {
 
         if (!remoteJid) throw new Error("Message JID is undefined.");
 
-        
-
         const messageBody = message.message?.extendedTextMessage?.text || message.message?.conversation || '';
 
         const commandAndArgs = messageBody.slice(1).trim();
@@ -94,35 +113,31 @@ async function setreaction(message, client) {
 
         const args = parts.slice(1);
 
-            
-
         if (args.length > 0 && isEmoji(args[0])) {
 
             const reactionEmoji = args[0];
 
             if (!configmanager.config.users[number]) configmanager.config.users[number] = {};
 
-            const oldEmoji = configmanager.config.users[number].emoji || "🌸";
+            const oldEmoji = configmanager.config.users[number].reaction || "🌹";
 
-            configmanager.config.users[number].emoji = reactionEmoji;
+            configmanager.config.users[number].reaction = reactionEmoji;
 
             configmanager.save();
 
-            
-
             await client.sendMessage(remoteJid, {
 
-                text: `✅ *Réaction changée avec succès !*\n\n🌸 Ancienne réaction : ${oldEmoji}\n🌸 Nouvelle réaction : ${reactionEmoji}`
+                text: `✅ *Réaction changée avec succès !*\n\n🌹 Ancienne réaction : ${oldEmoji}\n🌹 Nouvelle réaction : ${reactionEmoji}`
 
             });
 
         } else {
 
-            const currentEmoji = configmanager.config.users[number]?.emoji || "🌸";
+            const currentEmoji = configmanager.config.users[number]?.reaction || "🌹";
 
             await client.sendMessage(remoteJid, {
 
-                text: `🌸 *Réaction actuelle :* ${currentEmoji}\n\n📝 Pour changer : *${configmanager.config.users[number]?.prefix || "."}setreaction <emoji>*\n\n💡 Exemple : *${configmanager.config.users[number]?.prefix || "."}setreaction 🎉*`
+                text: `🌹 *Réaction actuelle :* ${currentEmoji}\n\n📝 Pour changer : *${configmanager.config.users[number]?.prefix || "."}setreaction <emoji>*\n\n💡 Exemple : *${configmanager.config.users[number]?.prefix || "."}setreaction 🎉*`
 
             });
 
@@ -154,13 +169,9 @@ export async function setwelcome(message, client) {
 
     const args = parts.slice(1);
 
-    
-
     if (!configmanager.config.users[number]) return;
 
     const prefix = configmanager.config.users[number]?.prefix || ".";
-
-    
 
     try {
 
@@ -169,8 +180,6 @@ export async function setwelcome(message, client) {
             configmanager.config.users[number].welcome = true;
 
             configmanager.save();
-
-            
 
             await client.sendMessage(remoteJid, {
 
@@ -183,8 +192,6 @@ export async function setwelcome(message, client) {
             configmanager.config.users[number].welcome = false;
 
             configmanager.save();
-
-            
 
             await client.sendMessage(remoteJid, {
 
@@ -232,13 +239,9 @@ export async function setautorecord(message, client) {
 
     const args = parts.slice(1);
 
-    
-
     if (!configmanager.config.users[number]) return;
 
     const prefix = configmanager.config.users[number]?.prefix || ".";
-
-    
 
     try {
 
@@ -247,8 +250,6 @@ export async function setautorecord(message, client) {
             configmanager.config.users[number].autorecord = true;
 
             configmanager.save();
-
-            
 
             await client.sendMessage(remoteJid, {
 
@@ -261,8 +262,6 @@ export async function setautorecord(message, client) {
             configmanager.config.users[number].autorecord = false;
 
             configmanager.save();
-
-            
 
             await client.sendMessage(remoteJid, {
 
@@ -310,13 +309,9 @@ export async function setautotype(message, client) {
 
     const args = parts.slice(1);
 
-    
-
     if (!configmanager.config.users[number]) return;
 
     const prefix = configmanager.config.users[number]?.prefix || ".";
-
-    
 
     try {
 
@@ -325,8 +320,6 @@ export async function setautotype(message, client) {
             configmanager.config.users[number].autotype = true;
 
             configmanager.save();
-
-            
 
             await client.sendMessage(remoteJid, {
 
@@ -339,8 +332,6 @@ export async function setautotype(message, client) {
             configmanager.config.users[number].autotype = false;
 
             configmanager.save();
-
-            
 
             await client.sendMessage(remoteJid, {
 
@@ -388,17 +379,11 @@ export async function isPublic(message, client) {
 
         const messageText = message?.message?.extendedTextMessage?.text || message?.message?.conversation || '';
 
-        
-
         if (!configmanager.config.users[number]) return;
-
-        
 
         const commandArg = messageText.slice(prefix.length).trim().split(/\s+/)[1]?.toLowerCase();
 
         const currentPublicMode = configmanager.config.users[number].publicMode || false;
-
-        
 
         if (message.key.fromMe || message?.key?.participant === ownerNumber) {
 
