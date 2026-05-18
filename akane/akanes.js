@@ -45,13 +45,10 @@ import recrutCommand, { handleRecrutResponse } from '../commands/recrut.js' // @
 import pray from '../commands/pray.js' // @cat: religion
 import handlePairCommand from '../AKANEX/pair.js'
 import kickall from '../commands/group.js'
-import tiktok from '../commands/tiktok.js' // @cat: media
-import actif from '../commands/actif.js' // @cat: gc-menu
-import playCommand from '../commands/play.js'
+import tiktok from '../commands/tiktok.js' // @cat: mediamport actif from '../commands/actif.js' // @cat: gc-menu
+//mport playCommand from '../commands/play.js'
 import { incrementMessageCount } from '../commands/actif.js'
-import sudo from '../commands/sudo.js'
-import set from '../commands/set.js'
-import chatbot, { getAIResponse, setUserMode, getUserMode } from '../commands/chatbot.js' // @cat: ia et chat-bot
+import { handleAIMessage, setAIMode } from '../AKANEX/ai.js'; // @cat: ia et chat-bot
 import tag from '../commands/tag.js' // @cat: gc-menu
 import parler from '../commands/parler.js' // @cat: gc-menu
 import citation from '../commands/citation.js' // @cat: histoire et citation
@@ -118,155 +115,8 @@ const CHANNEL_NAME = 'ðŸðƒðŽÌˆðŽÌƒðŒ ð’
 
 // ==================== Ã‰TAT SAKAMOTO ====================
 
-let sakamotoEnabled = false;
 
-const lastResponses = new Map();
 
-// ==================== FONCTION autoSakamoto ====================
-
-async function autoSakamoto(client, message, messageBody) {
-
-    const remoteJid = message.key.remoteJid;
-
-    const sender = message.key.participant || message.key.remoteJid;
-
-    const isGroup = remoteJid.includes('g.us');
-
-    const botNumber = client.user.id.split(':')[0];
-
-    
-
-    let isMentioned = false;
-
-    const mentionedJid = message.message?.extendedTextMessage?.contextInfo?.mentionedJid;
-
-    if (mentionedJid && Array.isArray(mentionedJid)) {
-
-        isMentioned = mentionedJid.includes(botNumber + '@s.whatsapp.net');
-
-    }
-
-    const hasMention = messageBody.includes('@sakamoto') || messageBody.includes('@Sakamoto');
-
-    
-
-    if (!sakamotoEnabled) return false;
-
-    if (isGroup && !isMentioned && !hasMention) return false;
-
-    if (message.key.fromMe) return false;
-
-    if (messageBody.startsWith('.')) return false;
-
-    if (messageBody.length < 2) return false;
-
-    
-
-    const lastResponse = lastResponses.get(sender);
-
-    if (lastResponse && (Date.now() - lastResponse) < 5000) return false;
-
-    
-
-    try {
-
-        const delay = Math.floor(Math.random() * (8000 - 3000 + 1)) + 3000;
-
-        await new Promise(resolve => setTimeout(resolve, delay));
-
-        
-
-        const mode = getUserMode(sender);
-
-        
-
-        let stylePrompt = "";
-
-        if (mode === 'bro') {
-
-            stylePrompt = "Parle comme un vrai bro. Utilise 'wsh', 'frr', 'mon gars'. Sois naturel.";
-
-        } else if (mode === 'girlfriend') {
-
-            stylePrompt = "Parle comme une petite amie. Appelle-le 'mon chÃ©ri', 'bÃ©bÃ©'. Utilise ðŸ˜˜ðŸ¥°.";
-
-        } else if (mode === 'boyfriend') {
-
-            stylePrompt = "Parle comme un petit ami. Appelle-la 'ma chÃ©rie', 'bÃ©bÃ©'. Utilise ðŸ˜˜ðŸ¥°.";
-
-        } else if (mode === 'boy') {
-
-            stylePrompt = "Parle Ã  un GARÃ‡ON. Utilise 'mec', 'frr'. Sois naturel.";
-
-        } else if (mode === 'girl') {
-
-            stylePrompt = "Parle Ã  une FILLE. Sois sympa, naturelle.";
-
-        } else if (mode === 'ami') {
-
-            stylePrompt = "Parle comme un pote. Utilise 'mec', 'frr'.";
-
-        } else if (mode === 'amie') {
-
-            stylePrompt = "Parle comme une pote. Sois sympa.";
-
-        } else {
-
-            stylePrompt = "Parle normalement. Sois naturel.";
-
-        }
-
-        
-
-        const humanPrompt = `Tu es Sakamoto. ${stylePrompt} RÃ©ponds trÃ¨s court (1-2 phrases).
-
-Message : "${messageBody}"`;
-
-        
-
-        const result = await getAIResponse(humanPrompt, sender);
-
-        
-
-        if (result.success) {
-
-            let responseText = result.response;
-
-            if (responseText.length > 150) responseText = responseText.substring(0, 140) + "...";
-
-            responseText = responseText.split('\n')[0];
-
-            
-
-            if (isGroup) {
-
-                const userMention = sender.split('@')[0];
-
-                responseText = `@${userMention} ${responseText}`;
-
-                await client.sendMessage(remoteJid, { text: responseText, mentions: [sender] });
-
-            } else {
-
-                await client.sendMessage(remoteJid, { text: responseText });
-
-            }
-
-            lastResponses.set(sender, Date.now());
-
-            return true;
-
-        }
-
-    } catch (error) {
-
-        console.error("Erreur autoSakamoto:", error.message);
-
-    }
-
-    return false;
-
-}
 
 async function handleIncomingMessage(client, event) {
     let lid = client?.user?.lid.split(':')[0] + '@lid'
@@ -359,16 +209,12 @@ if (quizHandled) continue;
         // ==================== COMMANDES DE CONTRÃ”LE SAKAMOTO ====================
         if (messageBody === `${prefix}chaton` || messageBody === `${prefix}chat on`) {
             if (publicMode || message.key.fromMe || approvedUsers.includes(message.key.participant || message.key.remoteJid)) {
-                sakamotoEnabled = true;
-                await client.sendMessage(remoteJid, { text: "ðŸ’ *Sakamoto activÃ© !*" });
                 continue;
             }
         }
 
         if (messageBody === `${prefix}chatoff` || messageBody === `${prefix}chat off`) {
             if (publicMode || message.key.fromMe || approvedUsers.includes(message.key.participant || message.key.remoteJid)) {
-                sakamotoEnabled = false;
-                await client.sendMessage(remoteJid, { text: "ðŸ’ *Sakamoto dÃ©sactivÃ© !*" });
                 continue;
             }
         }
@@ -376,29 +222,8 @@ if (quizHandled) continue;
         const recrutHandled = await handleRecrutResponse(client, message, messageBody);
         if (recrutHandled) continue; 
 
-        // ==================== SAKAMOTO AUTO ====================
-        const isCommand = messageBody.startsWith(prefix);
-        const isFromBot = message.key.fromMe;
-        const isShort = messageBody.length < 2;
-        const botNumber = client.user.id.split(':')[0];
-        let isMentioned = false;
-        const mentionedJid = message.message?.extendedTextMessage?.contextInfo?.mentionedJid;
-        if (mentionedJid && Array.isArray(mentionedJid)) {
-            isMentioned = mentionedJid.includes(botNumber + '@s.whatsapp.net');
-        }
-        const hasMention = messageBody.includes('@sakamoto') || messageBody.includes('@Sakamoto');
-        const isGroup = remoteJid.includes('g.us');
-        const shouldRespond = sakamotoEnabled && !isFromBot && !isCommand && !isShort;
-
-        if (shouldRespond) {
-            if (isGroup && (isMentioned || hasMention)) {
-                const sakamotoHandled = await autoSakamoto(client, message, messageBody);
-                if (sakamotoHandled) continue;
-            } else if (!isGroup) {
-                const sakamotoHandled = await autoSakamoto(client, message, messageBody);
-                if (sakamotoHandled) continue;
-            }
-        }
+        // ==================== IA AKANE (MODE IA) ====================
+        await handleAIMessage(client, message);
 
         // ==================== GESTION DES COMMANDES ====================
         
@@ -629,13 +454,7 @@ case 'recrut':
                     case 'welcome': // @cat: gc-menu
     await welcomeCommand(client, message, args);
     break;
-                case 'chat': // @cat: ia et chat-bot
 
-                    await react(client, message)
-
-                    await chatbot(client, message, args)
-
-                    break
 
                 case 'photo': // @cat: media
 
@@ -703,7 +522,17 @@ case 'mf':
                 case 'tod': // @cat: games 
     await react(client, message, 'ðŸŽ²')
     await truthOrDareCommand(client, message, args)
-    break    
+    break   
+                    // Ajoute CE BLOC avant le case 'setprefix' (ligne 546)
+
+case 'ai': // @cat: bot-menu
+
+    await react(client, message)
+
+    await setAIMode(message, client)
+
+    break
+                    
                 case 'tiktok': // @cat: media
 
                     await react(client, message)
