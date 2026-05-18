@@ -48,7 +48,6 @@ import kickall from '../commands/group.js'
 import tiktok from '../commands/tiktok.js' // @cat: mediamport actif from '../commands/actif.js' // @cat: gc-menu
 //mport playCommand from '../commands/play.js'
 import { incrementMessageCount } from '../commands/actif.js'
-import { handleAIMessage, setAIMode } from '../AKANEX/ai.js'; // @cat: ia et chat-bot
 import tag from '../commands/tag.js' // @cat: gc-menu
 import parler from '../commands/parler.js' // @cat: gc-menu
 import citation from '../commands/citation.js' // @cat: histoire et citation
@@ -81,7 +80,7 @@ import reactions from '../commands/reactions.js' // @cat: bot-menu
 
 import media from '../commands/media.js' // @cat: media
 
-import setprefix from '../commands/set.js' // @cat: bot-menu
+import * as set from '../commands/set.js' // @cat: bot-menu
 
 import fancy from '../commands/fancy.js' // @cat: jeu et autres
 
@@ -207,14 +206,14 @@ if (quizHandled) continue;
         const todHandled = await handleTruthOrDareResponse(client, message, messageBody);
         
         // ==================== COMMANDES DE CONTRÃ”LE SAKAMOTO ====================
-        if (messageBody === `${prefix}chaton` || messageBody === `${prefix}chat on`) {
-            if (publicMode || message.key.fromMe || approvedUsers.includes(message.key.participant || message.key.remoteJid)) {
+        if (false) {
+            if (false) {
                 continue;
             }
         }
 
-        if (messageBody === `${prefix}chatoff` || messageBody === `${prefix}chat off`) {
-            if (publicMode || message.key.fromMe || approvedUsers.includes(message.key.participant || message.key.remoteJid)) {
+        if (false) {
+            if (false) {
                 continue;
             }
         }
@@ -223,7 +222,6 @@ if (quizHandled) continue;
         if (recrutHandled) continue; 
 
         // ==================== IA AKANE (MODE IA) ====================
-        await handleAIMessage(client, message);
 
         // ==================== GESTION DES COMMANDES ====================
         
