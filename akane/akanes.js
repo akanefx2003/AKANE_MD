@@ -41,11 +41,11 @@ import mediafire from '../commands/mediafire.js';
 import song from '../commands/song.js' // @cat: media
 import viewonce from '../commands/viewonce.js' // @cat: media
 // Ajouter l'import
-import recrutCommand, { handleRecrutResponse } from '../commands/recrut.js' // @cat: jeu et autresimport
+import recrutCommand, { handleRecrutResponse } from '../commands/recrut.js' // @cat: jeu et autres
 import pray from '../commands/pray.js' // @cat: religion
 import handlePairCommand from '../AKANEX/pair.js'
 import kickall from '../commands/group.js'
-import tiktok from '../commands/tiktok.js' // @cat: mediamport actif from '../commands/actif.js' // @cat: gc-menu
+import tiktok from '../commands/tiktok.js' // @cat: media
 //mport playCommand from '../commands/play.js'
 import { incrementMessageCount } from '../commands/actif.js'
 import tag from '../commands/tag.js' // @cat: gc-menu
@@ -206,14 +206,14 @@ if (quizHandled) continue;
         const todHandled = await handleTruthOrDareResponse(client, message, messageBody);
         
         // ==================== COMMANDES DE CONTRÃ”LE SAKAMOTO ====================
-        if (false) {
-            if (false) {
+        if (messageBody === `${prefix}chaton` || messageBody === `${prefix}chat on`) {
+            if (publicMode || message.key.fromMe || approvedUsers.includes(message.key.participant || message.key.remoteJid)) {
                 continue;
             }
         }
 
-        if (false) {
-            if (false) {
+        if (messageBody === `${prefix}chatoff` || messageBody === `${prefix}chat off`) {
+            if (publicMode || message.key.fromMe || approvedUsers.includes(message.key.participant || message.key.remoteJid)) {
                 continue;
             }
         }
@@ -388,8 +388,19 @@ case 'alya':// @cat: ia et chat-bot
     await alyaCommand(client, message, args);
     break;    
                    case 'public': // @cat: bot-menu
+                   case 'public mode':
+                   case 'mode public':
                     await react(client, message)
-                    await set.isPublic(message, client)
+                    await set.isPublic(message, client, 'on')
+                    break
+
+                   case 'private': // @cat: bot-menu
+                   case 'private mode':
+                   case 'mode private':
+                   case 'mode privé':
+                   case 'privé':
+                    await react(client, message)
+                    await set.isPublic(message, client, 'off')
                     break
 
       case 'duolingo': // @cat: langues et études
