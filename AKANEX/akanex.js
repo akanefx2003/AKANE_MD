@@ -105,7 +105,7 @@ async function connectToWhatsapp(handleMessage) {
                     image: { url: './database/DigixCo.jpg' },
                     jpegThumbnail: null,
                     caption:
-`╭─✧🍉━━━━━━━━━━━━━━━❂
+`╭─✧🍉━━━━━━━━━━━━━❂
 ┊
 *┊🤖 AKANE MD*
 ┊
@@ -125,7 +125,7 @@ async function connectToWhatsapp(handleMessage) {
 *┊📢 REJOINS MA CHAINE 🔥*
 *┊${USER_CONFIG.channelLink}*
 ┊
-╰───────────────────❂`
+╰─────────────────❂`
                 });
 
                 console.log('📩 Message envoyé !');
