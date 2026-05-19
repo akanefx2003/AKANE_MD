@@ -1,48 +1,35 @@
+// commands/url.js
+
 import axios from 'axios';
-
 import { downloadMediaMessage } from 'baileys';
-
 import { fileTypeFromBuffer } from 'file-type';
-
 import FormData from 'form-data';
 
-/**
+const IMG_HELP  = 'https://raw.githubusercontent.com/toge021/Media/main/c687.jpg';
+const IMG_ERROR = 'https://raw.githubusercontent.com/toge021/Media/main/b570.jpg';
 
- * Fonction d'upload vers DevHackers
+// ─── Upload vers DevHackers ───────────────────────────────────────────────────
 
- * Extrait spécifiquement le githubUrl pour éviter le texte bizarre
-
- */
-
-async function uploadToDevHackers(buffer, fileName) {
+async function uploadToDevHackers(buffer, fileName) {   
 
     const form = new FormData();
 
     form.append('file', buffer, { filename: fileName });
 
-    const res = await axios.post('https://devhackers-link-generator.onrender.com/upload', form, {
+    const res = await axios.post(
 
-        headers: { ...form.getHeaders() },
+        'https://devhackers-link-generator.onrender.com/upload',
+        form,
+        {
+            headers: { ...form.getHeaders() },
+            maxContentLength: Infinity,
+            maxBodyLength: Infinity,
+            timeout: 60000
+        }
 
-        maxContentLength: Infinity,
+    );
 
-        maxBodyLength: Infinity
-
-    });
-
-    // --- NETTOYAGE DU TEXTE BIZZARE ---
-
-    // Ton serveur renvoie un objet avec "githubUrl"
-
-    if (res.data && res.data.githubUrl) {
-
-        return res.data.githubUrl; 
-
-    }
-
-    
-
-    // Si githubUrl n'existe pas, on cherche une autre clé ou on renvoie le lien court
+    if (res.data && res.data.githubUrl) return res.data.githubUrl;
 
     if (typeof res.data === 'object') {
 
@@ -50,85 +37,229 @@ async function uploadToDevHackers(buffer, fileName) {
 
     }
 
-    
-
     return res.data.trim();
 
 }
 
+// ─── Verrou anti-bug enchaînement ────────────────────────────────────────────
+
+const processing = new Set();
+
+// ─── Commande principale ─────────────────────────────────────────────────────
+
 export async function url(client, message) {
 
-    const jid = message.key.remoteJid;
+    const jid    = message.key.remoteJid;
+    const sender = message.key.participant || message.key.remoteJid;
 
-    const quoted = message.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+    // ─── Anti-bug : si déjà en cours pour ce sender ───────────────────────────
+    if (processing.has(sender)) {
 
-    
+        return client.sendMessage(jid, {
 
-    if (!quoted) {
+            text: '⏳ *Patiente, un upload est déjà en cours...*'
 
-        return client.sendMessage(jid, { text: 
-
-`﹝╎🔗 𝐔𝐑𝐋 𝐔𝐏𝐋𝐎𝐀𝐃𝐄𝐑 ╎˼
-
-⎔ــﮩ٨ـﮩﮩـ٨ •﹝ 𐰁 ⚠️ 𐰁 ﹞• ٨ـﮩ–ﮩ٨⎔
-
-⸙﹝ Répondez à un média (Image, Vidéo, Audio, Doc) ﹞✴︎
-
-> *© AKANE MD 🌹*` });
+        });
 
     }
 
+    const quoted = message.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+
+    // ─── Pas de média répondu → aide ──────────────────────────────────────────
+    if (!quoted) {
+
+        return client.sendMessage(jid, {
+
+            image: { url: IMG_HELP },
+            caption:
+`╭─✧🌹━━━━━━━━━━━━━━━❂
+┊
+*┊🔗 URL UPLOADER*
+┊
+*┊⚠️ RÉPONDS À UN MÉDIA*
+*┊POUR GÉNÉRER SON LIEN !*
+┊
+*┊📁 SUPPORTS :*
+*┊🖼️ Image  •  🎥 Vidéo*
+*┊🎵 Audio  •  📄 Document*
+┊
+*┊💡 EXEMPLE :*
+*┊Réponds à une image puis*
+*┊tape .url*
+┊
+╰───────────────────❂`
+
+        });
+
+    }
+
+    // ─── Détection du type de média ───────────────────────────────────────────
+    const mediaData = quoted.imageMessage
+        || quoted.videoMessage
+        || quoted.audioMessage
+        || quoted.documentMessage;
+
+    if (!mediaData) {
+
+        return client.sendMessage(jid, {
+
+            image: { url: IMG_HELP },
+            caption:
+`╭─✧🌹━━━━━━━━━━━━━━━❂
+┊
+*┊❌ MÉDIA NON SUPPORTÉ*
+┊
+*┊Réponds à une image, vidéo,*
+*┊audio ou document.*
+┊
+╰───────────────────❂`
+
+        });
+
+    }
+
+    // ─── Traitement ───────────────────────────────────────────────────────────
+    processing.add(sender);
+
     try {
 
-        const mediaData = quoted.imageMessage || quoted.videoMessage || quoted.audioMessage || quoted.documentMessage;
+        // ─── Téléchargement du média ──────────────────────────────────────────
+        const fakeMsg = {
 
-        if (!mediaData) return client.sendMessage(jid, { text: "❌ *Média non supporté.*" });
+            key:     { ...message.key },
+            message: quoted
 
-        await client.sendMessage(jid, { text: "⏳ *AKANE MD génère le lien GitHub...*" });
+        };
 
-        const buffer = await downloadMediaMessage({ message: quoted }, 'buffer');
+        const buffer = await downloadMediaMessage(fakeMsg, 'buffer', {});
 
-        if (!buffer) throw new Error("Erreur de téléchargement");
+        if (!buffer || buffer.length === 0) throw new Error("Impossible de télécharger le média");
 
-        const type = await fileTypeFromBuffer(buffer);
-
-        const extension = type ? type.ext : (quoted.documentMessage?.fileName?.split('.').pop() || 'bin');
+        const type      = await fileTypeFromBuffer(buffer);
+        const extension = type?.ext
+            || quoted.documentMessage?.fileName?.split('.').pop()
+            || 'bin';
 
         const fileName = `akane_${Date.now()}.${extension}`;
-
-        // Récupération du lien propre
+        const sizeMB   = (buffer.length / 1024 / 1024).toFixed(2);
 
         const link = await uploadToDevHackers(buffer, fileName);
 
-        await client.sendMessage(jid, { 
+        // ─── Image → renvoie l'image originale avec caption ───────────────────
+        if (quoted.imageMessage) {
 
-            text: 
+            await client.sendMessage(jid, {
 
-`﹝╎🔗 𝐔𝐑𝐋 𝐆𝐄𝐍𝐄𝐑𝐀𝐓𝐄𝐃 ╎˼
+                image:   buffer,
+                caption:
+`╭─✧🌹━━━━━━━━━━━━━━━❂
+┊
+*┊✅ LIEN GÉNÉRÉ AVEC SUCCÈS !*
+┊
+*┊🌐 LIEN DIRECT :*
+┊${link}
+┊
+*┊📂 HÉBERGEUR : DevHackers*
+*┊⚖️ TAILLE : ${sizeMB} MB*
+┊
+╰───────────────────❂`
 
-⎔ــﮩ٨ـﮩﮩـ٨ •﹝ 𐰁 ✅ 𐰁 ﹞• ٨ـﮩ–ﮩ٨⎔
+            }, { quoted: message });
 
-✨ *Lien direct :*
+        // ─── Vidéo / Audio / Document → lien + caption uniquement ────────────
+        } else if (quoted.videoMessage) {
 
-${link}
+            await client.sendMessage(jid, {
 
-📂 *Hébergeur :* DevHackers Cloud
+                text:
+`╭─✧🌹━━━━━━━━━━━━━━━❂
+┊
+*┊✅ LIEN VIDÉO GÉNÉRÉ !*
+┊
+*┊🎥 TYPE : Vidéo*
+*┊⚖️ TAILLE : ${sizeMB} MB*
+┊
+*┊🌐 LIEN DIRECT :*
+┊${link}
+┊
+*┊📂 HÉBERGEUR : DevHackers*
+┊
+╰───────────────────❂`
 
-⚖️ *Taille :* ${(buffer.length / 1024 / 1024).toFixed(2)} MB
+            }, { quoted: message });
 
-> *© AKANE MD 🌹*` 
+        } else if (quoted.audioMessage) {
 
-        }, { quoted: message });
+            await client.sendMessage(jid, {
+
+                text:
+`╭─✧🌹━━━━━━━━━━━━━━━❂
+┊
+*┊✅ LIEN AUDIO GÉNÉRÉ !*
+┊
+*┊🎵 TYPE : Audio*
+*┊⚖️ TAILLE : ${sizeMB} MB*
+┊
+*┊🌐 LIEN DIRECT :*
+┊${link}
+┊
+*┊📂 HÉBERGEUR : DevHackers*
+┊
+╰───────────────────❂`
+
+            }, { quoted: message });
+
+        } else {
+
+            await client.sendMessage(jid, {
+
+                text:
+`╭─✧🌹━━━━━━━━━━━━━━━❂
+┊
+*┊✅ LIEN DOCUMENT GÉNÉRÉ !*
+┊
+*┊📄 FICHIER : ${quoted.documentMessage?.fileName || fileName}*
+*┊⚖️ TAILLE : ${sizeMB} MB*
+┊
+*┊🌐 LIEN DIRECT :*
+┊${link}
+┊
+*┊📂 HÉBERGEUR : DevHackers*
+┊
+╰───────────────────❂`
+
+            }, { quoted: message });
+
+        }
 
     } catch (error) {
 
-        console.error("Erreur DevHackers:", error);
+        console.error('❌ Erreur URL:', error.message);
 
-        await client.sendMessage(jid, { text: "❌ *Échec de l'upload.*" });
+        await client.sendMessage(jid, {
+
+            image: { url: IMG_ERROR },
+            caption:
+`╭─✧🌹━━━━━━━━━━━━━━━❂
+┊
+*┊❌ ÉCHEC DE L'UPLOAD*
+┊
+*┊🔍 RAISON :*
+*┊${error.message}*
+┊
+*┊💡 Réessaie dans quelques*
+*┊secondes.*
+┊
+╰───────────────────❂`
+
+        });
+
+    } finally {
+
+        processing.delete(sender);
 
     }
 
 }
 
 export default url;
-
