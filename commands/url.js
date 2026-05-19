@@ -8,9 +8,13 @@ import FormData from 'form-data';
 const IMG_HELP  = 'https://raw.githubusercontent.com/toge021/Media/main/c687.jpg';
 const IMG_ERROR = 'https://raw.githubusercontent.com/toge021/Media/main/b570.jpg';
 
+// ─── Cadre uniforme ───────────────────────────────────────────────────────────
+// ╭─✧🌹━━━━━━━━━━━━━━━━━━━❂  ← haut
+// ╰───────────────────────❂  ← bas (même longueur)
+
 // ─── Upload vers DevHackers ───────────────────────────────────────────────────
 
-async function uploadToDevHackers(buffer, fileName) {   
+async function uploadToDevHackers(buffer, fileName) {
 
     const form = new FormData();
 
@@ -23,13 +27,13 @@ async function uploadToDevHackers(buffer, fileName) {
         {
             headers: { ...form.getHeaders() },
             maxContentLength: Infinity,
-            maxBodyLength: Infinity,
-            timeout: 60000
+            maxBodyLength:    Infinity,
+            timeout:          60000
         }
 
     );
 
-    if (res.data && res.data.githubUrl) return res.data.githubUrl;
+    if (res.data?.githubUrl) return res.data.githubUrl;
 
     if (typeof res.data === 'object') {
 
@@ -41,9 +45,9 @@ async function uploadToDevHackers(buffer, fileName) {
 
 }
 
-// ─── Verrou anti-bug enchaînement ────────────────────────────────────────────
+// ─── Verrou par sender (permet l'enchaînement entre différents users) ─────────
 
-const processing = new Set();
+const processing = new Map();
 
 // ─── Commande principale ─────────────────────────────────────────────────────
 
@@ -52,12 +56,13 @@ export async function url(client, message) {
     const jid    = message.key.remoteJid;
     const sender = message.key.participant || message.key.remoteJid;
 
-    // ─── Anti-bug : si déjà en cours pour ce sender ───────────────────────────
-    if (processing.has(sender)) {
+    // ─── Si ce sender a déjà un upload en cours → on laisse passer
+    //     mais on prévient. Deux uploads simultanés du MÊME sender → bloqué.
+    if (processing.get(sender)) {
 
         return client.sendMessage(jid, {
 
-            text: '⏳ *Patiente, un upload est déjà en cours...*'
+            text: '⏳ *Ton upload est déjà en cours, patiente...*'
 
         });
 
@@ -65,14 +70,14 @@ export async function url(client, message) {
 
     const quoted = message.message?.extendedTextMessage?.contextInfo?.quotedMessage;
 
-    // ─── Pas de média répondu → aide ──────────────────────────────────────────
+    // ─── Pas de média → aide ──────────────────────────────────────────────────
     if (!quoted) {
 
         return client.sendMessage(jid, {
 
             image: { url: IMG_HELP },
             caption:
-`╭─✧🌹━━━━━━━━━━━━━━━❂
+`╭─✧🌹━━━━━━━━━━━━━❂
 ┊
 *┊🔗 URL UPLOADER*
 ┊
@@ -87,13 +92,13 @@ export async function url(client, message) {
 *┊Réponds à une image puis*
 *┊tape .url*
 ┊
-╰───────────────────❂`
+╰─────────────────❂`
 
         });
 
     }
 
-    // ─── Détection du type de média ───────────────────────────────────────────
+    // ─── Type de média ────────────────────────────────────────────────────────
     const mediaData = quoted.imageMessage
         || quoted.videoMessage
         || quoted.audioMessage
@@ -105,25 +110,35 @@ export async function url(client, message) {
 
             image: { url: IMG_HELP },
             caption:
-`╭─✧🌹━━━━━━━━━━━━━━━❂
+`╭─✧🌹━━━━━━━━━━━━━❂
 ┊
 *┊❌ MÉDIA NON SUPPORTÉ*
 ┊
 *┊Réponds à une image, vidéo,*
 *┊audio ou document.*
 ┊
-╰───────────────────❂`
+┊
+┊
+┊
+╰─────────────────❂`
 
         });
 
     }
 
-    // ─── Traitement ───────────────────────────────────────────────────────────
-    processing.add(sender);
+    // ─── Marquer ce sender comme en cours ────────────────────────────────────
+    processing.set(sender, true);
+
+    // ─── Message d'attente (réaction visuelle) ────────────────────────────────
+    await client.sendMessage(jid, {
+
+        react: { text: '⏳', key: message.key }
+
+    });
 
     try {
 
-        // ─── Téléchargement du média ──────────────────────────────────────────
+        // ─── Téléchargement en parallèle avec l'upload ────────────────────────
         const fakeMsg = {
 
             key:     { ...message.key },
@@ -131,28 +146,43 @@ export async function url(client, message) {
 
         };
 
+        // Télécharge le buffer
         const buffer = await downloadMediaMessage(fakeMsg, 'buffer', {});
 
         if (!buffer || buffer.length === 0) throw new Error("Impossible de télécharger le média");
 
-        const type      = await fileTypeFromBuffer(buffer);
+        // Détection type + upload en parallèle
+        const [type, link] = await Promise.all([
+
+            fileTypeFromBuffer(buffer),
+            uploadToDevHackers(
+                buffer,
+                `akane_${Date.now()}.tmp`
+            )
+
+        ]);
+
         const extension = type?.ext
             || quoted.documentMessage?.fileName?.split('.').pop()
             || 'bin';
 
-        const fileName = `akane_${Date.now()}.${extension}`;
-        const sizeMB   = (buffer.length / 1024 / 1024).toFixed(2);
+        const sizeMB = (buffer.length / 1024 / 1024).toFixed(2);
 
-        const link = await uploadToDevHackers(buffer, fileName);
+        // ─── Réaction succès ──────────────────────────────────────────────────
+        await client.sendMessage(jid, {
 
-        // ─── Image → renvoie l'image originale avec caption ───────────────────
+            react: { text: '✅', key: message.key }
+
+        });
+
+        // ─── Image → renvoie l'image + lien ───────────────────────────────────
         if (quoted.imageMessage) {
 
             await client.sendMessage(jid, {
 
                 image:   buffer,
                 caption:
-`╭─✧🌹━━━━━━━━━━━━━━━❂
+`╭─✧🌹━━━━━━━━━━━━━❂
 ┊
 *┊✅ LIEN GÉNÉRÉ AVEC SUCCÈS !*
 ┊
@@ -162,17 +192,17 @@ export async function url(client, message) {
 *┊📂 HÉBERGEUR : DevHackers*
 *┊⚖️ TAILLE : ${sizeMB} MB*
 ┊
-╰───────────────────❂`
+╰─────────────────❂`
 
             }, { quoted: message });
 
-        // ─── Vidéo / Audio / Document → lien + caption uniquement ────────────
+        // ─── Vidéo → texte uniquement ─────────────────────────────────────────
         } else if (quoted.videoMessage) {
 
             await client.sendMessage(jid, {
 
                 text:
-`╭─✧🌹━━━━━━━━━━━━━━━❂
+`╭─✧🌹━━━━━━━━━━━━━❂
 ┊
 *┊✅ LIEN VIDÉO GÉNÉRÉ !*
 ┊
@@ -184,16 +214,17 @@ export async function url(client, message) {
 ┊
 *┊📂 HÉBERGEUR : DevHackers*
 ┊
-╰───────────────────❂`
+╰─────────────────❂`
 
             }, { quoted: message });
 
+        // ─── Audio → texte uniquement ─────────────────────────────────────────
         } else if (quoted.audioMessage) {
 
             await client.sendMessage(jid, {
 
                 text:
-`╭─✧🌹━━━━━━━━━━━━━━━❂
+`╭─✧🌹━━━━━━━━━━━━❂
 ┊
 *┊✅ LIEN AUDIO GÉNÉRÉ !*
 ┊
@@ -205,20 +236,21 @@ export async function url(client, message) {
 ┊
 *┊📂 HÉBERGEUR : DevHackers*
 ┊
-╰───────────────────❂`
+╰─────────────────❂`
 
             }, { quoted: message });
 
+        // ─── Document → texte uniquement ──────────────────────────────────────
         } else {
 
             await client.sendMessage(jid, {
 
                 text:
-`╭─✧🌹━━━━━━━━━━━━━━━❂
+`╭─✧🌹━━━━━━━━━━━━━❂
 ┊
 *┊✅ LIEN DOCUMENT GÉNÉRÉ !*
 ┊
-*┊📄 FICHIER : ${quoted.documentMessage?.fileName || fileName}*
+*┊📄 ${quoted.documentMessage?.fileName || `fichier.${extension}`}*
 *┊⚖️ TAILLE : ${sizeMB} MB*
 ┊
 *┊🌐 LIEN DIRECT :*
@@ -226,7 +258,7 @@ export async function url(client, message) {
 ┊
 *┊📂 HÉBERGEUR : DevHackers*
 ┊
-╰───────────────────❂`
+╰─────────────────❂`
 
             }, { quoted: message });
 
@@ -238,9 +270,15 @@ export async function url(client, message) {
 
         await client.sendMessage(jid, {
 
+            react: { text: '❌', key: message.key }
+
+        });
+
+        await client.sendMessage(jid, {
+
             image: { url: IMG_ERROR },
             caption:
-`╭─✧🌹━━━━━━━━━━━━━━━❂
+`╭─✧🌹━━━━━━━━━━━━━❂
 ┊
 *┊❌ ÉCHEC DE L'UPLOAD*
 ┊
@@ -250,12 +288,13 @@ export async function url(client, message) {
 *┊💡 Réessaie dans quelques*
 *┊secondes.*
 ┊
-╰───────────────────❂`
+╰─────────────────❂`
 
         });
 
     } finally {
 
+        // ─── Libère le verrou → enchaînement possible ─────────────────────────
         processing.delete(sender);
 
     }
