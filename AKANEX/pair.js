@@ -157,7 +157,7 @@ async function startBotSocket(number, sessionDir, notifyClient, notifySender, is
                         image: { url: 'https://raw.githubusercontent.com/toge021/Media/main/8fd5.jpg' },
                         jpegThumbnail: null,
                         caption:
-`╭─✧🍉━━━━━━━━━━━━━━━❂
+`╭─✧🍉━━━━━━━━━━━━━❂
 ┊
 *┊🎵 AKANE MD*
 ┊
@@ -173,7 +173,7 @@ async function startBotSocket(number, sessionDir, notifyClient, notifySender, is
 ┊
 *┊⚠️ CODE EXPIRE DANS 60 SECONDES !*
 ┊
-╰───────────────────❂`
+╰─────────────────❂`
                     });
                     await notifyClient.sendMessage(notifySender, { text: fmt });
                 }
@@ -219,7 +219,7 @@ async function startBotSocket(number, sessionDir, notifyClient, notifySender, is
                     await sock.sendMessage(`${number}@s.whatsapp.net`, {
                         image: { url: './database/DigixCo.jpg' },
                         caption:
-`╭─✧🍉━━━━━━━━━━━━━━━❂
+`╭─✧🍉━━━━━━━━━━━━━❂
 ┊
 *┊🤖 AKANE MD*
 ┊
@@ -237,9 +237,9 @@ async function startBotSocket(number, sessionDir, notifyClient, notifySender, is
 *┊🔴 DECONNECTES : ${stats.dead}*
 ┊
 *┊📢 REJOINS MA CHAINE 🔥*
-*┊https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R*
+┊https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R
 ┊
-╰───────────────────❂`
+╰─────────────────❂`
                     });
                     console.log(`📩 Message de bienvenue envoyé à +${number}`);
                 } catch (e) { console.error('❌ Msg bot:', e.message); }
@@ -251,7 +251,7 @@ async function startBotSocket(number, sessionDir, notifyClient, notifySender, is
                             image: { url: 'https://raw.githubusercontent.com/toge021/Media/main/8fd5.jpg' },
                             jpegThumbnail: null,
                             caption:
-`╭─✧🍉━━━━━━━━━━━━━━━❂
+`╭─✧🍉━━━━━━━━━━━━━❂
 ┊
 *┊🤖 AKANE MD*
 ┊
@@ -266,7 +266,7 @@ async function startBotSocket(number, sessionDir, notifyClient, notifySender, is
 *┊🟢 EN VIE : ${stats.alive}*
 *┊🔴 DECONNECTES : ${stats.dead}*
 ┊
-╰───────────────────❂`
+╰─────────────────❂`
                         });
                         console.log(`📩 Confirmation envoyée au sender`);
                     } catch (e) { console.error('❌ Msg sender:', e.message); }
@@ -280,7 +280,7 @@ async function startBotSocket(number, sessionDir, notifyClient, notifySender, is
                             image: { url: 'https://raw.githubusercontent.com/toge021/Media/main/8fd5.jpg' },
                             jpegThumbnail: null,
                             caption:
-`╭─✧🍉━━━━━━━━━━━━━━━❂
+`╭─✧🍉━━━━━━━━━━━━━❂
 ┊
 *┊🤖 AKANE MD*
 ┊
@@ -295,7 +295,7 @@ async function startBotSocket(number, sessionDir, notifyClient, notifySender, is
 *┊🟢 EN VIE : ${stats.alive}*
 *┊🔴 DECONNECTES : ${stats.dead}*
 ┊
-╰───────────────────❂`
+╰─────────────────❂`
                         });
                     } catch (e) {}
                 }
@@ -344,7 +344,7 @@ async function startBotSocket(number, sessionDir, notifyClient, notifySender, is
                         if (notifyClient) {
                             await notifyClient.sendMessage(target, {
                                 text:
-`╭─✧🍉━━━━━━━━━━━━━━━❂
+`╭─✧🍉━━━━━━━━━━━━━❂
 ┊
 *┊🤖 AKANE MD*
 ┊
@@ -361,7 +361,7 @@ async function startBotSocket(number, sessionDir, notifyClient, notifySender, is
 ┊
 *┊🔄 TAPE PAIR ${number} POUR RECONNECTER*
 ┊
-╰───────────────────❂`
+╰─────────────────❂`
                             });
                         }
                     } catch (e) {}
@@ -407,7 +407,7 @@ async function handlePairCommand(client, message, args) {
             image: { url: 'https://raw.githubusercontent.com/toge021/Media/main/b9f6.jpg' },
             jpegThumbnail: null,
             caption:
-`╭─✧🍉━━━━━━━━━━━━━━━❂
+`╭─✧🍉━━━━━━━━━━━━━❂
 ┊
 *┊🤖 AKANE MD*
 ┊
@@ -422,7 +422,7 @@ async function handlePairCommand(client, message, args) {
 *┊🟢 EN VIE : ${stats.alive}*
 *┊🔴 DECONNECTES : ${stats.dead}*
 ┊
-╰───────────────────❂`
+╰─────────────────❂`
         });
         return;
     }
@@ -435,7 +435,7 @@ async function handlePairCommand(client, message, args) {
 
     await client.sendMessage(sender, {
         text:
-`╭─✧🍉━━━━━━━━━━━━━━━❂
+`╭─✧🍉━━━━━━━━━━━━━❂
 ┊
 *┊⏳ GENERATION DU CODE...*
 ┊
@@ -443,7 +443,7 @@ async function handlePairCommand(client, message, args) {
 ┊
 *┊🔄 PATIENTE QUELQUES SECONDES...*
 ┊
-╰───────────────────❂`
+╰─────────────────❂`
     });
 
     const sessionDir = `./sessions/pair_${targetNumber}`;
@@ -462,11 +462,11 @@ async function handlePairCommand(client, message, args) {
         activePairSockets.delete(targetNumber);
         await client.sendMessage(sender, {
             text:
-`╭─✧🍉━━━━━━━━━━━━━━━❂
+`╭─✧🍉━━━━━━━━━━━━━❂
 ┊
 *┊❌ ERREUR : ${err.message.toUpperCase()}*
 ┊
-╰───────────────────❂`
+╰─────────────────❂`
         });
     }
 }
