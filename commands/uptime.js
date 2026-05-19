@@ -1,48 +1,48 @@
+// commands/uptime.js
+
+const IMG = 'https://raw.githubusercontent.com/toge021/Media/main/9563.jpg';
+
 export async function runtime(client, message) {
 
     const jid = message.key.remoteJid;
 
-    
-
-    // --- GÉNÉRATION DE FAUX PING (ENTRE 990 ET 1573) ---
-
+    // ─── Faux ping ────────────────────────────────────────────────────────────
     const fakePing = Math.floor(Math.random() * (1573 - 990 + 1)) + 990;
 
-    // --- CALCUL DE L'UPTIME ---
-
+    // ─── Uptime ───────────────────────────────────────────────────────────────
     const uptimeSeconds = process.uptime();
 
-    const days = Math.floor(uptimeSeconds / 86400);
-
-    const hours = Math.floor((uptimeSeconds % 86400) / 3600);
-
+    const days    = Math.floor(uptimeSeconds / 86400);
+    const hours   = Math.floor((uptimeSeconds % 86400) / 3600);
     const minutes = Math.floor((uptimeSeconds % 3600) / 60);
-
     const seconds = Math.floor(uptimeSeconds % 60);
 
     const uptimeString = `${days > 0 ? `${days}j ` : ''}${hours > 0 ? `${hours}h ` : ''}${minutes}m ${seconds}s`;
 
-    // --- STATS RAM ---
-
+    // ─── RAM ──────────────────────────────────────────────────────────────────
     const ramUsage = (process.memoryUsage().heapUsed / 1024 / 1024).toFixed(1);
 
-    const text = `﹝╎⏳ 𝐒𝐓𝐀𝐓𝐔𝐒 𝐀𝐊𝐀𝐍𝐄 ╎˼
+    // ─── Envoi ────────────────────────────────────────────────────────────────
+    await client.sendMessage(jid, {
 
-⎔ــﮩ٨ـﮩﮩـ٨ •﹝ 𐰁 ✨ 𐰁 ﹞• ٨ـﮩ–ﮩ٨⎔
+        image: { url: IMG },
+        caption:
+`╭─✧🌹━━━━━━━━━━━━━━━❂
+┊
+*┊⏳ STATUS AKANE MD*
+┊
+*┊📡 STATUT : EN LIGNE ✅*
+┊
+*┊🚀 VITESSE : ${fakePing} MS*
+┊
+*┊⏱️ EN VIE DEPUIS : ${uptimeString}*
+┊
+*┊📂 MÉMOIRE : ${ramUsage} MB / 1GO*
+┊
+╰───────────────────❂`
 
-📡 *Statut :* *En ligne ✅*
-
-🚀 *Vitesse :* *${fakePing} ms*
-
-⏱️ *En vie depuis :* *${uptimeString}*
-
-📂 *Mémoire :* *${ramUsage} MB / 1go*
-
-> *© AKANE MD 🌹*`;
-
-    await client.sendMessage(jid, { text: text }, { quoted: message });
+    }, { quoted: message });
 
 }
 
 export default runtime;
-
