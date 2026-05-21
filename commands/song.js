@@ -139,7 +139,7 @@ export default async function songCommand(client, message, args) {
         titleDisplay = titleDisplay.substring(0, 37) + '...'
     }
 
-    const caption = `╭─✧🍉━━━━━━━━━━━━━━━❂
+    const caption = `╭─✧🍉━━━━━━━━━━━━━❂
 ┊
 *┊🎵 AKANE MD*
 ┊
@@ -149,7 +149,7 @@ export default async function songCommand(client, message, args) {
 ┊
 *┊👀 VUES :* *${Number(video.views).toLocaleString()}*
 ┊
-╰───────────────────❂
+╰─────────────────❂
 
 *⬇️ TELECHARGEMENT EN COURS...*`
 
