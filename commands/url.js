@@ -1,7 +1,7 @@
 // commands/url.js
 
 import axios from 'axios';
-import { downloadMediaMessage } from 'baileys';
+import { downloadMediaMessage } from '@crysnovax/baileys';
 import { fileTypeFromBuffer } from 'file-type';
 import FormData from 'form-data';
 
