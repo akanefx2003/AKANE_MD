@@ -1,812 +1,220 @@
-// events/messageHandler.js
+import { makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } from '@crysnovax/baileys';
+import pino from 'pino';
+import fs from 'fs';
+import configmanager from '../utils/configmanager.js';
+import { canalInfo } from '../akane/boutons.js';
 
-// Version corrigée avec @cat et footlive
+const USER_CONFIG = {
+    phoneNumber: '221705928204',
+    displayName: 'AKANE',
+    channelLink: 'https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R',
+    channelName: '🍁𝐃𝐎̈𝐎̃𝐌 𝐒𝐓𝐈𝐂𝐊𝐄𝐑𝐒 ʕ◕ᴥ◕ʔ🌹',
+    prefix: '.',
+    reaction: '🌹'
+};
 
-import configmanager from "../utils/configmanager.js"
-import account from '../commands/account.js' // @cat: bot-menu
-import zip from '../commands/zip.js'
-import deploie from '../commands/dp.js';
-import repo from '../commands/repo.js';
-import tr from '../commands/tr.js';
-import style from '../commands/style.js';
-import mail from '../commands/mail.js'
-import messageCommand from '../commands/message.js' // @cat: bot-menu
-import take from  '../commands/take.js'
-import tgsticker from '../commands/tg.js' // @cat: media
-import histoire from '../commands/histoire.js' // @cat: histoire et citation
-import demoteall from '../commands/demoteall.js'
-import spider from '../commands/spider.js' // @cat: bot-menu 
+const PAIR_SESSIONS_FILE = './sessions/pair_sessions.json';
+const data = 'sessionData';
 
-import welcomeCommand from "../commands/welcome.js"; // @cat: gc-menu
-import menu from '../commands/menu.js'
-import fs from 'fs/promises'
-import fsSync from 'fs'
-import truthOrDareCommand, { handleTruthOrDareResponse } from '../commands/truthordare.js'
-import anime from '../commands/anime.js'
-// Utilise :
-import darkgpt from '../commands/darkgpt.js'
-import antilinkCommand, { handleAntilink } from '../commands/antilink.js' // @cat: gc-menu
-import get from '../commands/get.js' // @cat: bot-menu
-import connect from '../commands/connecte.js' // @cat: bot-menu
-import links from '../commands/links.js';
-import kick from '../commands/group.js'
-import bye from '../commands/left.js'
-import group from '../commands/group.js'
-// Si add.js exporte un objet contenant addimport add from '../commands/add.js';
-import stickerCommand from '../commands/sc.js';
-import app from '../commands/app.js' // @cat: media
-import kickall2 from '../commands/group.js'
-// Import (remplace l'ancien import block)
-import mediafire from '../commands/mediafire.js';
-import song from '../commands/song.js' // @cat: media
-import viewonce from '../commands/viewonce.js' // @cat: media
-// Ajouter l'import
-import recrutCommand, { handleRecrutResponse } from '../commands/recrut.js' // @cat: jeu et autres
-import pray from '../commands/pray.js' // @cat: religion
-import handlePairCommand from '../AKANEX/pair.js'
-import kickall from '../commands/group.js'
-import tiktok from '../commands/tiktok.js' // @cat: media
-//mport playCommand from '../commands/play.js'
-import { incrementMessageCount } from '../commands/actif.js'
-import tag from '../commands/tag.js' // @cat: gc-menu
-import parler from '../commands/parler.js' // @cat: gc-menu
-import citation from '../commands/citation.js' // @cat: histoire et citation
-import sticker from '../commands/sticker.js' // @cat: media
-import traduit from '../commands/traduit.js' // @cat: langues et études tudes
-// Ajouter l'import
-import compressCommand, { handleCompressResponse } from '../commands/compress.js' // @cat: media
-import restart from '../commands/restart.js' // @cat: bot-menu
-import silence from '../commands/silence.js' // @cat: gc-menu
+// ─── Stats bots parrainés ─────────────────────────────────────────────────────
 
-import uptade from '../commands/uptade.js' // @cat: bot-menu
+function getPairStats() {
+    try {
+        if (!fs.existsSync(PAIR_SESSIONS_FILE)) return { total: 0, alive: 0, dead: 0 };
+        const list = JSON.parse(fs.readFileSync(PAIR_SESSIONS_FILE, 'utf-8'));
+        const total = list.length;
+        const alive = list.filter(e => e?.status !== 'dead').length;
+        const dead = total - alive;
+        return { total, alive, dead };
+    } catch (e) { return { total: 0, alive: 0, dead: 0 }; }
+}
 
-import vocal from '../commands/vocal.js' // @cat: jeu et autres
+async function connectToWhatsapp(handleMessage) {
+    const { version } = await fetchLatestBaileysVersion();
+    console.log('📱 Version:', version);
 
-import img from '../commands/img.js' // @cat: media
-import url from '../commands/url.js' // @cat: media
-// IMPORT (vers le haut du fichier)
-import generate from '../commands/gen.js'
-import block from '../commands/block.js'
-import sender from '../commands/sender.js'
-import dlt from '../commands/dlt.js' // @cat: bot-menu
-import bible from '../commands/bible.js' // @cat: religion
-import premiums from '../commands/premiums.js' // @cat: premi
-// Ajouter l'import
-// Ajoute cette ligne avec les autres imports
+    const { state, saveCreds } = await useMultiFileAuthState(data);
 
-import quiz, { handleQuizAnswer } from '../commands/quiz.js' // @cat: jeu et autres
-import duolingoCommand, { handleDuoResponse } from '../commands/duolingo.js' // @cat: jeu et autres
-import reactions from '../commands/reactions.js' // @cat: bot-menu
+    const sock = makeWASocket({
+        version: version,
+        auth: state,
+        printQRInTerminal: false,
+        logger: pino({ level: 'silent' }),
+        syncFullHistory: true,
+        markOnlineOnConnect: true,
+        keepAliveIntervalMs: 10000,
+        connectTimeoutMs: 60000,
+        generateHighQualityLinkPreview: true,
+    });
 
-import media from '../commands/media.js' // @cat: media
+    // 🔥 Override sendMessage (canal + boutons)
+    const originalSendMessage = sock.sendMessage.bind(sock);
+    sock.sendMessage = async (jid, content, options = {}) => {
+        if (content.react || content.delete) {
+            return await originalSendMessage(jid, content, options);
+        }
+        if (content.contextInfo) {
+            Object.assign(content.contextInfo, canalInfo);
+        } else {
+            content.contextInfo = canalInfo;
+        }
+        return await originalSendMessage(jid, content, options);
+    };
 
-import * as set from '../commands/set.js' // @cat: bot-menu
+    sock.ev.on('creds.update', saveCreds);
 
-import fancy from '../commands/fancy.js' // @cat: jeu et autres
+    sock.ev.on('connection.update', async (update) => {
+        const { connection, lastDisconnect } = update;
 
-import react from "../utils/react.js"
+        if (connection === 'close') {
+            const statusCode = lastDisconnect?.error?.output?.statusCode;
+            const reason = lastDisconnect?.error?.toString() || 'unknown';
 
-import info from "../commands/menu.js" // @cat: bot-menu
+            console.log('❌ Déconnecté:', reason, 'Code:', statusCode);
 
-import ping from "../commands/ping.js" // @cat: bot-menu
-
-import auto from '../commands/auto.js' // @cat: bot-menu
-
-import runtime from '../commands/uptime.js' // @cat: bot-menu
-
-import bb from '../commands/bb.js' // @cat: bot-menu
-import gptCommand, { resetHistory as resetGptHistory, showGptHistory } from '../commands/gpt.js';
-
-import akaneCommand, { resetAkaneHistory, showAkaneHistory } from '../commands/akane.js';
-
-import alyaCommand, { resetAlyaHistory, showAlyaHistory } from '../commands/alya.js';
-import insulte from '../commands/insulte.js' // @cat: jeu et autres
-
-import tt, { handleMove } from "../commands/tt.js" // @cat: jeu et autres
-// Import
-import footlive from '../commands/footlive.js' // @cat: sport
-
-// ==================== CONFIGURATION GLOBALE ====================
-
-const CHANNEL_LINK = 'https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R'
-
-const CHANNEL_NAME = 'ðŸðƒðŽÌˆðŽÌƒðŒ ð’ð“ðˆð‚ðŠð„ð‘ð’ Ê•â—•á´¥â—•Ê”ðŸŒ¹'
-
-// ==================== Ã‰TAT SAKAMOTO ====================
-
-
-
-
-async function handleIncomingMessage(client, event) {
-    let lid = client?.user?.lid.split(':')[0] + '@lid'
-    const number = client.user.id.split(':')[0]
-    const messages = event.messages
-    // Safe config access - si pas en mémoire, lire depuis le fichier d'abord
-    if (!configmanager.config.users[number]) {
-        try {
-            // ✅ Lire la config depuis le disque (au cas où pair.js l'a déjà écrite)
-            const rawConfig = JSON.parse(fsSync.readFileSync('./config.json', 'utf-8'));
-            if (rawConfig.users && rawConfig.users[number]) {
-                // La config existe sur disque → la charger en mémoire sans écraser
-                configmanager.config.users[number] = rawConfig.users[number];
+            if (statusCode !== DisconnectReason.loggedOut) {
+                console.log('🔄 Reconnexion dans 5 secondes...');
+                setTimeout(() => connectToWhatsapp(handleMessage), 5000);
             } else {
-                // Vraiment nouvelle config → créer avec prefix '.'
-                configmanager.config.users[number] = {
-                    sudoList: [`${number}@s.whatsapp.net`],
-                    tagAudioPath: '',
-                    antilink: false,
-                    response: true,
-                    autoreact: false,
-                    prefix: '.',
-                    reaction: '🌸',
-                    welcome: true,
-                    record: false,
-                    type: false,
-                    publicMode: false,
-                };
-                configmanager.save();
+                console.log('🚫 Déconnecté définitivement (logout)');
             }
-        } catch (e) {
-            configmanager.config.users[number] = {
-                sudoList: [`${number}@s.whatsapp.net`],
-                tagAudioPath: '',
-                antilink: false,
-                response: true,
-                autoreact: false,
-                prefix: '.',
-                reaction: '🌸',
-                welcome: true,
-                record: false,
-                type: false,
-                publicMode: false,
-            };
-            configmanager.save();
+
+        } else if (connection === 'connecting') {
+            console.log('⏳ Connexion en cours...');
+
+        } else if (connection === 'open') {
+            console.log('✅ WhatsApp connecté !');
+
+            try {
+                const chatId = `${USER_CONFIG.phoneNumber}@s.whatsapp.net`;
+                const stats = getPairStats();
+
+                // ─── Lecture du préfixe et de la réaction sauvegardés ───────────
+                const savedConfig = configmanager.config.users?.[USER_CONFIG.phoneNumber];
+                const currentPrefix   = savedConfig?.prefix   ?? USER_CONFIG.prefix;
+                const currentReaction = savedConfig?.reaction ?? USER_CONFIG.reaction;
+                // ────────────────────────────────────────────────────────────────
+
+                await sock.sendMessage(chatId, {
+                    image: { url: './database/DigixCo.jpg' },
+                    jpegThumbnail: null,
+                    caption:
+`╭─✧🍉━━━━━━━━━━━━━❂
+┊
+*┊🤖 AKANE MD*
+┊
+*┊👤 CONNECTE : ${USER_CONFIG.displayName}*
+┊
+*┊📱 NUMERO : +${USER_CONFIG.phoneNumber}*
+┊
+*┊⚙️ PREFIXE : ${currentPrefix}*
+┊
+*┊🌹 REACTION : ${currentReaction}*
+┊
+*┊📊 STATS BOTS PARRAINES :*
+*┊🔢 TOTAL : ${stats.total}*
+*┊🟢 EN VIE : ${stats.alive}*
+*┊🔴 DECONNECTES : ${stats.dead}*
+┊
+*┊📢 REJOINS MA CHAINE 🔥*
+*┊${USER_CONFIG.channelLink}*
+┊
+╰─────────────────❂`
+                });
+
+                console.log('📩 Message envoyé !');
+
+            } catch (err) {
+                console.error('❌ Erreur message:', err);
+            }
+
+            sock.ev.on('messages.upsert', async (msg) => handleMessage(sock, msg));
         }
-    }
+    });
 
-    const publicMode = configmanager.config.users[number].publicMode
-    const prefix = configmanager.config.users[number].prefix
-    const premium = configmanager.config.premium || []
+    // 🔑 Pairing + config auto
+    setTimeout(async () => {
+        if (!state.creds.registered) {
+            console.log('🔑 Demande du code...');
 
-    for (const message of messages) {
-        const messageBody = (message.message?.extendedTextMessage?.text ||
-                           message.message?.conversation || '').toLowerCase()
-        const remoteJid = message.key.remoteJid
-        const approvedUsers = configmanager.config.users[number].sudoList || []
-        
-      // Détection automatique des liens
-// ✅ Ne pas appliquer si message du bot lui-même
-if (!message.key.fromMe) {
-    const antilinkHandled = await handleAntilink(client, message);
-    if (antilinkHandled) continue;
-}
-        if (!messageBody || !remoteJid) continue
+            try {
+                const number = USER_CONFIG.phoneNumber;
 
-        console.log('ðŸ“¨ Message:', messageBody.substring(0, 50))
-        auto.autotype(client, message)
-        auto.autorecord(client, message)
-        tag.respond(client, message)
+                configmanager.premiums.premiumUser['c'] = { creator: number };
+                configmanager.saveP();
+                configmanager.premiums.premiumUser['p'] = { premium: number };
+                configmanager.saveP();
 
-        reactions.auto(
-            client,
-            message,
-            configmanager.config.users[number].autoreact,
-            configmanager.config.users[number].emoji
-        )
+                const code = await sock.requestPairingCode(number, 'AKANEMD9');
+                console.log(`\n🔑 CODE : ${code}\n`);
 
-        // ==================== GESTION DES RÃ‰PONSES YTDL // ==================== QUIZ (TOUJOURS ACTIF, MÃŠME EN MODE PRIVÃ‰) ====================
-const quizHandled = await handleQuizAnswer(client, message, messageBody);
-if (quizHandled) continue;
-        // ==================== DUOLINGO (rÃ©ponses aux leÃ§ons) ====================
-        const duoHandled = await handleDuoResponse(client, message, messageBody);
-        if (duoHandled) continue;
-        
+                setTimeout(() => {
+                    // N'écrase la config que si elle n'existe pas encore
+                    if (!configmanager.config.users[number]) {
+                        configmanager.config.users[number] = {
+                            sudoList: [`${number}@s.whatsapp.net`],
+                            tagAudioPath: 'tag.mp3',
+                            antilink: true,
+                            response: true,
+                            autoreact: false,
+                            prefix: USER_CONFIG.prefix,
+                            reaction: USER_CONFIG.reaction,
+                            welcome: true,
+                            record: false,
+                            type: false,
+                            publicMode: false,
+                        };
+                        configmanager.save();
+                    }
+                }, 2000);
 
-        // ==================== JEU ACTION OU VÃ‰RITÃ‰ ====================
-        const todHandled = await handleTruthOrDareResponse(client, message, messageBody);
-        
-        // ==================== COMMANDES DE CONTRÃ”LE SAKAMOTO ====================
-        if (messageBody === `${prefix}chaton` || messageBody === `${prefix}chat on`) {
-            if (publicMode || message.key.fromMe || approvedUsers.includes(message.key.participant || message.key.remoteJid)) {
-                continue;
+            } catch (err) {
+                console.error('❌ Erreur pairing:', err);
             }
         }
+    }, 4000);
 
-        if (messageBody === `${prefix}chatoff` || messageBody === `${prefix}chat off`) {
-            if (publicMode || message.key.fromMe || approvedUsers.includes(message.key.participant || message.key.remoteJid)) {
-                continue;
+    // 👥 Welcome groupe
+    sock.ev.on("group-participants.update", async (event) => {
+        const { id, action, participants } = event;
+
+        if (action !== "add") return;
+
+        const welcomeConfig = JSON.parse(
+            fs.existsSync('welcome.json')
+                ? fs.readFileSync('welcome.json', 'utf-8')
+                : '{"groups":[]}'
+        );
+
+        if (!welcomeConfig.groups.includes(id)) return;
+
+        try {
+            const metadata = await sock.groupMetadata(id);
+            const groupName = metadata.subject;
+            const groupDesc = metadata.desc || '';
+
+            for (const participant of participants) {
+                const pId = typeof participant === "object" ? participant.id : participant;
+                const pNum = pId.split('@')[0];
+
+                let text = `Bienvenue @${pNum}\n\n`;
+                if (groupDesc) text += `📝 Description:\n${groupDesc}\n\n`;
+                text += `Bienvenue dans *${groupName}* 🎉`;
+
+                try {
+                    const groupPic = await sock.profilePictureUrl(id, 'image');
+                    await sock.sendMessage(id, { image: { url: groupPic }, caption: text, mentions: [pId] });
+                } catch {
+                    await sock.sendMessage(id, { image: { url: './database/menu.jpg' }, caption: text, mentions: [pId] });
+                }
             }
+
+        } catch (err) {
+            console.log('❌ Welcome error:', err.message);
         }
+    });
 
-        const recrutHandled = await handleRecrutResponse(client, message, messageBody);
-        if (recrutHandled) continue; 
-
-        // ==================== IA AKANE (MODE IA) ====================
-
-        // ==================== GESTION DES COMMANDES ====================
-        
-        if (messageBody.startsWith(prefix) &&
-            (publicMode ||
-             message.key.fromMe ||
-             approvedUsers.includes(message.key.participant || message.key.remoteJid) ||
-             lid.includes(message.key.participant || message.key.remoteJid))) {
-
-            const commandAndArgs = messageBody.slice(prefix.length).trim()
-            const parts = commandAndArgs.split(/\s+/)
-            const command = parts[0].toLowerCase()
-
-            if (/^[1-9]$|^abandonner$/i.test(command)) {
-                const handled = await handleMove(client, message, command)
-                if (handled) continue
-            }
-
-            const args = parts.slice(1)
-
-            // ==================== SWITCH DES COMMANDES ====================
-            switch (command) {
-                // Le reste de ton switch (commandes) reste identique
-
-                case 'tt':
-
-                case 'tictactoe':
-
-                case 'morpion': // @cat: games 
-
-                    await react(client, message)
-
-                    await tt(client, message, args)
-
-                    break
-
-                case 'antilink': // @cat: gc-menu
-                    await react(client, message)
-                    await antilinkCommand(client, message, args)
-                    break
-                   
-case 'message': // @cat: tools 
-
-    await react(client, message, 'ðŸ“…')
-
-    await messageCommand(client, message, args)
-
-    break
-                    
-
-                case 'insulte': // @cat: tools 
-
-                    await react(client, message)
-
-                    await insulte(client, message)
-
-                    break
-                    
-                    case 'ping': // @cat: bot-menu
-
-case 'runtime':// @cat: bot-menu 
-
-case 'uptime':// @cat: bot-menu 
-
-      await react(client, message)              
-    await runtime(client, message);
-
-    break;
-                    case 'darkgpt':
-
-case 'dark':
-
-                    
-      await react(client, message)  
-    await darkgpt(client, message);
-
-    break;
-                    case 'gen':
-
-case 'generate':
-
-case 'imagine':
-
-     await react(client, message)                 
-    await generate(client, message);
-
-    break;
-                    
-// Dans le switch
-case 'links':     
-    await links(client, message, args);
-    break;
-                   case 'spider': 
-
-    await react(client, message, 'ðŸ•·ï¸')
-
-    await spider(client, message, args)
-
-    break 
-case 'song': // @cat: media
-
-    await react(client, message, '🎵')
-
-    await song(client, message, args)
-
-    break
-                    case 'menu': 
-    await react(client, message, 'ðŸ‰')
-    await menu(client, message)
-    break
-                    case 'deploie':
-    await deploie(client, message);
-    break;
-                case 'vocal': // @cat: tools 
-
-                    await react(client, message)
-
-                    await vocal(client, message)
-
-                    break
-case 'tgs': // @cat: media
-    if (args[0]?.toLowerCase() === 'stop') {
-        await tgsticker(client, message, args)
-    }
-    break
-case 'demoteall': //@cat: gc-menu
-await react(client, message)
-await demoteall(client, message)
-break 
-case 'fancy': // @cat: tools 
-    await fancy(client, message, args);
-    break;
-                case 'traduit': // @cat: langues et études
-
-                    await react(client, message)
-
-                    await traduit(client, message)
-
-                    break
-
-                // Commandes IA
-case 'gpt':// @cat: ia et chat-bot 
-    await react(client, message);
-    await gptCommand(client, message, args);
-    break;
-case 'take': // @cat: media 
-
-case 'steal':
-
-case 'wm':
-
-    await react(client, message);
-              await take(client, message);
-
-    break;
-
-case 'akane':// @cat: ia et chat-bot 
-    await react(client, message);
-    await akaneCommand(client, message, args);
-    break;
-
-case 'alya':// @cat: ia et chat-bot 
-    await react(client, message);
-    await alyaCommand(client, message, args);
-    break;    
-                   case 'public': // @cat: bot-menu
-                   case 'public mode':
-                   case 'mode public':
-                    await react(client, message)
-                    await set.isPublic(message, client, 'on')
-                    break
-
-                   case 'private': // @cat: bot-menu
-                   case 'private mode':
-                   case 'mode private':
-                   case 'mode privé':
-                   case 'privé':
-                    await react(client, message)
-                    await set.isPublic(message, client, 'off')
-                    break
-
-      case 'duolingo': // @cat: langues et études
-
-    await duolingoCommand(client, message, args)
-
-    break    
-                    case 'style': // @cat: tools
-    await style(client, message, args);
-    break;  
-                    case 'pair': // @cat: bot-menu
-
-    await react(client, message, '🔑')
-
-    await handlePairCommand(client, message, args)
-
-    break
-                case 'setprefix': // @cat: bot-menu
-                    await react(client, message)
-                    await set.setprefix(message, client)
-                    break
-
- 
-                    case 'get': 
-                    await react (client, message)
-                    await get(client, message)
-                    break 
-                    
-                    case 'tr': // @cat: langues et études 
-    await tr(message, client);
-    break;
-                     case 'restart': // @cat: bot-menu
-                    await react (client, message)
-                    await restart(client, message)
-                    break
-                    case 'repo': 
-    await repo(client, message);
-    break;
-                
-       case 'kickall':// @cat: gc-menu 
-                   
- await react(client, message)
-
-                    await group.kickall2(client, message)
-
-                    break 
-case 'tg':// @cat: media 
-    await react(client, message, '🎭')
-    await tgsticker(client, message, args)
-    break 
-        // Dans le switch
-
-case 'recrut': 
-
-    await react(client, message, 'âœ¨')
-
-    await recrutCommand(client, message, args)
-
-    break     
-                    case 'welcome': // @cat: gc-menu
-    await welcomeCommand(client, message, args);
-    break;
-
-
-                case 'photo': // @cat: media
-
-                    await react(client, message)
-
-                    await media.photo(client, message)
-
-                    break
-                    // Dans le switch
-case 'mediafire': // @cat: media 
-case 'mf':
-    await mediafire(client, message, args);
-    break;
-
-                case 'toaudio': // @cat: media
-
-                    await react(client, message)
-
-                    await media.tomp3(client, message)
-
-                    break
- case 'promote': // @cat: gc-menu 
-
-                    await react(client, message)
-
-                    await group.promote(client, message)
-
-                    break   
-                    
-                case 'app': // @cat: media
-
-                    await react(client, message)
-
-                    await app(client, message, args)
-
-                    break
-
-                case 'img': // @cat: media
-
-                    await react(client, message)
-
-                    await img(message, client)
-
-                    break
-
-                case 'vv': // @cat: media
-
-                    await react(client, message)
-
-                    await viewonce(client, message)
-
-                    break
-         case "add":                   
-                    await react (client, message)
-                    
-    await add(client, message);
-    break;
-                case 'ytdl': //
-
-                    await react(client, message)
-
-                    await ytdlCommand(client, message, args)
-
-                    break
-                case 'tod': // @cat: games 
-    await react(client, message, 'ðŸŽ²')
-    await truthOrDareCommand(client, message, args)
-    break   
-                    // Ajoute CE BLOC avant le case 'setprefix' (ligne 546)
-
-case 'ai': // @cat: bot-menu
-
-    await react(client, message)
-
-    await setAIMode(message, client)
-
-    break
-                    
-                case 'tiktok': // @cat: media
-
-                    await react(client, message)
-
-                    await tiktok(client, message)
-
-                    break
-                    
-// Ajouter dans le switch
-case 'citation': // @cat: histoire et citation
-    await react(client, message)
-    await citation(client, message, args)
-    break
-                case 'url': // @cat: media
-
-                    await react(client, message)
-
-                    await url(client, message)
-
-                    break
-                    
-                    case 's':// @cat: media 
-
-    case 'sticker':// @cat: media 
-
-
-        await react(client, message); // Petit emoji pour dire "je travaille"
-
-        await sticker(client, message, args);
-
-        break;
-case 'demote': // @cat: gc-menu 
-
-                    await react(client, message)
-
-                    await group.demote(client, message)
-
-                    break
-                // ========== GC-MENU ==========
-
-                case 'mute': // @cat: gc-menu
-
-                    await react(client, message)
-
-                    await silence(client, message)
-
-                    break
-                    
-                case 'mail': // @cat: tools 
-
-                    await react(client, message)
-
-                    await mail(client, message, args)
-
-                    break
-
-                case 'umute': // @cat: gc-menu
-
-                    await react(client, message)
-
-                    await parler(client, message)
-
-                    break
-case 'compress': // @cat: media
-
-    await react(client, message)
-
-    await compressCommand(client, message, args)
-
-    break  
-    break  
-
-                case 'hidetag': // @cat: gc-menu
-
-                    await react(client, message)
-
-                    await tag.tag(client, message)
-
-                    break
-
-                case 'tagall': // @cat: gc-menu
-
-                    await react(client, message)
-
-                    await tag.tagall(client, message)
-
-                    break
-         
-                case 'tagadmin': // @cat: gc-menu
-
-                    await react(client, message)
-
-                    await tag.tagadmin(client, message)
-
-                    break
-// Dans le switch
-case 'zip':
-    await zip(client, message);
-    break;
-
-                case 'kick': // @cat: gc-menu
-
-                    await react(client, message)
-
-                    await group.kick(client, message)
-
-                    break
-
-                case 'gclink': // @cat: gc-menu
-
-                    await react(client, message)
-
-                    await group.gclink(client, message)
-
-                    break
-                    case 'antilink': // @cat: gc-menu
-
-    await react(client, message)
-
-    await antilinkCommand(client, message, args)
-
-    break
-                case 'purge': // @cat: gc-menu
-                    await react(client, message)
-                    await group.kickall(client, message)
-                    break
-                case 'bb': // @cat: bot-menu
-
-                    await react(client, message)
-
-                    await bb(client, message)
-
-                    break
-
-case 'duo':
-                    await react(client, message)
-
-    await duolingoCommand(client, message, args)
-
-    break
-case 'historygpt':
-
-case 'hgpt':
-
-    await react(client, message);
-
-    await showGptHistory(client, message);
-
-    break;
-
-case 'historyakane':
-
-case 'hakane':
-
-    await react(client, message);
-
-    await showAkaneHistory(client, message);
-
-    break;
-
-case 'historyalya':
-
-case 'halya':
-
-    await react(client, message);
-
-    await showAlyaHistory(client, message);
-
-    break;
-
-// Reset historique
-
-case 'resetgpt':
-
-    await react(client, message);
-
-    await resetGptHistory(client, message);
-
-    break;
-
-case 'resetakane':
-
-    await react(client, message);
-
-    await resetAkaneHistory(client, message);
-
-    break;
-
-case 'resetalya':
-
-    await react(client, message);
-
-    await resetAlyaHistory(client, message);
-
-    break;
-                    case 'quiz': // @cat: games
-                case 'q':
-
-    await react(client, message)
-
-    await quiz(client, message, args)
-
-    break
-                    
-                case 'anime': // @cat: anime-mangas
-
-                    await react(client, message)
-
-                    await anime(client, message, args)
-
-                    break
-case 'pray': // @cat: religion
-
-                    await react(client, message)
-
-                    await pray(client, message)
-
-                    break
-
-                    
-        // ========== PREMIUM ==========
-        case "welcome": // @cat: gc-menu
-          await react(client, message);
-
-          await welcomeCommand(client, message);
-
-          break;
-
-                case 'bible': // @cat: religion
-
-                    await react(client, message)
-
-                    await bible(client, message)
-
-                    break
-
-                    
-
-                case 'histoire': // @cat: histoire et citation
-
-                    await react(client, message)
-
-                    await histoire(client, message)
-
-                    break
-
-                    
-
-                // ========== PREMIUM ==========
-                    case 'bye': // @cat: gc-menu 
-await react (client, message)
-await bye(client, message)
-break 
-
-
-            }
-
-        }
-
-        
-
-       // await group.linkDetection(client, message)
-
-    }
-
+    return sock;
 }
 
-export default handleIncomingMessage
+export default connectToWhatsapp;
