@@ -1,5 +1,5 @@
 import { DigixNew } from '../utils/DigixNew.js';
-import { downloadMediaMessage } from 'baileys';
+import { downloadMediaMessage } from "@crysnovax/baileys";
 import fs from 'fs';
 import path from 'path';
 import stylizedChar from '../utils/fancy.js';
