@@ -1,4 +1,4 @@
-import { makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } from 'baileys';
+import { makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } from '@crysnovax/baileys';
 import pino from 'pino';
 import fs from 'fs';
 import configmanager from '../utils/configmanager.js';
@@ -45,12 +45,6 @@ async function connectToWhatsapp(handleMessage) {
         keepAliveIntervalMs: 10000,
         connectTimeoutMs: 60000,
         generateHighQualityLinkPreview: true,
-        getMobile: async () => ({
-            onCode: (code) => {
-                console.log(`\n🔑 CODE DE CONNEXION : ${code}\n`);
-                console.log(`📱 WhatsApp > Appareils liés > Lier un appareil\n`);
-            }
-        })
     });
 
     // 🔥 Override sendMessage (canal + boutons)
