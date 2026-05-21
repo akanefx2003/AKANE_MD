@@ -1,6 +1,6 @@
 import { Sticker, StickerTypes } from 'wa-sticker-formatter';
 
-import { downloadMediaMessage } from "baileys";
+import { downloadMediaMessage } from "@crysnovax/baileys";
 
 import fs from "fs";
 
