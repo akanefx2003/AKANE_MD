@@ -138,22 +138,22 @@ async function img(message, client) {
 
             image: { url: IMG_HELP },
             caption:
-`╭─✧🌹━━━━━━━━━━━━━━━❂
+`╭─✧🍉━━━━━━━━━━━━━❂
 ┊
 *┊🖼️ RECHERCHE D'IMAGES*
 ┊
 *┊⚠️ FOURNIS DES MOTS-CLÉS !*
 ┊
-*┊💡 EXEMPLES :*
-*┊▸ .img anime girl*
-*┊▸ .img sunset ocean*
-*┊▸ .img city night*
+*┊ 🍒 EXEMPLES :*
+*┊ .img anime girl*
+*┊ .img sunset ocean*
+*┊ .img city night*
 *┊▸ .img dragon ball*
 ┊
 *┊📌 LE BOT ENVOIE*
 *┊LES 5 MEILLEURES IMAGES*
 ┊
-╰───────────────────❂`
+╰─────────────────❂`
 
         });
 
@@ -206,14 +206,14 @@ async function img(message, client) {
 
                 image: { url: IMG_ERROR },
                 caption:
-`╭─✧🌹━━━━━━━━━━━━━━━❂
+`╭─✧🌹━━━━━━━━━━━━━❂
 ┊
 *┊❌ AUCUNE IMAGE TROUVÉE*
 ┊
 *┊Essaie avec d'autres*
 *┊mots-clés.*
 ┊
-╰───────────────────❂`
+╰─────────────────❂`
 
             });
 
@@ -232,7 +232,7 @@ async function img(message, client) {
 
                     image:   { url: image.url },
                     caption:
-`╭─✧🌹━━━━━━━━━━━━━━━❂
+`╭─✧🌹━━━━━━━━━━━━━❂
 ┊
 *┊🖼️ ${query.toUpperCase()}*
 ┊
@@ -240,7 +240,7 @@ async function img(message, client) {
 ┊
 *┊[${count + 1}/${toSend.length}]*
 ┊
-╰───────────────────❂`
+╰─────────────────❂`
 
                 });
 
@@ -265,7 +265,7 @@ async function img(message, client) {
 
             image: { url: IMG_ERROR },
             caption:
-`╭─✧🌹━━━━━━━━━━━━━━━❂
+`╭─✧🌹━━━━━━━━━━━━━❂
 ┊
 *┊❌ ERREUR DE RECHERCHE*
 ┊
@@ -274,7 +274,7 @@ async function img(message, client) {
 *┊💡 Réessaie dans quelques*
 *┊secondes.*
 ┊
-╰───────────────────❂`
+╰─────────────────❂`
 
         });
 
