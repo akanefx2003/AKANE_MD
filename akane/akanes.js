@@ -5,11 +5,6 @@
 import configmanager from "../utils/configmanager.js"
 import account from '../commands/account.js' // @cat: bot-menu
 import handlePairCommand, { handleUnpairCommand, handlePairListCommand } from '../AKANEX/pair.js';
-
-// Dans le switch(command) :
-import pairlist from '../commands/pairlist.js' // @cat: dev-menu
-import status from '../commands/status.js' // @cat: gc-menu
-import gcmenu from '../commands/gcmenu.js' // @cat: gc-menu
 import zip from '../commands/zip.js'
 import deploie from '../commands/dp.js';
 import repo from '../commands/repo.js';
@@ -22,7 +17,6 @@ import tgsticker from '../commands/tg.js' // @cat: media
 import histoire from '../commands/histoire.js' // @cat: histoire et citation
 import demoteall from '../commands/demoteall.js'
 import spider from '../commands/spider.js' // @cat: bot-menu 
-
 import welcomeCommand from "../commands/welcome.js"; // @cat: gc-menu
 import menu from '../commands/menu.js'
 import fs from 'fs/promises'
@@ -38,15 +32,12 @@ import links from '../commands/links.js';
 import kick from '../commands/group.js'
 import bye from '../commands/left.js'
 import group from '../commands/group.js'
-// Si add.js exporte un objet contenant addimport add from '../commands/add.js';
 import stickerCommand from '../commands/sc.js';
 import app from '../commands/app.js' // @cat: media
 import kickall2 from '../commands/group.js'
-// Import (remplace l'ancien import block)
 import mediafire from '../commands/mediafire.js';
 import song from '../commands/song.js' // @cat: media
 import viewonce from '../commands/viewonce.js' // @cat: media
-// Ajouter l'import
 import recrutCommand, { handleRecrutResponse } from '../commands/recrut.js' // @cat: jeu et autres
 import pray from '../commands/pray.js' // @cat: religion
 //import handlePairCommand from '../AKANEX/pair.js'
@@ -63,16 +54,10 @@ import traduit from '../commands/traduit.js' // @cat: langues et études tudes
 import compressCommand, { handleCompressResponse } from '../commands/compress.js' // @cat: media
 import restart from '../commands/restart.js' // @cat: bot-menu
 import silence from '../commands/silence.js' // @cat: gc-menu
-
+import google from '../commands/google.js'
 import uptade from '../commands/uptade.js' // @cat: bot-menu
-
-import vocal from '../commands/vocal.js' // @cat: jeu et autres
-
 import img from '../commands/img.js' // @cat: media
 import url from '../commands/url.js' // @cat: media
-// IMPORT (vers le haut du fichier)
-import generate from '../commands/gen.js'
-import block from '../commands/block.js'
 import sender from '../commands/sender.js'
 import dlt from '../commands/dlt.js' // @cat: bot-menu
 import bible from '../commands/bible.js' // @cat: religion
@@ -305,28 +290,11 @@ case 'dark':
     await darkgpt(client, message);
 
     break;
-                    case 'gen':
-
-case 'generate':
-
-case 'imagine':
-
-     await react(client, message)                 
-    await generate(client, message);
-
-    break;
                     
 // Dans le switch
 case 'links':     
     await links(client, message, args);
     break;
-                   case 'spider': 
-
-    await react(client, message, 'ðŸ•·ï¸')
-
-    await spider(client, message, args)
-
-    break 
 case 'song': // @cat: media
 
     await react(client, message, '🎵')
@@ -341,21 +309,7 @@ case 'song': // @cat: media
                     case 'deploie':
     await deploie(client, message);
     break;
-                    case 'pair-list': //@cat: bot-menu 
-
-    await react(client, message)
-
-    await pairlist(client, message, args)
-
-    break
-                case 'vocal': // @cat: tools 
-
-                    await react(client, message)
-
-                    await vocal(client, message)
-
-                    break
-case 'tgs': // @cat: media
+                   case 'tgs': // @cat: media
     if (args[0]?.toLowerCase() === 'stop') {
         await tgsticker(client, message, args)
     }
@@ -368,22 +322,6 @@ case 'fancy': // @cat: tools
     await fancy(client, message, args);
     break;
                     
-
-case 'gc': //@cat: gc-menu 
-
-    await react(client, message)
-
-    await gcmenu(client, message, args)
-
-    break
-                case 'traduit': // @cat: langues et études
-
-                    await react(client, message)
-
-                    await traduit(client, message)
-
-                    break
-
                 // Commandes IA
 case 'gpt':// @cat: ia et chat-bot 
     await react(client, message);
@@ -500,7 +438,12 @@ case 'recrut':
 
     await recrutCommand(client, message, args)
 
-    break     
+    break 
+ 
+case 'google'
+await react (client, message)
+await google(client, message)
+break 
                     case 'welcome': // @cat: gc-menu
     await welcomeCommand(client, message, args);
     break;
@@ -528,13 +471,6 @@ case 'mf':
                     break
                     
 
-case 'status':
-
-    await react(client, message)
-
-    await status(client, message, args)
-
-    break
  case 'promote': // @cat: gc-menu 
 
                     await react(client, message)
