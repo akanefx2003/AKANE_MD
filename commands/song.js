@@ -7,7 +7,7 @@ import axios from 'axios'
 import fs from 'fs'
 
 const API_KEYS = [
-    '0a52dff07cmshdf55b3f391aee31p1f7cd5jsn44e49ccea12f',
+    '25222978fdmshe6b4366767fb8e6p18086bjsnee54a88ff976',
     '8b6e431195msh4bbb0cb84a3abfbp1f02b5jsnfccc2f87aa44'
 ]
 
