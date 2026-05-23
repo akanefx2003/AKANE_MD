@@ -2,7 +2,7 @@
 // @cat: media
 
 import axios from 'axios'
-import { translateText } from './traduit.js'
+
 
 const RAPIDAPI_KEY = '0a52dff07cmshdf55b3f391aee31p1f7cd5jsn44e49ccea12f'
 const API_HOST = 'google-search74.p.rapidapi.com'
