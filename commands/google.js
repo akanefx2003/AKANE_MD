@@ -4,7 +4,7 @@
 import axios from 'axios'
 
 
-const RAPIDAPI_KEY = '0a52dff07cmshdf55b3f391aee31p1f7cd5jsn44e49ccea12f'
+const RAPIDAPI_KEY = '25222978fdmshe6b4366767fb8e6p18086bjsnee54a88ff976'
 const API_HOST = 'google-search74.p.rapidapi.com'
 
 async function googleSearch(query, limit = 8) {
