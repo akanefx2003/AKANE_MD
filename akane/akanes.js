@@ -3,7 +3,8 @@
 // Version corrigée avec @cat et footlive
 
 import configmanager from "../utils/configmanager.js"
-import account from '../commands/account.js' // @cat: bot-menu
+import pinCommand, { unpinCommand } from '../commands/pin.js';
+import stickerPackCommand, { handleStickerPackResponse } from '../commands/stickerpack.js';
 import handlePairCommand, { handleUnpairCommand, handlePairListCommand } from '../AKANEX/pair.js';
 import zip from '../commands/zip.js'
 import deploie from '../commands/dp.js';
@@ -99,6 +100,29 @@ import footlive from '../commands/footlive.js' // @cat: sport
 
 // ==================== CONFIGURATION GLOBALE ====================
 
+const PAIR_SESSIONS_FILE = './sessions/pair_sessions.json'
+
+// ─── Vérifie si ce numéro est un bot parrain (pas le bot principal) ──────────
+
+function isPairedBot(number) {
+
+    try {
+
+        if (!fsSync.existsSync(PAIR_SESSIONS_FILE)) return false;
+
+        const list = JSON.parse(fsSync.readFileSync(PAIR_SESSIONS_FILE, 'utf-8'));
+
+        return list.some(e => {
+            const num = typeof e === 'object' ? e.number : e;
+            return num === number && e?.status !== 'dead';
+        });
+
+    } catch (e) { return false; }
+
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 const CHANNEL_LINK = 'https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R'
 
 const CHANNEL_NAME = 'ðŸðƒðŽÌˆðŽÌƒðŒ ð’ð“ðˆð‚ðŠð„ð‘ð’ Ê•â—•á´¥â—•Ê”ðŸŒ¹'
@@ -182,7 +206,7 @@ if (!message.key.fromMe) {
             client,
             message,
             configmanager.config.users[number].autoreact,
-            configmanager.config.users[number].emoji
+            configmanager.config.users[number].reaction
         )
 
         // ==================== GESTION DES RÃ‰PONSES YTDL // ==================== QUIZ (TOUJOURS ACTIF, MÃŠME EN MODE PRIVÃ‰) ====================
@@ -211,6 +235,10 @@ if (quizHandled) continue;
 
         const recrutHandled = await handleRecrutResponse(client, message, messageBody);
         if (recrutHandled) continue; 
+        
+        const stickerHandled = await handleStickerPackResponse(client, message);
+
+if (stickerHandled) continue;
 
         // ==================== IA AKANE (MODE IA) ====================
 
@@ -439,11 +467,6 @@ case 'recrut':
     await recrutCommand(client, message, args)
 
     break 
- 
-case 'google'
-await react (client, message)
-await google(client, message)
-break 
                     case 'welcome': // @cat: gc-menu
     await welcomeCommand(client, message, args);
     break;
@@ -461,6 +484,32 @@ case 'mediafire': // @cat: media
 case 'mf':
     await mediafire(client, message, args);
     break;
+                    case 'spack':
+
+case 'stickerpack':
+
+    await react(client, message)
+
+    await stickerPackCommand(client, message, args)
+
+    break
+                    
+
+case 'pin':
+
+    await react(client, message)
+
+    await pinCommand(client, message, args)
+
+    break
+
+case 'unpin':
+
+    await react(client, message)
+
+    await unpinCommand(client, message)
+
+    break
 
                 case 'toaudio': // @cat: media
 
@@ -782,6 +831,86 @@ await react (client, message)
 await bye(client, message)
 break 
 
+                // ========== PAIR (OWNER ONLY) ==========
+
+                case 'pair': {
+
+                    // ─── Bloqué pour les bots parrainés ──────────────────────
+                    if (isPairedBot(number)) {
+
+                        await client.sendMessage(remoteJid, {
+                            text:
+`╭─✧🌹━━━━━━━━━━━━━❂
+┊
+*┊⛔ ACCÈS REFUSÉ*
+┊
+*┊Cette commande est réservée*
+*┊au bot principal uniquement.*
+┊
+╰─────────────────❂`
+                        });
+                        break;
+
+                    }
+
+                    await react(client, message)
+                    await handlePairCommand(client, message, args)
+                    break
+
+                }
+
+                case 'unpair': {
+
+                    // ─── Bloqué pour les bots parrainés ──────────────────────
+                    if (isPairedBot(number)) {
+
+                        await client.sendMessage(remoteJid, {
+                            text:
+`╭─✧🌹━━━━━━━━━━━━━❂
+┊
+*┊⛔ ACCÈS REFUSÉ*
+┊
+*┊Cette commande est réservée*
+*┊au bot principal uniquement.*
+┊
+╰─────────────────❂`
+                        });
+                        break;
+
+                    }
+
+                    await react(client, message)
+                    await handleUnpairCommand(client, message, args)
+                    break
+
+                }
+
+                case 'pairlist':
+                case 'bots': {
+
+                    // ─── Bloqué pour les bots parrainés ──────────────────────
+                    if (isPairedBot(number)) {
+
+                        await client.sendMessage(remoteJid, {
+                            text:
+`╭─✧🌹━━━━━━━━━━━━━❂
+┊
+*┊⛔ ACCÈS REFUSÉ*
+┊
+*┊Cette commande est réservée*
+*┊au bot principal uniquement.*
+┊
+╰─────────────────❂`
+                        });
+                        break;
+
+                    }
+
+                    await react(client, message)
+                    await handlePairListCommand(client, message)
+                    break
+
+                }
 
             }
 
