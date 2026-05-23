@@ -1,5 +1,5 @@
 import { createWriteStream } from 'fs'
-import { downloadMediaMessage } from "baileys"
+import { downloadMediaMessage } from "@crysnovax/baileys"
 import configmanager from '../utils/configmanager.js'
 
 export async function tagall(client, message) {
