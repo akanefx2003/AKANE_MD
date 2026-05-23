@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-import { downloadMediaMessage } from 'baileys';
+import { downloadMediaMessage } from "@crysnovax/baileys"
 
 import { exec } from 'child_process';
 
