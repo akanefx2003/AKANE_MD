@@ -282,16 +282,16 @@ export default async function gptCommand(sock, message) {
         if (!args) {
             // Afficher l'aide avec image
             await sock.sendMessage(remoteJid, {
-                image: { url: 'https://raw.githubusercontent.com/toge021/Media/main/514e.tmp' },
-                caption:
+                image: { url: 'https://raw.githubusercontent.com/toge021/Media/main/5cef.tmp' },
+                caption: 
 `╭─✧🌹━━━━━━━━━━━━━━❂
 ┊
-*┊🤖 AKANE GPT*
+*┊🤖 GPT - IA*
 ┊
 *┊📌 .gpt [ta question]*
 ┊
 *┊📝 Exemple:*
-*┊.gpt quel est l'animal le plus rapide au monde ?*
+*┊.gpt quel est la plus grand continent au monde*
 ┊
 *┊💡 Le bot se souvient de toi !*
 ┊
@@ -348,13 +348,11 @@ export default async function gptCommand(sock, message) {
 
         // Envoyer la réponse avec image et TOUT EN GRAS
         await sock.sendMessage(remoteJid, {
-            image: { url: 'https://raw.githubusercontent.com/toge021/Media/main/5cef.tmp' },
+            image: { url: 'https://raw.githubusercontent.com/toge021/Media/main/514e.tmp' },
             caption:
 `╭─✧🌹━━━━━━━━━━━━━━❂
-*┊ AKANE GPT 🤖:*
 ┊
-*┊${reply}*
-┊
+*┊🤖 ${reply}*
 ┊
 ╰─────────────────❂`
         });
