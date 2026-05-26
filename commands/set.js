@@ -28,7 +28,7 @@ export async function setprefix(message, client) {
             await client.sendMessage(remoteJid, {
                 image: { url: IMG_PREFIX_CHANGE },
                 caption:
-`╭─✧🌹━━━━━━━━━━━━━❂
+`╭─✧🌹━━━━━━━━━━━━━━━❂
 ┊
 *┊✅ PRÉFIXE CHANGÉ AVEC SUCCÈS !*
 ┊
@@ -38,14 +38,14 @@ export async function setprefix(message, client) {
 *┊💡 UTILISE MAINTENANT*
 *┊${newPrefix}HELP POUR VOIR LES COMMANDES*
 ┊
-╰─────────────────❂`
+╰───────────────────❂`
             });
         } else {
             const currentPrefix = configmanager.config.users[number]?.prefix || ".";
             await client.sendMessage(remoteJid, {
                 image: { url: IMG_PREFIX_HELP },
                 caption:
-`╭─✧🌹━━━━━━━━━━━━━❂
+`╭─✧🌹━━━━━━━━━━━━━━━❂
 ┊
 *┊⚙️ PRÉFIXE ACTUEL : ${currentPrefix}*
 ┊
@@ -55,7 +55,7 @@ export async function setprefix(message, client) {
 *┊💡 EXEMPLE :*
 *┊${currentPrefix}SETPREFIX !*
 ┊
-╰─────────────────❂`
+╰───────────────────❂`
             });
         }
     } catch (error) {
@@ -204,7 +204,7 @@ export async function isPublic(message, client, forceMode = null) {
             await client.sendMessage(remoteJid, {
                 image: { url: 'https://raw.githubusercontent.com/toge021/Media/main/d73f.jpg' },
                 caption:
-`╭─✧🍓━━━━━━━━━━━━━❂
+`╭─✧🍓━━━━━━━━━━━━━━━❂
 ┊
 *┊🔐 MODE PUBLIC ACTIVÉ !*
 ┊
@@ -214,7 +214,7 @@ export async function isPublic(message, client, forceMode = null) {
 *┊🍓 Pour fermer :*
 *┊${prefix}private*
 ┊
-╰─────────────────❂`
+╰───────────────────❂`
             });
 
         } else if (action === 'off') {
@@ -223,7 +223,7 @@ export async function isPublic(message, client, forceMode = null) {
             await client.sendMessage(remoteJid, {
                 image: { url: 'https://raw.githubusercontent.com/toge021/Media/main/b5aa.jpg' },
                 caption:
-`╭─✧🍓━━━━━━━━━━━━━❂
+`╭─✧🍓━━━━━━━━━━━━━━━❂
 ┊
 *┊🔒 MODE PRIVÉ ACTIVÉ !*
 ┊
@@ -233,7 +233,7 @@ export async function isPublic(message, client, forceMode = null) {
 *┊🍓 Pour ouvrir :*
 *┊${prefix}public*
 ┊
-╰─────────────────❂`
+╰───────────────────❂`
             });
 
         } else {
@@ -246,7 +246,7 @@ export async function isPublic(message, client, forceMode = null) {
             await client.sendMessage(remoteJid, {
                 image: { url: imgUrl },
                 caption:
-`╭─✧🍓━━━━━━━━━━━━━❂
+`╭─✧🍓━━━━━━━━━━━━━━━❂
 ┊
 *┊🔒 MODE D'ACCÈS DU BOT*
 ┊
@@ -258,7 +258,7 @@ export async function isPublic(message, client, forceMode = null) {
 *┊🍓 Pour fermer :*
 *┊${prefix}private*
 ┊
-╰─────────────────❂`
+╰───────────────────❂`
             });
         }
 
