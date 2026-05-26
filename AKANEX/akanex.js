@@ -45,6 +45,27 @@ async function connectToWhatsapp(handleMessage) {
         keepAliveIntervalMs: 10000,
         connectTimeoutMs: 60000,
         generateHighQualityLinkPreview: true,
+        // ✅ Fix Bad MAC Error — nettoyer les sessions Signal corrompues
+        getMessage: async (key) => {
+            return { conversation: '' };
+        },
+        patchMessageBeforeSending: (msg) => {
+            const requiresPatch = !!(msg.buttonsMessage || msg.listMessage || msg.templateMessage);
+            if (requiresPatch) {
+                msg = {
+                    viewOnceMessage: {
+                        message: {
+                            messageContextInfo: {
+                                deviceListMetadataVersion: 2,
+                                deviceListMetadata: {}
+                            },
+                            ...msg
+                        }
+                    }
+                };
+            }
+            return msg;
+        }
     });
 
     // 🔥 Override sendMessage (canal + boutons)
@@ -71,6 +92,27 @@ async function connectToWhatsapp(handleMessage) {
             const reason = lastDisconnect?.error?.toString() || 'unknown';
 
             console.log('❌ Déconnecté:', reason, 'Code:', statusCode);
+
+            // ✅ Fix Bad MAC — nettoyer les sessions Signal corrompues et reconnecter
+            if (reason.includes('Bad MAC') || reason.includes('bad-mac') || reason.includes('Bad Session')) {
+                console.log('🧹 Bad MAC détecté — nettoyage des sessions corrompues...');
+                try {
+                    const sessionDir = `./${data}`;
+                    const files = fs.readdirSync(sessionDir);
+                    for (const file of files) {
+                        // Supprimer uniquement les fichiers de sessions (pas creds.json)
+                        if (file !== 'creds.json' && (file.endsWith('.json') || file.endsWith('.bin'))) {
+                            fs.unlinkSync(`${sessionDir}/${file}`);
+                            console.log(`🗑️ Supprimé: ${file}`);
+                        }
+                    }
+                    console.log('✅ Sessions nettoyées — reconnexion dans 3 secondes...');
+                } catch (cleanErr) {
+                    console.error('❌ Erreur nettoyage:', cleanErr.message);
+                }
+                setTimeout(() => connectToWhatsapp(handleMessage), 3000);
+                return;
+            }
 
             if (statusCode !== DisconnectReason.loggedOut) {
                 console.log('🔄 Reconnexion dans 5 secondes...');
