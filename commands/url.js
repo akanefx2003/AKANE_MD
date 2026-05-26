@@ -8,44 +8,38 @@ import FormData from 'form-data';
 const IMG_HELP  = 'https://raw.githubusercontent.com/toge021/Media/main/c687.jpg';
 const IMG_ERROR = 'https://raw.githubusercontent.com/toge021/Media/main/b570.jpg';
 
-// ─── Cadre uniforme ───────────────────────────────────────────────────────────
-// ╭─✧🌹━━━━━━━━━━━━━━━━━━━❂  ← haut
-// ╰───────────────────────❂  ← bas (même longueur)
+// ─── Upload vers CDN Crysnovax (avec bonne extension) ──────────────────────
 
-// ─── Upload vers DevHackers ───────────────────────────────────────────────────
-
-async function uploadToDevHackers(buffer, fileName) {
+async function uploadToCrysnovax(buffer, fileName) {
 
     const form = new FormData();
-
     form.append('file', buffer, { filename: fileName });
 
-    const res = await axios.post(
+    try {
+        const res = await axios.post(
+            'https://cdn.crysnovax.link/upload',
+            form,
+            {
+                headers: { ...form.getHeaders() },
+                maxContentLength: Infinity,
+                maxBodyLength: Infinity,
+                timeout: 15000
+            }
+        );
 
-        'https://devhackers-link-generator.onrender.com/upload',
-        form,
-        {
-            headers: { ...form.getHeaders() },
-            maxContentLength: Infinity,
-            maxBodyLength:    Infinity,
-            timeout:          60000
+        let url = res.data?.url || res.data?.link || res.data;
+        
+        if (typeof url === 'object') {
+            url = url.url || url.link || JSON.stringify(url);
         }
 
-    );
-
-    if (res.data?.githubUrl) return res.data.githubUrl;
-
-    if (typeof res.data === 'object') {
-
-        return res.data.url || res.data.shortUrl || JSON.stringify(res.data);
-
+        return url ? url.trim() : null;
+    } catch (error) {
+        throw new Error(`Upload failed: ${error.message}`);
     }
-
-    return res.data.trim();
-
 }
 
-// ─── Verrou par sender (permet l'enchaînement entre différents users) ─────────
+// ─── Verrou par sender ─────────────────────────────────────────────────────
 
 const processing = new Map();
 
@@ -56,25 +50,16 @@ export async function url(client, message) {
     const jid    = message.key.remoteJid;
     const sender = message.key.participant || message.key.remoteJid;
 
-    // ─── Si ce sender a déjà un upload en cours → on laisse passer
-    //     mais on prévient. Deux uploads simultanés du MÊME sender → bloqué.
     if (processing.get(sender)) {
-
         return client.sendMessage(jid, {
-
             text: '⏳ *Ton upload est déjà en cours, patiente...*'
-
         });
-
     }
 
     const quoted = message.message?.extendedTextMessage?.contextInfo?.quotedMessage;
 
-    // ─── Pas de média → aide ──────────────────────────────────────────────────
     if (!quoted) {
-
         return client.sendMessage(jid, {
-
             image: { url: IMG_HELP },
             caption:
 `╭─✧🌹━━━━━━━━━━━━━❂
@@ -92,22 +77,17 @@ export async function url(client, message) {
 *┊Réponds à une image puis*
 *┊tape .url*
 ┊
-╰─────────────────❂`
-
+━━━━━━━━━━━━━❂`
         });
-
     }
 
-    // ─── Type de média ────────────────────────────────────────────────────────
     const mediaData = quoted.imageMessage
         || quoted.videoMessage
         || quoted.audioMessage
         || quoted.documentMessage;
 
     if (!mediaData) {
-
         return client.sendMessage(jid, {
-
             image: { url: IMG_HELP },
             caption:
 `╭─✧🌹━━━━━━━━━━━━━❂
@@ -120,162 +100,145 @@ export async function url(client, message) {
 ┊
 ┊
 ┊
-╰─────────────────❂`
-
+━━━━━━━━━━━━━❂`
         });
-
     }
 
-    // ─── Marquer ce sender comme en cours ────────────────────────────────────
     processing.set(sender, true);
 
-    // ─── Message d'attente (réaction visuelle) ────────────────────────────────
     await client.sendMessage(jid, {
-
         react: { text: '⏳', key: message.key }
-
     });
 
     try {
-
-        // ─── Téléchargement en parallèle avec l'upload ────────────────────────
         const fakeMsg = {
-
             key:     { ...message.key },
             message: quoted
-
         };
 
-        // Télécharge le buffer
         const buffer = await downloadMediaMessage(fakeMsg, 'buffer', {});
 
-        if (!buffer || buffer.length === 0) throw new Error("Impossible de télécharger le média");
+        if (!buffer || buffer.length === 0) {
+            throw new Error("Impossible de télécharger le média");
+        }
 
-        // Détection type + upload en parallèle
-        const [type, link] = await Promise.all([
+        // ─── Déterminer l'extension ───────────────────────────────────────────
+        let extension = 'bin';
+        try {
+            const type = await fileTypeFromBuffer(buffer);
+            extension = type?.ext || 
+                quoted.documentMessage?.fileName?.split('.').pop() || 'bin';
+        } catch (e) {
+            extension = quoted.documentMessage?.fileName?.split('.').pop() || 'bin';
+        }
 
-            fileTypeFromBuffer(buffer),
-            uploadToDevHackers(
-                buffer,
-                `akane_${Date.now()}.tmp`
-            )
-
-        ]);
-
-        const extension = type?.ext
-            || quoted.documentMessage?.fileName?.split('.').pop()
-            || 'bin';
+        // ─── Upload ULTRA RAPIDE avec bonne extension ──────────────────────────
+        const link = await uploadToCrysnovax(
+            buffer,
+            `akane_${Date.now()}.${extension}`
+        );
 
         const sizeMB = (buffer.length / 1024 / 1024).toFixed(2);
 
-        // ─── Réaction succès ──────────────────────────────────────────────────
         await client.sendMessage(jid, {
-
             react: { text: '✅', key: message.key }
-
         });
 
-        // ─── Image → renvoie l'image + lien ───────────────────────────────────
+        // ─── Image → renvoie l'image + lien + bouton copier ───────────────────
         if (quoted.imageMessage) {
-
             await client.sendMessage(jid, {
-
                 image:   buffer,
                 caption:
 `╭─✧🌹━━━━━━━━━━━━━❂
 ┊
-*┊✅ LIEN GÉNÉRÉ AVEC SUCCÈS !*
+*┊✅ LIEN GÉNÉRÉ !*
 ┊
 *┊🌐 LIEN DIRECT :*
 ┊${link}
 ┊
-*┊📂 HÉBERGEUR : DevHackers*
-*┊⚖️ TAILLE : ${sizeMB} MB*
+*┊📂 CDN Crysnovax*
+*┊⚖️ ${sizeMB} MB*
 ┊
-╰─────────────────❂`
-
+━━━━━━━━━━━━━❂`,
+                nativeFlow: [{
+                    text: '📋 Copier le lien',
+                    copy: link
+                }]
             }, { quoted: message });
 
-        // ─── Vidéo → texte uniquement ─────────────────────────────────────────
         } else if (quoted.videoMessage) {
-
             await client.sendMessage(jid, {
-
                 text:
 `╭─✧🌹━━━━━━━━━━━━━❂
 ┊
 *┊✅ LIEN VIDÉO GÉNÉRÉ !*
 ┊
-*┊🎥 TYPE : Vidéo*
-*┊⚖️ TAILLE : ${sizeMB} MB*
+*┊🎥 Vidéo • ${sizeMB} MB*
 ┊
-*┊🌐 LIEN DIRECT :*
+*┊🌐 LIEN :*
 ┊${link}
 ┊
-*┊📂 HÉBERGEUR : DevHackers*
+*┊📂 CDN Crysnovax*
 ┊
-╰─────────────────❂`
-
+━━━━━━━━━━━━━❂`,
+                nativeFlow: [{
+                    text: '📋 Copier le lien',
+                    copy: link
+                }]
             }, { quoted: message });
 
-        // ─── Audio → texte uniquement ─────────────────────────────────────────
         } else if (quoted.audioMessage) {
-
             await client.sendMessage(jid, {
-
                 text:
-`╭─✧🌹━━━━━━━━━━━━❂
+`╭─✧🌹━━━━━━━━━━━━━❂
 ┊
 *┊✅ LIEN AUDIO GÉNÉRÉ !*
 ┊
-*┊🎵 TYPE : Audio*
-*┊⚖️ TAILLE : ${sizeMB} MB*
+*┊🎵 Audio • ${sizeMB} MB*
 ┊
-*┊🌐 LIEN DIRECT :*
+*┊🌐 LIEN :*
 ┊${link}
 ┊
-*┊📂 HÉBERGEUR : DevHackers*
+*┊📂 CDN Crysnovax*
 ┊
-╰─────────────────❂`
-
+━━━━━━━━━━━━━❂`,
+                nativeFlow: [{
+                    text: '📋 Copier le lien',
+                    copy: link
+                }]
             }, { quoted: message });
 
-        // ─── Document → texte uniquement ──────────────────────────────────────
         } else {
-
             await client.sendMessage(jid, {
-
                 text:
 `╭─✧🌹━━━━━━━━━━━━━❂
 ┊
 *┊✅ LIEN DOCUMENT GÉNÉRÉ !*
 ┊
 *┊📄 ${quoted.documentMessage?.fileName || `fichier.${extension}`}*
-*┊⚖️ TAILLE : ${sizeMB} MB*
+*┊⚖️ ${sizeMB} MB*
 ┊
-*┊🌐 LIEN DIRECT :*
+*┊🌐 LIEN :*
 ┊${link}
 ┊
-*┊📂 HÉBERGEUR : DevHackers*
+*┊📂 CDN Crysnovax*
 ┊
-╰─────────────────❂`
-
+━━━━━━━━━━━━━❂`,
+                nativeFlow: [{
+                    text: '📋 Copier le lien',
+                    copy: link
+                }]
             }, { quoted: message });
-
         }
 
     } catch (error) {
-
         console.error('❌ Erreur URL:', error.message);
 
         await client.sendMessage(jid, {
-
             react: { text: '❌', key: message.key }
-
         });
 
         await client.sendMessage(jid, {
-
             image: { url: IMG_ERROR },
             caption:
 `╭─✧🌹━━━━━━━━━━━━━❂
@@ -288,17 +251,12 @@ export async function url(client, message) {
 *┊💡 Réessaie dans quelques*
 *┊secondes.*
 ┊
-╰─────────────────❂`
-
+━━━━━━━━━━━━━❂`
         });
 
     } finally {
-
-        // ─── Libère le verrou → enchaînement possible ─────────────────────────
         processing.delete(sender);
-
     }
-
 }
 
 export default url;
