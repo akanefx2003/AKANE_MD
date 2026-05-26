@@ -2,9 +2,13 @@
 
 import axios from 'axios';
 
-const API_BASE = 'https://api.mail.tm';
-
+const API_BASE    = 'https://api.mail.tm';
 const CHANNEL_LINK = "https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R";
+
+const IMG_HELP   = 'https://raw.githubusercontent.com/toge021/Media/main/f216.jpg';
+const IMG_GEN    = 'https://raw.githubusercontent.com/toge021/Media/main/cacd.jpg';
+const IMG_INBOX  = 'https://raw.githubusercontent.com/toge021/Media/main/9293.jpg';
+const IMG_DELETE = 'https://raw.githubusercontent.com/toge021/Media/main/b570.jpg';
 
 const mailSessions = new Map();
 
@@ -13,33 +17,53 @@ const mailSessions = new Map();
 class TempMail {
 
     constructor(email, password, id) {
-
-        this.email = email;
-
-        this.password = password;
-
-        this.id = id;
-
+        this.email     = email;
+        this.password  = password;
+        this.id        = id;
         this.createdAt = Date.now();
-
-        this.messages = [];
-
-        this.token = null;
-
+        this.messages  = [];
+        this.token     = null;
     }
 
     getAge() {
-
         return Math.floor((Date.now() - this.createdAt) / 60000);
-
     }
 
     isExpired() {
-
         return this.getAge() > 60;
-
     }
 
+}
+
+// ==================== EXTRACTION DE CODES ====================
+
+function extractMainCode(text) {
+    const codes = [];
+    
+    const otpRegex = /\b\d{4,8}\b/g;
+    const otpMatches = text.match(otpRegex) || [];
+    
+    if (otpMatches.length > 0) {
+        const firstOtp = otpMatches[0];
+        if (!firstOtp.startsWith('20') && !firstOtp.startsWith('19')) {
+            codes.push({ type: 'OTP', value: firstOtp, emoji: '🔐' });
+            return codes;
+        }
+    }
+    
+    const alphaRegex = /\b[A-Z]{4,10}\b/g;
+    const alphaMatches = text.match(alphaRegex) || [];
+    if (alphaMatches.length > 0) {
+        const firstAlpha = alphaMatches[0];
+        codes.push({ type: 'CODE', value: firstAlpha, emoji: '📝' });
+        return codes;
+    }
+    
+    if (otpMatches.length > 0) {
+        codes.push({ type: 'OTP', value: otpMatches[0], emoji: '🔐' });
+    }
+    
+    return codes;
 }
 
 // ==================== API ====================
@@ -54,14 +78,12 @@ async function createTempEmail() {
 
         const randomName = Math.random().toString(36).substring(2, 12);
 
-        const email = `${randomName}@${domain}`;
-
+        const email    = `${randomName}@${domain}`;
         const password = Math.random().toString(36).substring(2, 15);
 
         const res = await axios.post(`${API_BASE}/accounts`, {
 
-            address: email,
-
+            address:  email,
             password: password
 
         });
@@ -86,8 +108,7 @@ async function getToken(email, password) {
 
         const res = await axios.post(`${API_BASE}/token`, {
 
-            address: email,
-
+            address:  email,
             password: password
 
         });
@@ -160,27 +181,25 @@ export default async function mailCommand(client, message, args) {
 
         return client.sendMessage(sender, {
 
-text:
-
-`📧 EMAIL TEMPORAIRE
-
-📝 Commandes :
-
-• mail gen
-
-• mail inbox
-
-• mail read [num]
-
-• mail info
-
-• mail delete
-
-🔗 Chaîne :
-
-${CHANNEL_LINK}
-
-DEV : 🍁AKANE KUROGAWAʕ◕ᴥ◕ʔ🌹`
+            image: { url: IMG_HELP },
+            caption:
+`╭─✧🌹━━━━━━━━━━━━━❂
+┊
+*┊📧 EMAIL TEMPORAIRE*
+┊
+*┊📝 COMMANDES :*
+┊
+*┊▸ mail gen*
+*┊▸ mail inbox*
+*┊▸ mail read [num]*
+*┊▸ mail delete*
+┊
+*┊📢 REJOINS MA CHAINE 🔥*
+*┊${CHANNEL_LINK}*
+┊
+*┊DEV : 🍁AKANE🌹*
+┊
+━━━━━━━━━━━━━❂`
 
         });
 
@@ -188,7 +207,7 @@ DEV : 🍁AKANE KUROGAWAʕ◕ᴥ◕ʔ🌹`
 
     // ===== GEN =====
 
-    if (['gen','generate','new'].includes(sub)) {
+    if (['gen', 'generate', 'new'].includes(sub)) {
 
         const old = mailSessions.get(sender);
 
@@ -196,25 +215,29 @@ DEV : 🍁AKANE KUROGAWAʕ◕ᴥ◕ʔ🌹`
 
             return client.sendMessage(sender, {
 
-text:
-
-`⚠️ Email actif
-
-📧 ${old.email}
-
-⏱ Expire dans ${60 - old.getAge()} minutes`
+                image: { url: IMG_GEN },
+                caption:
+`╭─✧🌹━━━━━━━━━━━━━❂
+┊
+*┊⚠️ EMAIL DÉJÀ ACTIF !*
+┊
+*┊📧 ${old.email}*
+┊
+*┊⏱️ EXPIRE DANS ${60 - old.getAge()}m*
+┊
+━━━━━━━━━━━━━❂`
 
             });
 
         }
 
-        await client.sendMessage(sender, { text: "🔄 Création..." });
+        await client.sendMessage(sender, { text: "🔄 *Création en cours...*" });
 
         const data = await createTempEmail();
 
         if (!data) {
 
-            return client.sendMessage(sender, { text: "❌ Erreur création" });
+            return client.sendMessage(sender, { text: "❌ *Erreur lors de la création*" });
 
         }
 
@@ -224,27 +247,32 @@ text:
 
         return client.sendMessage(sender, {
 
-text:
-
-`✅ EMAIL CRÉÉ
-
-📧 ${data.email}
-
-🔑 ${data.password}
-
-⏳ Durée : 1 heure
-
-📌 Commandes :
-
-mail inbox
-
-mail read 1
-
-🔗 Chaîne :
-
-${CHANNEL_LINK}
-
-DEV : 🍁AKANE KUROGAWAʕ◕ᴥ◕ʔ🌹`
+            image: { url: IMG_GEN },
+            caption:
+`╭─✧🌹━━━━━━━━━━━━━❂
+┊
+*┊✅ EMAIL CRÉÉ !*
+┊
+*┊📧 ${data.email}*
+*┊🔑 ${data.password}*
+┊
+*┊⏳ DURÉE : 1 HEURE*
+┊
+*┊COMMANDES :*
+*┊▸ mail inbox*
+*┊▸ mail read 1*
+┊
+━━━━━━━━━━━━━❂`,
+            nativeFlow: [
+                {
+                    text: '📧 Copier email',
+                    copy: data.email
+                },
+                {
+                    text: '🔑 Copier password',
+                    copy: data.password
+                }
+            ]
 
         });
 
@@ -252,21 +280,25 @@ DEV : 🍁AKANE KUROGAWAʕ◕ᴥ◕ʔ🌹`
 
     // ===== INBOX =====
 
-    if (['inbox','messages','list'].includes(sub)) {
+    if (['inbox', 'messages', 'list'].includes(sub)) {
 
         const s = mailSessions.get(sender);
 
-        if (!s) return client.sendMessage(sender, { text: "❌ Aucun email" });
+        if (!s) {
+
+            return client.sendMessage(sender, { text: "❌ *Aucun email actif. Fais mail gen d'abord.*" });
+
+        }
 
         if (s.isExpired()) {
 
             mailSessions.delete(sender);
 
-            return client.sendMessage(sender, { text: "❌ Expiré" });
+            return client.sendMessage(sender, { text: "❌ *Email expiré. Fais mail gen.*" });
 
         }
 
-        await client.sendMessage(sender, { text: "📥 Récupération..." });
+        await client.sendMessage(sender, { text: "📥 *Récupération...*" });
 
         s.messages = [];
 
@@ -284,51 +316,44 @@ DEV : 🍁AKANE KUROGAWAʕ◕ᴥ◕ʔ🌹`
 
             return client.sendMessage(sender, {
 
-text:
-
-`📭 AUCUN MESSAGE
-
-📧 ${s.email}
-
-⏱ Expire dans ${60 - s.getAge()} minutes
-
-📌 Astuce :
-
-1. Envoie un mail
-
-2. Attends
-
-3. Refais mail inbox
-
-💡 Test :
-
-Envoie "TEST" à ${s.email}
-
-🔗 Chaîne :
-
-${CHANNEL_LINK}
-
-DEV : 🍁AKANE KUROGAWAʕ◕ᴥ◕ʔ🌹`
+                image: { url: IMG_INBOX },
+                caption:
+`╭─✧🌹━━━━━━━━━━━━━❂
+┊
+*┊📭 AUCUN MESSAGE*
+┊
+*┊📧 ${s.email}*
+┊
+*┊⏱️ EXPIRE DANS ${60 - s.getAge()}m*
+┊
+*┊💡 ASTUCE :*
+*┊Envoie un mail à l'adresse*
+*┊puis fais mail inbox*
+┊
+━━━━━━━━━━━━━❂`
 
             });
 
         }
 
-        let txt = `📥 INBOX (${msgs.length})\n\n`;
+        let lines = `╭─✧🌹━━━━━━━━━━━━━❂\n┊\n*┊📥 INBOX (${msgs.length})*\n┊\n`;
 
-        msgs.slice(0,10).forEach((m,i)=>{
+        msgs.slice(0, 10).forEach((m, i) => {
 
-            txt += `${i+1}. ${m.subject || 'Sans objet'}\n`;
-
-            txt += `De: ${m.from?.address}\n`;
-
-            txt += `→ mail read ${i+1}\n\n`;
+            lines += `*┊${i + 1}. ${m.subject || 'Sans objet'}*\n`;
+            lines += `*┊   De : ${m.from?.address}*\n`;
+            lines += `*┊   → mail read ${i + 1}*\n┊\n`;
 
         });
 
-        txt += `🔗 Chaîne :\n${CHANNEL_LINK}\n\nDEV : 🍁AKANE KUROGAWAʕ◕ᴥ◕ʔ🌹`;
+        lines += `━━━━━━━━━━━━━❂`;
 
-        return client.sendMessage(sender, { text: txt });
+        return client.sendMessage(sender, {
+
+            image: { url: IMG_INBOX },
+            caption: lines
+
+        });
 
     }
 
@@ -340,7 +365,11 @@ DEV : 🍁AKANE KUROGAWAʕ◕ᴥ◕ʔ🌹`
 
         const s = mailSessions.get(sender);
 
-        if (!s) return client.sendMessage(sender, { text: "❌ Aucun email" });
+        if (!s) {
+
+            return client.sendMessage(sender, { text: "❌ *Aucun email actif.*" });
+
+        }
 
         if (!s.token) {
 
@@ -358,41 +387,50 @@ DEV : 🍁AKANE KUROGAWAʕ◕ᴥ◕ʔ🌹`
 
         }
 
-        if (!msgs[num-1]) {
+        if (!msgs[num - 1]) {
 
-            return client.sendMessage(sender, { text: "❌ Introuvable" });
+            return client.sendMessage(sender, { text: "❌ *Message introuvable.*" });
 
         }
 
-        const full = await getMessageContent(s.token, msgs[num-1].id);
+        const full = await getMessageContent(s.token, msgs[num - 1].id);
 
         let content = full.text || full.html || '';
 
         if (Array.isArray(content)) content = content[0];
 
-        let otp = content.match(/\b\d{4,8}\b/);
+        // ─── EXTRACTION DU CODE PRINCIPAL ───────────────────────────────────
+        const codes = extractMainCode(content);
+        
+        let clean   = content.length > 1000 ? content.slice(0, 1000) + '...' : content;
+        let codesText = '';
+        let nativeFlows = [];
 
-        let otpText = otp ? `\n\n🔐 CODE: ${otp[0]}` : '';
-
-        let clean = content.length > 1500 ? content.slice(0,1500)+'...' : content;
+        // Afficher SEULEMENT le code principal extrait
+        if (codes.length > 0) {
+            const mainCode = codes[0];
+            codesText = `\n┊\n*┊🔑 ${mainCode.type} : ${mainCode.value}*`;
+            nativeFlows.push({
+                text: `${mainCode.emoji} Copier ${mainCode.type}`,
+                copy: mainCode.value
+            });
+        }
 
         return client.sendMessage(sender, {
 
-text:
-
-`📧 MESSAGE
-
-De: ${full.from?.address}
-
-Objet: ${full.subject}
-
-${clean}${otpText}
-
-🔗 Chaîne :
-
-${CHANNEL_LINK}
-
-DEV : 🍁AKANE KUROGAWAʕ◕ᴥ◕ʔ🌹`
+            image: { url: IMG_INBOX },
+            caption:
+`╭─✧🌹━━━━━━━━━━━━━❂
+┊
+*┊📧 MESSAGE #${num}*
+┊
+*┊DE : ${full.from?.address}*
+*┊OBJET : ${full.subject}*
+┊
+${clean}${codesText}
+┊
+━━━━━━━━━━━━━❂`,
+            ...(nativeFlows.length > 0 && { nativeFlow: nativeFlows })
 
         });
 
@@ -400,30 +438,37 @@ DEV : 🍁AKANE KUROGAWAʕ◕ᴥ◕ʔ🌹`
 
     // ===== DELETE =====
 
-    if (['delete','del'].includes(sub)) {
+    if (['delete', 'del'].includes(sub)) {
 
         const s = mailSessions.get(sender);
 
-        if (!s) return client.sendMessage(sender, { text: "❌ Aucun email" });
+        if (!s) {
+
+            return client.sendMessage(sender, { text: "❌ *Aucun email actif.*" });
+
+        }
 
         mailSessions.delete(sender);
 
         return client.sendMessage(sender, {
 
-text:
-
-`✅ EMAIL SUPPRIMÉ
-
-📧 ${s.email}
-
-🔗 ${CHANNEL_LINK}
-
-DEV : 🍁AKANE KUROGAWAʕ◕ᴥ◕ʔ🌹`
+            image: { url: IMG_DELETE },
+            caption:
+`╭─✧🌹━━━━━━━━━━━━━❂
+┊
+*┊✅ EMAIL SUPPRIMÉ !*
+┊
+*┊📧 ${s.email}*
+┊
+*┊💡 FAIS mail gen*
+*┊   POUR EN CRÉER UN*
+┊
+━━━━━━━━━━━━━❂`
 
         });
 
     }
 
-    return client.sendMessage(sender, { text: "❌ Commande invalide" });
+    return client.sendMessage(sender, { text: "❌ *Commande invalide. Fais mail help.*" });
 
 }
