@@ -199,7 +199,7 @@ export default async function mailCommand(client, message, args) {
 ┊
 *┊DEV : 🍁AKANE🌹*
 ┊
-━━━━━━━━━━━━━❂`
+╰─────────────────❂`
 
         });
 
@@ -225,7 +225,7 @@ export default async function mailCommand(client, message, args) {
 ┊
 *┊⏱️ EXPIRE DANS ${60 - old.getAge()}m*
 ┊
-━━━━━━━━━━━━━❂`
+╰─────────────────❂`
 
             });
 
@@ -262,7 +262,7 @@ export default async function mailCommand(client, message, args) {
 *┊▸ mail inbox*
 *┊▸ mail read 1*
 ┊
-━━━━━━━━━━━━━❂`,
+╰─────────────────❂`,
             nativeFlow: [
                 {
                     text: '📧 Copier email',
@@ -330,7 +330,7 @@ export default async function mailCommand(client, message, args) {
 *┊Envoie un mail à l'adresse*
 *┊puis fais mail inbox*
 ┊
-━━━━━━━━━━━━━❂`
+╰─────────────────❂`
 
             });
 
