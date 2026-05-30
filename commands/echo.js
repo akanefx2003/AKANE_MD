@@ -9,7 +9,7 @@ export default async function echoCommand(client, message, args) {
     if (!args[0]) {
         await client.sendMessage(remoteJid, {
             text:
-`╭─✧🍉━━━━━━━━━━━━━━━❂
+`╭─✧🍉━━━━━━━━━━━━━❂
 ┊
 *┊🤖 AKANE MD - ECHO*
 ┊
@@ -27,7 +27,7 @@ export default async function echoCommand(client, message, args) {
 ┊
 *┊🛑 POUR ARRETER : ECHO STOP*
 ┊
-╰───────────────────❂`
+╰─────────────────❂`
         })
         return
     }
@@ -39,11 +39,11 @@ export default async function echoCommand(client, message, args) {
             activeEchos.delete(remoteJid)
             await client.sendMessage(remoteJid, {
                 text:
-`╭─✧🍉━━━━━━━━━━━━━━━❂
+`╭─✧🍉━━━━━━━━━━━━━❂
 ┊
 *┊🛑 ECHO ARRETE !*
 ┊
-╰───────────────────❂`
+╰─────────────────❂`
             })
         } else {
             await client.sendMessage(remoteJid, {
@@ -64,13 +64,13 @@ export default async function echoCommand(client, message, args) {
     if (isNaN(count) || count < 1) {
         await client.sendMessage(remoteJid, {
             text:
-`╭─✧🍉━━━━━━━━━━━━━━━❂
+`╭─✧🍉━━━━━━━━━━━━━❂
 ┊
 *┊❌ NOMBRE INVALIDE*
 ┊
 *┊📋 EXEMPLE : ECHO 10 SALUT|ECOLE|CV*
 ┊
-╰───────────────────❂`
+╰─────────────────❂`
         })
         return
     }
@@ -78,13 +78,13 @@ export default async function echoCommand(client, message, args) {
     if (!rawText) {
         await client.sendMessage(remoteJid, {
             text:
-`╭─✧🍉━━━━━━━━━━━━━━━❂
+`╭─✧🍉━━━━━━━━━━━━━❂
 ┊
 *┊❌ TEXTE MANQUANT*
 ┊
 *┊📋 EXEMPLE : ECHO 10 SALUT|ECOLE|CV*
 ┊
-╰───────────────────❂`
+╰─────────────────❂`
         })
         return
     }
