@@ -27,7 +27,7 @@ export async function runtime(client, message) {
 
         image: { url: IMG },
         caption:
-`╭─✧🌹━━━━━━━━━━━━━━━❂
+`╭─✧🌹━━━━━━━━━━━━━❂
 ┊
 *┊⏳ STATUS AKANE MD*
 ┊
@@ -39,7 +39,7 @@ export async function runtime(client, message) {
 ┊
 *┊📂 MÉMOIRE : ${ramUsage} MB / 1GO*
 ┊
-╰───────────────────❂`
+╰─────────────────❂`
 
     }, { quoted: message });
 
