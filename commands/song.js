@@ -98,7 +98,7 @@ export default async function songCommand(client, message, args) {
 *┊💡 EXEMPLE :*
 *┊.song oshi no ko*
 ┊
-━━━━━━━━━━━━━❂`
+╰─────────────────❂`
             })
         } catch (err) {
             console.error('Erreur envoi aide song:', err)
@@ -149,7 +149,7 @@ export default async function songCommand(client, message, args) {
 *┊🎵 ${title}*
 *┊⏱️ ${video.seconds}s*
 ┊
-━━━━━━━━━━━━━❂`
+╰─────────────────❂`
         }, { quoted: message })
 
     } catch (err) {
