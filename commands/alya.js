@@ -214,18 +214,20 @@ export async function showAlyaHistory(client, message) {
     
     if (!userHistory || userHistory.messages.length === 0) {
         const noHistoryMessage = styleBible(
-`╭─❍ *🌸 HISTORIQUE ALYA*
+`╭─✧🌹━━━━━━━━━━━━━❂
+*🌸 HISTORIQUE ALYA*
 │
 │ 💕 Aucune discussion pour l'instant, mon cœur.
 │
 │ 💡 Parle-moi avec .alya
 │
-╰──────────────────`
+╰─────────────────❂`
         );
         return await client.sendMessage(message.key.remoteJid, { text: noHistoryMessage });
     }
     
-    let historyText = `╭─❍ *🌸 HISTORIQUE ALYA*
+    let historyText = `╭─✧🌹━━━━━━━━━━━━━❂
+ HISTORIQUE ALYA*
 │
 │ 💑 ${userHistory.messages.length} messages échangés
 │ ⏰ Dernier message: ${Math.floor((Date.now() - userHistory.lastActivity) / 60000)} min
