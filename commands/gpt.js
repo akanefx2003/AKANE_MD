@@ -284,14 +284,14 @@ export default async function gptCommand(sock, message) {
             await sock.sendMessage(remoteJid, {
                 image: { url: 'https://raw.githubusercontent.com/toge021/Media/main/5cef.tmp' },
                 caption: 
-`╭─✧🌹━━━━━━━━━━━━━━❂
+`╭─✧🌹━━━━━━━━━━━━━❂
 ┊
 *┊🤖 GPT - IA*
 ┊
 *┊📌 .gpt [ta question]*
 ┊
 *┊📝 Exemple:*
-*┊.gpt quel est la plus grand continent au monde*
+*┊.gpt comment devenir intelligent*
 ┊
 *┊💡 Le bot se souvient de toi !*
 ┊
@@ -350,7 +350,7 @@ export default async function gptCommand(sock, message) {
         await sock.sendMessage(remoteJid, {
             image: { url: 'https://raw.githubusercontent.com/toge021/Media/main/514e.tmp' },
             caption:
-`╭─✧🌹━━━━━━━━━━━━━━❂
+`╭─✧🌹━━━━━━━━━━━━━❂
 ┊
 *┊🤖 ${reply}*
 ┊
@@ -363,7 +363,7 @@ export default async function gptCommand(sock, message) {
 
         if (remoteJid) {
             const errorMessage = 
-`╭─✧🌹━━━━━━━━━━━━━━❂
+`╭─✧🌹━━━━━━━━━━━━━❂
 ┊
 *┊⚠️ API momentanément indisponible*
 ┊
