@@ -429,7 +429,7 @@ export default async function mailCommand(client, message, args) {
 ┊
 ${clean}${codesText}
 ┊
-━━━━━━━━━━━━━❂`,
+╰─────────────────❂`,
             ...(nativeFlows.length > 0 && { nativeFlow: nativeFlows })
 
         });
@@ -463,7 +463,7 @@ ${clean}${codesText}
 *┊💡 FAIS mail gen*
 *┊   POUR EN CRÉER UN*
 ┊
-━━━━━━━━━━━━━❂`
+╰─────────────────❂`
 
         });
 
