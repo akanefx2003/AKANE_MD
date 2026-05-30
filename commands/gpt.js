@@ -220,7 +220,7 @@ export async function showGptHistory(client, message) {
 
     if (!userHistory || userHistory.messages.length === 0) {
         const noHistoryMessage = styleBible(
-`╭─✧🌹━━━━━━━━━━━━━━❂
+`╭─✧🌹━━━━━━━━━━━━━❂
 ┊
 *┊📭 Aucun historique trouvé*
 ┊
@@ -231,7 +231,7 @@ export async function showGptHistory(client, message) {
         return await client.sendMessage(message.key.remoteJid, { text: noHistoryMessage });
     }
 
-    let historyText = `╭─✧🌹━━━━━━━━━━━━━━❂
+    let historyText = `╭─✧🍇━━━━━━━━━━━━━❂
 ┊
 *┊👤 ${userHistory.messages.length} messages*
 *┊⏰ ${Math.floor((Date.now() - userHistory.lastActivity) / 60000)} min*
