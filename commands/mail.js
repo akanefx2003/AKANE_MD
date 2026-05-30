@@ -8,7 +8,7 @@ const CHANNEL_LINK = "https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R";
 const IMG_HELP   = 'https://raw.githubusercontent.com/toge021/Media/main/f216.jpg';
 const IMG_GEN    = 'https://raw.githubusercontent.com/toge021/Media/main/cacd.jpg';
 const IMG_INBOX  = 'https://raw.githubusercontent.com/toge021/Media/main/9293.jpg';
-const IMG_DELETE = 'https://raw.githubusercontent.com/toge021/Media/main/b570.jpg';
+const IMG_DELETE = 'https://cdn.crysnovax.link/files/1780132127526-1700a073-c886-417b-9693-41ef9ea7a701.jpg';
 
 const mailSessions = new Map();
 
