@@ -22,16 +22,7 @@ async function invite(client, message) {
         } catch {
             return await client.sendMessage(remoteJid, {
                 text:
-`╭─✧🍉━━━━━━━━━━━━━❂
-┊
-*┊🤖 AKANE MD*
-┊
-*┊❌ DROITS ADMIN REQUIS CONNARDS*
-┊
-*┊⚠️ J'AI BESOIN D'ÊTRE ADMIN*
-*┊POUR GÉNÉRER LE LIEN*
-┊
-╰─────────────────❂`
+`*DROITS ADMIN REQUIS CONNARDS🌹*`
             })
         }
 
@@ -47,7 +38,7 @@ async function invite(client, message) {
 ┊
 *┊🔗 LIEN D'INVITATION :*
 ┊
-╰─────────────────`,
+╰─────────────────❂`,
             nativeFlow: [
                 {
                     text: '👥 REJOINDRE LE GROUPE',
