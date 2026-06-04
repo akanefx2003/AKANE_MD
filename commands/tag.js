@@ -1,107 +1,105 @@
-import { createWriteStream } from 'fs'
-import { downloadMediaMessage } from "@crysnovax/baileys"
-import configmanager from '../utils/configmanager.js'
+// commands/tag.js
+// @cat: gc-menu
 
-export async function tagall(client, message) {
-    const remoteJid = message.key.remoteJid
-    if (!remoteJid.includes('@g.us')) return
+async function getMeta(client, remoteJid) {
+    const meta    = await client.groupMetadata(remoteJid)
+    const all     = meta.participants || []
+    const admins  = all.filter(p => p.admin)
+    const members = all.filter(p => !p.admin)
+    return { all, admins, members, name: meta.subject }
+}
+
+function buildText(title, list, customText) {
+    const mentions = list.map(p => p.id)
+    const tags     = list.map(p => `@${p.id.split('@')[0]}`).join('\n')
+    const text     =
+`╭─✧🌹━━━━━━━━━━━━━❂
+┊
+*┊${title}*
+${customText ? `┊\n*┊📢 ${customText}*\n` : ''}┊
+${tags}
+┊
+╰─────────────────❂`
+    return { text, mentions }
+}
+
+// ══════════════════════════════════════════
+// .tagall — tag tout le monde
+// ══════════════════════════════════════════
+export async function tagallCommand(client, message, args) {
+    const remoteJid  = message.key.remoteJid
+    if (!remoteJid.endsWith('@g.us')) return
 
     try {
-        const groupMetadata = await client.groupMetadata(remoteJid)
-        const participants = groupMetadata.participants.map(user => user.id)
-        const text = participants.map(user => `@${user.split('@')[0]}`).join(' \n')
+        const { all }   = await getMeta(client, remoteJid)
+        const customText = args.join(' ').trim()
+        const { text, mentions } = buildText(`📢 TAG ALL — ${all.length} membres`, all, customText)
 
-        await client.sendMessage(remoteJid, {
-            text: `╭─⌈ 🚀 Digital Crew Broadcast ⌋\n│\n${text}\n│\n╰─⌊ Powered by DC243 ⌉`,
-            mentions: participants
-        })
-
-    } catch (error) {
-        console.error("Tagall error:", error)
+        await client.sendMessage(remoteJid, { text, mentions }, { quoted: message })
+    } catch (err) {
+        console.error('❌ tagall:', err.message)
+        await client.sendMessage(remoteJid, { text: `❌ *Erreur : ${err.message}*` })
     }
 }
 
-export async function tagadmin(client, message) {
+// ══════════════════════════════════════════
+// .tagadmin — tag seulement les admins
+// ══════════════════════════════════════════
+export async function tagadminCommand(client, message, args) {
     const remoteJid = message.key.remoteJid
-    const botNumber = client.user.id.split(':')[0] + '@s.whatsapp.net'
-    if (!remoteJid.includes('@g.us')) return
+    if (!remoteJid.endsWith('@g.us')) return
 
     try {
-        const { participants } = await client.groupMetadata(remoteJid)
-        const admins = participants.filter(p => p.admin && p.id !== botNumber).map(p => p.id)
-        
-        if (admins.length === 0) return
+        const { admins } = await getMeta(client, remoteJid)
 
-        const text = `╭─⌈ 🛡️ Digital Crew Alert ⌋\n│ Admin Alert\n│\n${admins.map(user => `@${user.split('@')[0]}`).join('\n')}\n│\n╰─⌊ DC243 Control ⌉`
-
-        await client.sendMessage(remoteJid, { text, mentions: admins })
-
-    } catch (error) {
-        console.error("Tagadmin error:", error)
-    }
-}
-
-export async function respond(client, message) {
-    const number = client.user.id.split(':')[0]
-    const remoteJid = message.key.remoteJid
-    const messageBody = message.message?.extendedTextMessage?.text || message.message?.conversation || ''
-    if (!configmanager.config.users[number]) return
-
-    const tagRespond = configmanager.config.users[number].response
-    if ((!message.key.fromMe) && tagRespond) {
-        const lid = client.user?.lid.split(':')[0]
-        if (messageBody.includes(`@${lid}`)) {
-            await client.sendMessage(remoteJid, {
-                audio: { url: "" },
-                mimetype: "",
-                ptt: true,
-                contextInfo: { 
-                    stanzaId: message.key.id,
-                    participant: message.key.participant || lid,
-                    quotedMessage: message.message
-                }
-            })
-        }
-    }
-}
-
-export async function tag(client, message) {
-    const remoteJid = message.key.remoteJid
-    if (!remoteJid.includes('@g.us')) return
-
-    try {
-        const groupMetadata = await client.groupMetadata(remoteJid)
-        const participants = groupMetadata.participants.map(user => user.id)
-        const messageBody = message.message?.conversation || message.message?.extendedTextMessage?.text || ""
-        const commandAndArgs = messageBody.slice(1).trim()
-        const parts = commandAndArgs.split(/\s+/)
-        const text = parts.slice(1).join(' ') || 'Digital Crew Alert'
-
-        const quotedMessage = message.message?.extendedTextMessage?.contextInfo?.quotedMessage
-        if (quotedMessage) {
-            if (quotedMessage.stickerMessage) {
-                await client.sendMessage(remoteJid, { 
-                    sticker: quotedMessage.stickerMessage, 
-                    mentions: participants 
-                })
-                return
-            }
-            const quotedText = quotedMessage.conversation || quotedMessage.extendedTextMessage?.text || ""
-            await client.sendMessage(remoteJid, { 
-                text: `${quotedText}`, 
-                mentions: participants 
-            })
-            return
+        if (!admins.length) {
+            return client.sendMessage(remoteJid, {
+                text:
+`╭─✧🌹━━━━━━━━━━━━━❂
+┊
+*┊❌ AUCUN ADMIN TROUVÉ*
+┊
+╰─────────────────❂`
+            }, { quoted: message })
         }
 
-        await client.sendMessage(remoteJid, { 
-            text: `${text}`, 
-            mentions: participants 
-        })
+        const customText = args.join(' ').trim()
+        const { text, mentions } = buildText(`👑 TAG ADMINS — ${admins.length} admins`, admins, customText)
 
-    } catch (error) {
-        console.error("Tag error:", error)
+        await client.sendMessage(remoteJid, { text, mentions }, { quoted: message })
+    } catch (err) {
+        console.error('❌ tagadmin:', err.message)
+        await client.sendMessage(remoteJid, { text: `❌ *Erreur : ${err.message}*` })
     }
 }
 
-export default { tagall, tagadmin, respond, tag }
+// ══════════════════════════════════════════
+// .tagmembers — tag seulement les non-admins
+// ══════════════════════════════════════════
+export async function tagmembersCommand(client, message, args) {
+    const remoteJid = message.key.remoteJid
+    if (!remoteJid.endsWith('@g.us')) return
+
+    try {
+        const { members } = await getMeta(client, remoteJid)
+
+        if (!members.length) {
+            return client.sendMessage(remoteJid, {
+                text:
+`╭─✧🌹━━━━━━━━━━━━━❂
+┊
+*┊❌ AUCUN MEMBRE TROUVÉ*
+┊
+╰─────────────────❂`
+            }, { quoted: message })
+        }
+
+        const customText = args.join(' ').trim()
+        const { text, mentions } = buildText(`👤 TAG MEMBRES — ${members.length} membres`, members, customText)
+
+        await client.sendMessage(remoteJid, { text, mentions }, { quoted: message })
+    } catch (err) {
+        console.error('❌ tagmembers:', err.message)
+        await client.sendMessage(remoteJid, { text: `❌ *Erreur : ${err.message}*` })
+    }
+}
