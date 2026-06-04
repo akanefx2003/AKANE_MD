@@ -5,6 +5,16 @@
 import configmanager from "../utils/configmanager.js"
 import { isTrusted, getTrustedJids } from '../AKANEX/trusted.js'
 import { sudoCommand, desudoCommand, sudoListCommand } from '../AKANEX/sudo.js' // @cat: bot-menu
+import { tagallCommand, tagadminCommand, tagmembersCommand } from '../commands/tag.js'
+import kickCommand from '../commands/kick.js'
+import approveCommand from '../commands/approve.js'
+import ginfoCommand from '../commands/ginfo.js'
+import { promoteCommand, demoteCommand } from '../commands/admin.js'
+import setgnameCommand from '../commands/setgname.js'
+import setgdescCommand from '../commands/setgdesc.js'
+import gstatusCommand from '../commands/gstatus.js'
+import setgppCommand from '../commands/setgpp.js'
+import groupCreateCommand from '../commands/groupcreate.js'
 import soraCommand from '../commands/sora.js'
 import invite from '../commands/invite.js' // @cat: gc-menu
 //import tempCommand from '../commands/temp.js';
@@ -52,9 +62,6 @@ import pray from '../commands/pray.js' // @cat: religion
 //import handlePairCommand from '../AKANEX/pair.js'
 import kickall from '../commands/group.js'
 import tiktok from '../commands/tiktok.js' // @cat: media
-//mport playCommand from '../commands/play.js'
-import { incrementMessageCount } from '../commands/actif.js'
-import tag from '../commands/tag.js' // @cat: gc-menu
 import parler from '../commands/parler.js' // @cat: gc-menu
 import citation from '../commands/citation.js' // @cat: histoire et citation
 import sticker from '../commands/sticker.js' // @cat: media
@@ -99,9 +106,7 @@ import akaneCommand, { resetAkaneHistory, showAkaneHistory } from '../commands/a
 import alyaCommand, { resetAlyaHistory, showAlyaHistory } from '../commands/alya.js';
 import insulte from '../commands/insulte.js' // @cat: jeu et autres
 
-import tt, { handleMove } from "../commands/tt.js" // @cat: jeu et autres
-// Import
-import footlive from '../commands/footlive.js' // @cat: sport
+import tt, { handleMove } from "../commands/tt.js" // @cat: jeu et au
 
 // ==================== CONFIGURATION GLOBALE ====================
 
@@ -327,7 +332,7 @@ case 'dark':
     break;
                     
 
-case 'setmenu':
+case 'setmenu':// @cat: bot-menu 
 
     await react(client, message)
 
@@ -346,6 +351,15 @@ case 'song': // @cat: media
     await song(client, message, args)
 
     break
+                    
+
+case 'kick':// @cat: gc-menu 
+
+    await react(client, message)
+
+    await kickCommand(client, message, args)
+
+    break
                     case 'menu': 
     await react(client, message, 'ðŸ‰')
     await menu(client, message)
@@ -357,6 +371,13 @@ case 'song': // @cat: media
     if (args[0]?.toLowerCase() === 'stop') {
         await tgsticker(client, message, args)
     }
+    break
+                    case 'ginfo':// @cat: gc-menu 
+
+    await react(client, message)
+
+    await ginfoCommand(client, message, args)
+
     break
 case 'demoteall': //@cat: gc-menu
 await react(client, message)
@@ -406,8 +427,12 @@ case 'unpair':
     await handleUnpairCommand(client, message, args)
 
     break
-
-case 'pairlist':
+                    
+       case 'setgpp':// @cat: gc-menu 
+    await react(client, message)
+    await setgppCommand(client, message, args)
+    break
+                case 'pairlist':// @cat: bot-menu 
 
 case 'bots':
 
@@ -507,13 +532,7 @@ case 'tg':// @cat: media
     await react(client, message, '🎭')
     await tgsticker(client, message, args)
     break 
-                    case 'pinterest': // @cat: media
-                    await react(client, message, '🎭')
-
-    return await pinterestCommand(client, message, args);
-                    break 
-        // Dans le switch
-
+                   
 case 'recrut': 
 
     await react(client, message, 'âœ¨')
@@ -564,11 +583,11 @@ case 'unpin':
     await unpinCommand(client, message)
 
     break
-                    case 'invite':
+                    case 'invite':// @cat; gc-menu
 
 case 'gclink':
 
-case 'lien':
+case 'lien':// @cat; gc-menu 
 
     await react(client, message)
 
@@ -599,23 +618,22 @@ case 'wssweb':
 
     break
                     
-
- case 'promote': // @cat: gc-menu 
-
-                    await react(client, message)
-
-                    await group.promote(client, message)
-
-                    break 
-         
-                    
-                case 'app': // @cat: media
+ case 'app': // @cat: media
 
                     await react(client, message)
 
                     await app(client, message, args)
 
                     break
+                    
+
+case 'approuve':// @cat: gc-menu 
+
+    await react(client, message)
+
+    await approveCommand(client, message, args)
+
+    break
 
                 case 'img': // @cat: media
 
@@ -624,6 +642,15 @@ case 'wssweb':
                     await img(message, client)
 
                     break
+                    case 'gs':
+
+case 'gstatus':// @cat: gc-menu 
+
+    await react(client, message)
+
+    await gstatusCommand(client, message, args)
+
+    break
 
                 case 'vv': // @cat: media
 
@@ -632,11 +659,7 @@ case 'wssweb':
                     await viewonce(client, message)
 
                     break
-         case "add":                   
-                    await react (client, message)
-                    
-    await add(client, message);
-    break;
+         
                 case 'ytdl': //
 
                     await react(client, message)
@@ -648,15 +671,7 @@ case 'wssweb':
     await react(client, message, 'ðŸŽ²')
     await truthOrDareCommand(client, message, args)
     break   
-                    // Ajoute CE BLOC avant le case 'setprefix' (ligne 546)
-
-case 'ai': // @cat: bot-menu
-
-    await react(client, message)
-
-    await setAIMode(message, client)
-
-    break
+         
                     
                 case 'tiktok': // @cat: media
 
@@ -665,6 +680,44 @@ case 'ai': // @cat: bot-menu
                     await tiktok(client, message)
 
                     break
+                    case 'setgname':// @cat: gc-menu 
+
+    await react(client, message)
+
+    await setgnameCommand(client, message, args)
+
+    break
+
+case 'setgdesc':// @cat: gc-menu 
+
+    await react(client, message)
+
+    await setgdescCommand(client, message, args)
+
+    break
+                    case 'tagall':// @cat: gc-menu 
+
+    await react(client, message)
+
+    await tagallCommand(client, message, args)
+
+    break
+
+case 'tagadmin':// @cat: gc-menu 
+
+    await react(client, message)
+
+    await tagadminCommand(client, message, args)
+
+    break
+
+case 'tagmembers':// @cat: gc-menu 
+
+    await react(client, message)
+
+    await tagmembersCommand(client, message, args)
+
+    break
                     
 // Ajouter dans le switch
 case 'citation': // @cat: histoire et citation
@@ -689,37 +742,6 @@ case 'citation': // @cat: histoire et citation
         await sticker(client, message, args);
 
         break;
-case 'demote': // @cat: gc-menu 
-
-                    await react(client, message)
-
-                    await group.demote(client, message)
-
-                    break
-                    case 'ytdl':
-
-case 'ytmp4':
-
-case 'video':
-
-    await react(client, message)
-
-    await ytdlCommand(client, message, args)
-
-    break
-                    case 'temp': // @cat: tools
-                    await react(client, message)
-
-    return await tempCommand(client, message, args);
-                // ========== GC-MENU ==========
-
-                case 'mute': // @cat: gc-menu
-
-                    await react(client, message)
-
-                    await silence(client, message)
-
-                    break
                     
                 case 'mail': // @cat: tools 
 
@@ -729,20 +751,12 @@ case 'video':
 
                     break
 
-                case 'umute': // @cat: gc-menu
-
-                    await react(client, message)
-
-                    await parler(client, message)
-
-                    break
-case 'compress': // @cat: media
+              case 'compress': // @cat: media
 
     await react(client, message)
 
     await compressCommand(client, message, args)
 
-    break  
     break  
 
                 case 'hidetag': // @cat: gc-menu
@@ -753,13 +767,21 @@ case 'compress': // @cat: media
 
                     break
 
-                case 'tagall': // @cat: gc-menu
+                case 'promote':// @cat: gc-menu 
 
-                    await react(client, message)
+    await react(client, message)
 
-                    await tag.tagall(client, message)
+    await promoteCommand(client, message, args)
 
-                    break
+    break
+
+case 'demote':// @cat gc-menu 
+
+    await react(client, message)
+
+    await demoteCommand(client, message, args)
+
+    break
          
                 case 'tagadmin': // @cat: gc-menu
 
@@ -884,6 +906,15 @@ case 'resetalya':
                     await anime(client, message, args)
 
                     break
+                    
+
+case 'gcreate': // @cat: gc-menu 
+
+    await react(client, message)
+
+    await groupCreateCommand(client, message, args)
+
+    break
 case 'pray': // @cat: religion
 
                     await react(client, message)
@@ -933,6 +964,7 @@ break
 
         }
 
+    
 
 }
 
