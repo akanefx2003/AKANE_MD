@@ -7,9 +7,6 @@ import { isTrusted, getTrustedJids } from '../AKANEX/trusted.js'
 import { sudoCommand, desudoCommand, sudoListCommand } from '../AKANEX/sudo.js' // @cat: bot-menu
 import soraCommand from '../commands/sora.js'
 import invite from '../commands/invite.js' // @cat: gc-menu
-import ytmp4 from '../commands/ytmp4.js' // @cat: media
-import ytdlCommand from '../commands/y.js' // @cat: media
-import pinterestCommand from '../commands/pinterest.js';
 import tempCommand from '../commands/temp.js';
 import echoCommand from '../commands/echo.js'
 import pinCommand, { unpinCommand } from '../commands/pin.js';
@@ -492,7 +489,7 @@ case 'bots':
                     await group.kickall2(client, message)
 
                     break 
-                       case 'sora':
+                       case 'sora': // @cat: ia et chat-bot
 
     case 'txt2img':
 
@@ -569,7 +566,7 @@ case 'unpin':
     break
                     case 'invite':
 
-case 'gclin':
+case 'gclink':
 
 case 'lien':
 
@@ -610,15 +607,7 @@ case 'wssweb':
                     await group.promote(client, message)
 
                     break 
-                    case 'ytmp4':
-
-case 'yt':
-
-    await react(client, message)
-
-    await ytmp4(client, message, args)
-
-    break
+         
                     
                 case 'app': // @cat: media
 
@@ -936,86 +925,7 @@ case 'pray': // @cat: religion
                     case 'bye': // @cat: gc-menu 
 await react (client, message)
 await bye(client, message)
-break 
-
-                // ========== PAIR (OWNER ONLY) ==========
-
-                case 'pair': {
-
-                    // ─── Bloqué pour les bots parrainés ──────────────────────
-                    if (isPairedBot(number)) {
-
-                        await client.sendMessage(remoteJid, {
-                            text:
-`╭─✧🌹━━━━━━━━━━━━━❂
-┊
-*┊⛔ ACCÈS REFUSÉ*
-┊
-*┊Cette commande est réservée*
-*┊au bot principal uniquement.*
-┊
-╰─────────────────❂`
-                        });
-                        break;
-
-                    }
-
-                    await react(client, message)
-                    await handlePairCommand(client, message, args)
-                    break
-
-                }
-
-                case 'unpair': {
-
-                    // ─── Bloqué pour les bots parrainés ──────────────────────
-                    if (isPairedBot(number)) {
-
-                        await client.sendMessage(remoteJid, {
-                            text:
-`╭─✧🌹━━━━━━━━━━━━━❂
-┊
-*┊⛔ ACCÈS REFUSÉ*
-┊
-*┊Cette commande est réservée*
-*┊au bot principal uniquement.*
-┊
-╰─────────────────❂`
-                        });
-                        break;
-
-                    }
-
-                    await react(client, message)
-                    await handleUnpairCommand(client, message, args)
-                    break
-
-                }
-
-                case 'pairlist':
-                case 'bots': {
-
-                    // ─── Bloqué pour les bots parrainés ──────────────────────
-                    if (isPairedBot(number)) {
-
-                        await client.sendMessage(remoteJid, {
-                            text:
-`╭─✧🌹━━━━━━━━━━━━━❂
-┊
-*┊⛔ ACCÈS REFUSÉ*
-┊
-*┊Cette commande est réservée*
-*┊au bot principal uniquement.*
-┊
-╰─────────────────❂`
-                        });
-                        break;
-
-                    }
-
-                    await react(client, message)
-                    await handlePairListCommand(client, message)
-                    break
+break
 
                 }
 
