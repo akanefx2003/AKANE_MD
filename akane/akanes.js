@@ -110,7 +110,7 @@ import tt, { handleMove } from "../commands/tt.js" // @cat: jeu et au
 
 // ==================== CONFIGURATION GLOBALE ====================
 
-const PAIR_SESSIONS_FILE = './sessions/pair_sessions.json'
+const PAIR_SESSIONS_FILE = '../sessions/pair_sessions.json'
 
 // ─── Vérifie si ce numéro est un bot parrain (pas le bot principal) ──────────
 
@@ -211,7 +211,7 @@ if (!message.key.fromMe) {
         console.log('ðŸ“¨ Message:', messageBody.substring(0, 50))
         auto.autotype(client, message)
         auto.autorecord(client, message)
-        tag.respond(client, message)
+        //tag.respond(client, message)
 
         reactions.auto(
             client,
