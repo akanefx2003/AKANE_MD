@@ -7,7 +7,7 @@ import { isTrusted, getTrustedJids } from '../AKANEX/trusted.js'
 import { sudoCommand, desudoCommand, sudoListCommand } from '../AKANEX/sudo.js' // @cat: bot-menu
 import soraCommand from '../commands/sora.js'
 import invite from '../commands/invite.js' // @cat: gc-menu
-import tempCommand from '../commands/temp.js';
+//import tempCommand from '../commands/temp.js';
 import echoCommand from '../commands/echo.js'
 import pinCommand, { unpinCommand } from '../commands/pin.js';
 import stickerPackCommand, { handleStickerPackResponse } from '../commands/stickerpack.js';
@@ -933,11 +933,6 @@ break
 
         }
 
-        
-
-       // await group.linkDetection(client, message)
-
-    }
 
 }
 
