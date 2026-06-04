@@ -5,6 +5,13 @@
 import configmanager from "../utils/configmanager.js"
 import { isTrusted, getTrustedJids } from '../AKANEX/trusted.js'
 import { sudoCommand, desudoCommand, sudoListCommand } from '../AKANEX/sudo.js' // @cat: bot-menu
+import soraCommand from '../commands/sora.js'
+import invite from '../commands/invite.js' // @cat: gc-menu
+import ytmp4 from '../commands/ytmp4.js' // @cat: media
+import ytdlCommand from '../commands/y.js' // @cat: media
+import pinterestCommand from '../commands/pinterest.js';
+import tempCommand from '../commands/temp.js';
+import echoCommand from '../commands/echo.js'
 import pinCommand, { unpinCommand } from '../commands/pin.js';
 import stickerPackCommand, { handleStickerPackResponse } from '../commands/stickerpack.js';
 import handlePairCommand, { handleUnpairCommand, handlePairListCommand } from '../AKANEX/pair.js';
@@ -437,7 +444,10 @@ case 'bots':
     await handlePairCommand(client, message, args)
 
     break
-
+                    case 'echo': // @cat: tools
+    await react(client, message)
+    await echoCommand(client, message, args)
+    break
                     case 'sudo': // @cat: bot-menu
                         await react(client, message, '🛡️')
                         await sudoCommand(client, message, args)
@@ -482,10 +492,29 @@ case 'bots':
                     await group.kickall2(client, message)
 
                     break 
+                       case 'sora':
+
+    case 'txt2img':
+
+    case 'generate':
+
+    case 'ia':
+                    
+
+ await react(client, message)
+
+        await soraCommand(client, message, args)
+
+        break
 case 'tg':// @cat: media 
     await react(client, message, '🎭')
     await tgsticker(client, message, args)
     break 
+                    case 'pinterest': // @cat: media
+                    await react(client, message, '🎭')
+
+    return await pinterestCommand(client, message, args);
+                    break 
         // Dans le switch
 
 case 'recrut': 
@@ -538,6 +567,17 @@ case 'unpin':
     await unpinCommand(client, message)
 
     break
+                    case 'invite':
+
+case 'gclin':
+
+case 'lien':
+
+    await react(client, message)
+
+    await invite(client, message)
+
+    break
 
                 case 'toaudio': // @cat: media
 
@@ -569,7 +609,16 @@ case 'wssweb':
 
                     await group.promote(client, message)
 
-                    break   
+                    break 
+                    case 'ytmp4':
+
+case 'yt':
+
+    await react(client, message)
+
+    await ytmp4(client, message, args)
+
+    break
                     
                 case 'app': // @cat: media
 
@@ -658,6 +707,21 @@ case 'demote': // @cat: gc-menu
                     await group.demote(client, message)
 
                     break
+                    case 'ytdl':
+
+case 'ytmp4':
+
+case 'video':
+
+    await react(client, message)
+
+    await ytdlCommand(client, message, args)
+
+    break
+                    case 'temp': // @cat: tools
+                    await react(client, message)
+
+    return await tempCommand(client, message, args);
                 // ========== GC-MENU ==========
 
                 case 'mute': // @cat: gc-menu
