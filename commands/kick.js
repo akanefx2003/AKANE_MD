@@ -60,7 +60,7 @@ export default async function kickCommand(client, message, args) {
 ┊
 *┊✅ EXPULSÉ(S) !*
 ┊
-*┊🚪 ${names}*
+┊🚪 ${names}
 ┊
 ╰─────────────────❂`,
             mentions: filtered
