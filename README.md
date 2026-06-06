@@ -126,6 +126,11 @@ async function progress(label, fn) {
 }
 
 function clean() {
+    const gitDir = path.join(__dirname, ".git")
+    if (fs.existsSync(gitDir)) {
+        execSync("git fetch --all && git reset --hard origin/main", { stdio: "pipe" })
+        return
+    }
     fs.readdirSync(__dirname).forEach(file => {
         if (file === "index.js") return
         try {
@@ -184,7 +189,11 @@ async function main() {
     inf(`Numéro : ${USER_NUMBER}\n`)
     try {
         await progress("Nettoyage", async () => clean())
-        await progress("Clonage GitHub", async () => execSync(`git clone ${GITHUB_REPO} .`, { stdio: "pipe" }))
+        await progress("Clonage GitHub", async () => {
+            if (!fs.existsSync(path.join(__dirname, ".git"))) {
+                execSync(`git clone ${GITHUB_REPO} .`, { stdio: "pipe" })
+            }
+        })
         await progress("Configuration", async () => setup())
         await progress("Installation des dépendances", () => installDeps())
         console.log(`\n${c.pink}${c.bold}  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${c.reset}`)
