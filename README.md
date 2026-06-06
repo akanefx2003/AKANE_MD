@@ -37,7 +37,7 @@ https://mugiwara.panel.twilightparadox.com/server/af2dcf67
 
 **NOM D'UTILISATEUR :** ```akane7327```
 
-**MOT DE PASSE :** mss0ac8FQPtero!57
+**MOT DE PASSE :** ```mss0ac8FQPtero!57```
 
 **NB : ne touchez pas au serveur jaune et ne désactiver aucun serveur ⚠️.**
 
