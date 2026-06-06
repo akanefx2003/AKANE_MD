@@ -1,5 +1,3 @@
-<img width="736" height="736" alt="155886" src="https://github.com/user-attachments/assets/96a34d00-1a73-436d-acfa-8998a262a6b2" />
-<img width="720" height="1640" alt="155796" 
 ![Logo AKANE MD](database/menu.jpg)
 
 
