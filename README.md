@@ -30,6 +30,15 @@
 
 **• Katabump : https://rl.katabump.fr/2def14**
 
+**•muigiwar Hosting**
+https://mugiwara.panel.twilightparadox.com/server/af2dcf67
+
+*c'est un site qui a plein de panel illimité réuni je vous donne mon compte*
+
+**NOM D'UTILISATEUR :** akane7327
+**MOT DE PASSE :** mss0ac8FQPtero!57
+
+
 ## 📱 Me contacter
 
 | Pour quoi faire ? | Cliquez ici |
