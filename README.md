@@ -35,9 +35,9 @@ https://mugiwara.panel.twilightparadox.com/server/af2dcf67
 
 *c'est un site qui a plein de panel illimité réuni je vous donne mon compte (muigiwar hosting).*
 
-**NOM D'UTILISATEUR :** ```akane7327```
+**NOM D'UTILISATEUR :** akane7327
 
-**MOT DE PASSE :** ```mss0ac8FQPtero!57```
+**MOT DE PASSE :** mss0ac8FQPtero!57
 
 **NB : ne touchez pas au serveur jaune et ne désactiver aucun serveur ⚠️.**
 
@@ -75,7 +75,8 @@ https://mugiwara.panel.twilightparadox.com/server/af2dcf67
 
 **🚀 index.js - Copiez ce code et coller le dans votre serveur**
 
-```const fs = require("fs");
+```js
+const fs = require("fs");
 const path = require("path");
 const { spawn, execSync } = require("child_process");
 
@@ -195,6 +196,7 @@ async function main() {
     }
 }
 
-main()```
+main()
+```
 
 </div>
