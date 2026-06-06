@@ -35,9 +35,9 @@ https://mugiwara.panel.twilightparadox.com/server/af2dcf67
 
 *c'est un site qui a plein de panel illimité réuni je vous donne mon compte (muigiwar hosting).*
 
-**NOM D'UTILISATEUR :** akane7327
+**NOM D'UTILISATEUR :** ```akane7327```
 
-**MOT DE PASSE :** mss0ac8FQPtero!57
+**MOT DE PASSE :** ```mss0ac8FQPtero!57```
 
 **NB : ne touchez pas au serveur jaune et ne désactiver aucun serveur ⚠️.**
 
