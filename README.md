@@ -75,7 +75,8 @@ https://mugiwara.panel.twilightparadox.com/server/af2dcf67
 
 **🚀 index.js - Copiez ce code et coller le dans votre serveur**
 
-```const fs = require("fs");
+```js
+const fs = require("fs");
 const path = require("path");
 const { spawn, execSync } = require("child_process");
 
@@ -100,7 +101,7 @@ function banner() {
     console.clear()
     console.log(`${c.pink}${c.bold}`)
     console.log(`  ┌────────────────────────────────────┐`)
-    console.log(`  │       🌸  AKANE MD DÉPLOIEMENT  🌸   `)
+    console.log(`  │       🌸  AKANE MD DÉPLOIEMENT  🌸   │`)
     console.log(`  └────────────────────────────────────┘`)
     console.log(`${c.reset}`)
 }
@@ -126,7 +127,7 @@ async function progress(label, fn) {
 
 function clean() {
     fs.readdirSync(__dirname).forEach(file => {
-        if (file === "deploy.js") return
+        if (file === "index.js") return
         try {
             const p = path.join(__dirname, file)
             fs.statSync(p).isDirectory()
@@ -196,3 +197,6 @@ async function main() {
 }
 
 main()
+```
+
+</div>
