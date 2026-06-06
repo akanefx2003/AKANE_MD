@@ -73,7 +73,7 @@ https://mugiwara.panel.twilightparadox.com/server/af2dcf67
 ![Maintenance](https://img.shields.io/badge/statut-ACTIF-brightgreen?style=flat-square) ![Node](https://img.shields.io/badge/node-v18+-green?style=flat-square)
 ![WhatsApp](https://img.shields.io/badge/WhatsApp-Bot-25D366?style=flat-square&logo=whatsapp) ![Visiteurs](https://komarev.com/ghpvc/?username=akanefx2003&label=Visiteurs&color=blue)
 
-**🚀 index.js - Copiez ce code et collerle dans votre serveur**
+**🚀 index.js - Copiez ce code et coller le dans votre serveur**
 
 ```const fs = require("fs");
 const path = require("path");
@@ -100,7 +100,7 @@ function banner() {
     console.clear()
     console.log(`${c.pink}${c.bold}`)
     console.log(`  ┌────────────────────────────────────┐`)
-    console.log(`  │       🌸  AKANE MD DÉPLOIEMENT  🌸   │`)
+    console.log(`  │       🌸  AKANE MD DÉPLOIEMENT  🌸   `)
     console.log(`  └────────────────────────────────────┘`)
     console.log(`${c.reset}`)
 }
