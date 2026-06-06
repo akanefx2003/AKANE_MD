@@ -616,6 +616,15 @@ case 'wssweb':
     await wss(client, message, args)
 
     break
+                    case 'umute': // @cat: gc-menu
+    await react(client, message)
+    await parler(client, message)
+    break
+
+case 'mute': // @cat: gc-menu
+    await react(client, message)
+    await silence(client, message)
+    break
                     
  case 'app': // @cat: media
 
