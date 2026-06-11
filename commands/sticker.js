@@ -1,4 +1,4 @@
-import pkg from 'wa-sticker-formatter';
+//import pkg from 'wa-sticker-formatter';
 
 const { Sticker, StickerTypes } = pkg;
 
