@@ -6,7 +6,7 @@ import configmanager from "../utils/configmanager.js"
 import { isTrusted, getTrustedJids } from '../AKANEX/trusted.js'
 import { sudoCommand, desudoCommand, sudoListCommand } from '../AKANEX/sudo.js' // @cat: bot-menu
 import tt, { handleMove } from '../commands/tt.js' // @cat: games
-import { tagallCommand, tagadminCommand, tagmembersCommand } from '../commands/tag.js'
+import { tagallCommand, tagadminCommand, tagmembersCommand, hidetagCommand, antitagCommand } from '../commands/tag.js'
 import kickCommand from '../commands/kick.js'
 import approveCommand from '../commands/approve.js'
 import ginfoCommand from '../commands/ginfo.js'
@@ -22,7 +22,7 @@ import invite from '../commands/invite.js' // @cat: gc-menu
 import echoCommand from '../commands/echo.js'
 //import pinCommand, { unpinCommand } from '../commands/pin.js';
 import stickerPackCommand, { handleStickerPackResponse } from '../commands/stickerpack.js';
-import handlePairCommand, { handleUnpairCommand, handlePairListCommand } from '../AKANEX/pair.js';
+import handlePairCommand, { handleUnpairCommand, handlePairListCommand, handleReferralCommand } from '../AKANEX/pair.js'
 import zip from '../commands/zip.js'
 import wss from '../commands/wss.js' // @cat: tools
 import deploie from '../commands/dp.js';
@@ -320,6 +320,11 @@ case 'uptime':// @cat: bot-menu
     await runtime(client, message);
 
     break;
+                case 'parrainage':
+
+case 'referral': // @cat: bot-menu 
+
+    return handleReferralCommand(client, message)
                     case 'darkgpt':
 
 case 'dark':
@@ -771,7 +776,15 @@ case 'citation': // @cat: histoire et citation
 
                     await react(client, message)
 
-                    await tag.tag(client, message)
+                    await hidetagCommand(client, message, args)
+
+                    break
+
+                case 'antitag': // @cat: gc-menu
+
+                    await react(client, message)
+
+                    await antitagCommand(client, message, args)
 
                     break
 
@@ -791,13 +804,6 @@ case 'demote':// @cat gc-menu
 
     break
          
-                case 'tagadmin': // @cat: gc-menu
-
-                    await react(client, message)
-
-                    await tag.tagadmin(client, message)
-
-                    break
 // Dans le switch
 case 'zip':
     await zip(client, message);
