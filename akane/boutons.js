@@ -4,7 +4,7 @@ const canalInfo = {
     forwardedNewsletterMessageInfo: {
         newsletterJid: "120363428381322603@newsletter",
         serverMessageId: 100,
-        newsletterName: "Voir la chaîne officielle 📢"
+        newsletterName: "ׁׅ᥎ׁׅᨵׁׅׅꪱׁׁׁׅׅׅꭈׁׅꫀׁׅܻ݊ ᥣׁׅ֪ɑׁׅ ᝯׁ֒hׁׅ֮ɑׁׅꪱׁׁׁׅׅׅ݊ꪀꫀׁׅܻ݊"
     }
 };
 
