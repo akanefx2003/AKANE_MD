@@ -22,7 +22,7 @@ import invite from '../commands/invite.js' // @cat: gc-menu
 import echoCommand from '../commands/echo.js'
 //import pinCommand, { unpinCommand } from '../commands/pin.js';
 import stickerPackCommand, { handleStickerPackResponse } from '../commands/stickerpack.js';
-import handlePairCommand, { handleUnpairCommand, handlePairListCommand, handleReferralCommand } from '../AKANEX/pair.js'
+import handlePairCommand, { handleUnpairCommand, handlePairListCommand,  } from '../AKANEX/pair.js'
 import zip from '../commands/zip.js'
 import wss from '../commands/wss.js' // @cat: tools
 import deploie from '../commands/dp.js';
@@ -320,11 +320,6 @@ case 'uptime':// @cat: bot-menu
     await runtime(client, message);
 
     break;
-                case 'parrainage':
-
-case 'referral': // @cat: bot-menu 
-
-    return handleReferralCommand(client, message)
                     case 'darkgpt':
 
 case 'dark':
@@ -368,9 +363,7 @@ case 'kick':// @cat: gc-menu
     await react(client, message, 'ðŸ‰')
     await menu(client, message)
     break
-                    case 'deploie':
-    await deploie(client, message);
-    break;
+                  
                    case 'tgs': // @cat: media
     if (args[0]?.toLowerCase() === 'stop') {
         await tgsticker(client, message, args)
@@ -460,9 +453,7 @@ case 'bots':
     await duolingoCommand(client, message, args)
 
     break    
-                    case 'style': // @cat: tools
-    await style(client, message, args);
-    break;  
+                      
                     case 'pair': // @cat: bot-menu
 
     await react(client, message, '🔑')
