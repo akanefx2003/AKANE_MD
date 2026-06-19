@@ -11,8 +11,6 @@ const __dirname = path.dirname(__filename)
 const app = express()
 app.use(express.json())
 
-const pendingCodes = new Map()
-
 // ✅ Formater le numéro WhatsApp
 function formatWhatsAppNumber(number) {
     let clean = number.replace(/[^0-9]/g, '')
@@ -25,8 +23,7 @@ function formatWhatsAppNumber(number) {
     return clean
 }
 
-// ─── Génération du code de pairing ───────────────────────────────────────
-
+// ✅ Générer le code - MÊME PRINCIPE QUE PAIR.JS
 async function generateCode(number) {
     const formatted = formatWhatsAppNumber(number)
     const sessionDir = `./sessions/pair_${formatted}`
@@ -37,32 +34,29 @@ async function generateCode(number) {
     }
     fs.mkdirSync(sessionDir, { recursive: true })
 
-    try {
-        const { version } = await fetchLatestBaileysVersion()
-        const { state, saveCreds } = await useMultiFileAuthState(sessionDir)
+    return new Promise(async (resolve, reject) => {
+        try {
+            const { version } = await fetchLatestBaileysVersion()
+            const { state, saveCreds } = await useMultiFileAuthState(sessionDir)
 
-        const sock = makeWASocket({
-            version,
-            auth: state,
-            printQRInTerminal: false,
-            logger: pino({ level: 'silent' }),
-            browser: Browsers.ubuntu('Chrome'),
-            keepAliveIntervalMs: 5000,
-            connectTimeoutMs: 60000,
-            syncFullHistory: false,
-            markOnlineOnConnect: false,
-        })
+            const sock = makeWASocket({
+                version,
+                auth: state,
+                printQRInTerminal: false,
+                logger: pino({ level: 'silent' }),
+                browser: Browsers.ubuntu('Chrome'),
+                keepAliveIntervalMs: 5000,
+                connectTimeoutMs: 60000,
+                syncFullHistory: false,
+                markOnlineOnConnect: true,
+            })
 
-        sock.ev.on('creds.update', saveCreds)
+            sock.ev.on('creds.update', saveCreds)
 
-        let codeSent = false
-        let timeoutId = null
-
-        const connectionPromise = new Promise((resolve, reject) => {
-            // Timeout après 30 secondes
-            timeoutId = setTimeout(() => {
+            let codeSent = false
+            let timeoutId = setTimeout(() => {
                 try { sock.ws.close() } catch {}
-                reject(new Error('Timeout - essaie de nouveau'))
+                reject(new Error('Timeout - Réessaie'))
             }, 30000)
 
             sock.ev.on('connection.update', async (update) => {
@@ -70,7 +64,8 @@ async function generateCode(number) {
                 
                 if (!codeSent && connection === 'connecting') {
                     codeSent = true
-                    await new Promise(r => setTimeout(r, 2000))
+                    await new Promise(r => setTimeout(r, 3000))
+                    
                     try {
                         const code = await sock.requestPairingCode(formatted)
                         const fmt = code.match(/.{1,4}/g)?.join('-') || code
@@ -78,28 +73,20 @@ async function generateCode(number) {
                         clearTimeout(timeoutId)
                         console.log(`✅ Code généré: +${formatted} = ${fmt}`)
                         
-                        pendingCodes.set(formatted, { 
-                            status: 'ready', 
-                            code: fmt, 
-                            error: null,
-                            number: formatted
-                        })
+                        try { sock.ws.close() } catch {}
                         
                         resolve(fmt)
                     } catch (e) {
                         clearTimeout(timeoutId)
-                        console.error(`❌ Erreur code:`, e.message)
                         reject(e)
                     }
                 }
             })
-        })
 
-        return await connectionPromise
-    } catch (e) {
-        console.error(`❌ Erreur génération:`, e.message)
-        throw e
-    }
+        } catch (e) {
+            reject(e)
+        }
+    })
 }
 
 // ─── Routes API ───────────────────────────────────────────────────────────
@@ -122,25 +109,9 @@ app.post('/pair', async (req, res) => {
         const code = await generateCode(formatted)
         res.json({ ok: true, number: formatted, code: code })
     } catch (e) {
-        pendingCodes.set(formatted, { 
-            status: 'error', 
-            code: null, 
-            error: e.message,
-            number: formatted
-        })
+        console.error('❌ Erreur pairing:', e.message)
         res.status(400).json({ error: e.message })
     }
-})
-
-app.get('/code/:number', (req, res) => {
-    const formatted = formatWhatsAppNumber(req.params.number)
-    const entry = pendingCodes.get(formatted)
-    
-    if (!entry) {
-        return res.json({ status: 'not_found' })
-    }
-    
-    res.json(entry)
 })
 
 // ─── Page web de pairing ──────────────────────────────────────────────────
@@ -375,7 +346,7 @@ app.listen(PORT, () => {
 ╔════════════════════════════════════════╗
 ║  🌹 AKANE MD — Pairing Server          ║
 ║  Port: ${PORT}                           
-║  URL: http://localhost:${PORT}           
+║  Fast Pairing Mode ⚡                  
 ╚════════════════════════════════════════╝
     `)
 })
