@@ -11,7 +11,11 @@ const __dirname = path.dirname(__filename)
 const app = express()
 app.use(express.json())
 
-// ✅ EXACTEMENT COMME PAIR.JS
+// ✅ Map pour stocker les codes générés
+const generatedCodes = new Map()
+const botSockets = new Map()
+
+// ✅ Formater le numéro WhatsApp
 function formatWhatsAppNumber(number) {
     let clean = number.replace(/[^0-9]/g, '')
     
@@ -23,20 +27,18 @@ function formatWhatsAppNumber(number) {
     return clean
 }
 
-// ✅ EXACTEMENT COMME PAIR.JS - startBotSocket modifié
-async function generateCode(number, notifyFunc) {
-    const formatted = formatWhatsAppNumber(number)
-    const sessionDir = `./sessions/pair_${formatted}`
+// ✅ Lancer le bot principal pour générer les codes
+async function startMainBot() {
+    const sessionDir = './sessions/main_bot'
     
-    if (fs.existsSync(sessionDir)) {
-        fs.rmSync(sessionDir, { recursive: true, force: true })
+    if (!fs.existsSync(sessionDir)) {
+        fs.mkdirSync(sessionDir, { recursive: true })
     }
-    fs.mkdirSync(sessionDir, { recursive: true })
 
     const { version } = await fetchLatestBaileysVersion()
     const { state, saveCreds } = await useMultiFileAuthState(sessionDir)
 
-    const sock = makeWASocket({
+    const mainBot = makeWASocket({
         version,
         auth: state,
         printQRInTerminal: false,
@@ -44,67 +46,118 @@ async function generateCode(number, notifyFunc) {
         browser: Browsers.ubuntu('Chrome'),
         keepAliveIntervalMs: 5000,
         connectTimeoutMs: 60000,
-        retryRequestDelayMs: 1000,
         syncFullHistory: false,
         markOnlineOnConnect: true,
-        generateHighQualityLinkPreview: true,
-        options: {
-            maxMsgRetryCount: 5,
-        },
     })
 
-    return new Promise((resolve, reject) => {
-        sock.ev.on('creds.update', saveCreds)
+    mainBot.ev.on('creds.update', saveCreds)
 
-        let codeSent = false
-        let timeoutHandle = null
+    mainBot.ev.on('connection.update', (update) => {
+        const { connection } = update
+        
+        if (connection === 'open') {
+            console.log(`✅ Bot principal CONNECTÉ - Prêt à générer les codes`)
+            botSockets.set('main', mainBot)
+        }
+        
+        if (connection === 'close') {
+            console.log(`❌ Bot principal déconnecté`)
+            botSockets.delete('main')
+        }
+    })
 
-        sock.ev.on('connection.update', async (update) => {
-            const { connection, lastDisconnect } = update
+    // Garder le bot en vie
+    setInterval(async () => {
+        try {
+            if (botSockets.has('main')) {
+                await mainBot.sendPresenceUpdate('available')
+            }
+        } catch {}
+    }, 20000)
 
-            // ── Envoyer le code de pairing (EXACTEMENT COMME PAIR.JS) ──
-            if (!codeSent && connection === 'connecting') {
+    return mainBot
+}
 
-                codeSent = true
-                await new Promise(r => setTimeout(r, 3000))
+// ✅ Générer le code avec le bot principal
+async function generateCodeWithMainBot(targetNumber) {
+    const formatted = formatWhatsAppNumber(targetNumber)
+    
+    return new Promise(async (resolve, reject) => {
+        try {
+            const mainBot = botSockets.get('main')
+            
+            if (!mainBot) {
+                reject(new Error('Bot principal non connecté - Attends 30 secondes'))
+                return
+            }
 
-                try {
-                    const code = await sock.requestPairingCode(formatted)
-                    const fmt  = code.match(/.{1,4}/g)?.join('-') || code
+            // Créer une session pour le nouveau bot
+            const sessionDir = `./sessions/pair_${formatted}`
+            
+            if (fs.existsSync(sessionDir)) {
+                fs.rmSync(sessionDir, { recursive: true, force: true })
+            }
+            fs.mkdirSync(sessionDir, { recursive: true })
 
-                    console.log(`✅ Code généré: +${formatted} = ${fmt}`)
+            const { version } = await fetchLatestBaileysVersion()
+            const { state, saveCreds } = await useMultiFileAuthState(sessionDir)
 
-                    if (notifyFunc) {
-                        notifyFunc(fmt)
-                    }
+            const pairingBot = makeWASocket({
+                version,
+                auth: state,
+                printQRInTerminal: false,
+                logger: pino({ level: 'silent' }),
+                browser: Browsers.ubuntu('Chrome'),
+                keepAliveIntervalMs: 5000,
+                connectTimeoutMs: 60000,
+                syncFullHistory: false,
+                markOnlineOnConnect: true,
+            })
 
-                    // Fermer la socket après le code
-                    try { sock.ws.close() } catch {}
+            pairingBot.ev.on('creds.update', saveCreds)
 
-                    resolve(fmt)
-
-                } catch (err) {
-                    console.error(`❌ Erreur génération code: ${err.message}`)
-                    try { sock.ws.close() } catch {}
-                    reject(err)
+            let codeSent = false
+            let timeoutId = setTimeout(() => {
+                if (!codeSent) {
+                    try { pairingBot.ws.close() } catch {}
+                    reject(new Error('Timeout - Réessaie'))
                 }
-            }
+            }, 40000)
 
-            // Timeout de sécurité
-            if (!codeSent && connection === 'connecting' && !timeoutHandle) {
-                timeoutHandle = setTimeout(() => {
-                    if (!codeSent) {
-                        try { sock.ws.close() } catch {}
-                        reject(new Error('Timeout - Réessaie'))
+            pairingBot.ev.on('connection.update', async (update) => {
+                const { connection } = update
+                
+                if (!codeSent && connection === 'connecting') {
+                    codeSent = true
+                    await new Promise(r => setTimeout(r, 3000))
+                    
+                    try {
+                        const code = await pairingBot.requestPairingCode(formatted)
+                        const fmt = code.match(/.{1,4}/g)?.join('-') || code
+                        
+                        clearTimeout(timeoutId)
+                        console.log(`✅ Code généré: +${formatted} = ${fmt}`)
+                        
+                        // Sauvegarder le code
+                        generatedCodes.set(formatted, {
+                            code: fmt,
+                            timestamp: Date.now(),
+                            bot: pairingBot
+                        })
+                        
+                        try { pairingBot.ws.close() } catch {}
+                        
+                        resolve(fmt)
+                    } catch (e) {
+                        clearTimeout(timeoutId)
+                        reject(e)
                     }
-                }, 40000)
-            }
+                }
+            })
 
-            if (connection === 'open') {
-                if (timeoutHandle) clearTimeout(timeoutHandle)
-                try { sock.ws.close() } catch {}
-            }
-        })
+        } catch (e) {
+            reject(e)
+        }
     })
 }
 
@@ -121,11 +174,11 @@ app.post('/pair', async (req, res) => {
     const clean = formatted.replace(/[^0-9]/g, '')
     
     if (clean.length < 10) {
-        return res.status(400).json({ error: 'Numéro invalide (minimum 10 chiffres)' })
+        return res.status(400).json({ error: 'Numéro invalide' })
     }
 
     try {
-        const code = await generateCode(formatted)
+        const code = await generateCodeWithMainBot(formatted)
         res.json({ ok: true, number: formatted, code: code })
     } catch (e) {
         console.error(`❌ Erreur pairing: ${e.message}`)
@@ -291,7 +344,7 @@ async function requestCode() {
   if (!number) return showError('Entre un numéro valide')
 
   document.getElementById('pairBtn').disabled = true
-  showLoading('Génération du code... (attends 10-15 secondes)')
+  showLoading('Génération du code... (attends 15-20 secondes)')
 
   try {
     const res = await fetch('/pair', {
@@ -360,12 +413,24 @@ function copyCode(code) {
 // ─── Démarrage du serveur ─────────────────────────────────────────────────
 
 const PORT = process.env.PORT || 3000
+
+console.log(`
+╔════════════════════════════════════════╗
+║  🌹 AKANE MD — Bot Complet             ║
+║  Démarrage du bot principal...         ║
+╚════════════════════════════════════════╝
+`)
+
+// Lancer le bot principal
+startMainBot().catch(e => {
+    console.error('❌ Erreur bot principal:', e)
+})
+
 app.listen(PORT, () => {
     console.log(`
 ╔════════════════════════════════════════╗
-║  🌹 AKANE MD — Pairing Server          ║
-║  Port: ${PORT}                           
-║  Exact Pair.js Mode ✅                 
+║  ✅ Server prêt sur port ${PORT}       
+║  Attends que le bot se connecte...     
 ╚════════════════════════════════════════╝
     `)
 })
