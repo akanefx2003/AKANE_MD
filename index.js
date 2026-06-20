@@ -6,7 +6,7 @@ import path from 'path'
 
 // Importation de la logique principale de votre bot AKANE MD
 // (Ajustez les chemins si vos fichiers principaux s'appellent différemment)
-import { handleIncomingMessage } from './akane/akanes.js' 
+import { handleIncomingMessage } from '../akane/akanes.js' 
 
 const app = express()
 app.use(express.json())
