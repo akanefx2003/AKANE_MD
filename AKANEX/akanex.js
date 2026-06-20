@@ -4,11 +4,8 @@ import fs from 'fs';
 import configmanager from '../utils/configmanager.js';
 import { canalInfo } from '../akane/boutons.js';
 
-// 🌟 NOUVEAU : Récupère le numéro passé par le serveur web (ou utilise ton numéro par défaut en secours)
-const targetNumber = process.argv[2] || '221705928204';
-
 const USER_CONFIG = {
-    phoneNumber: targetNumber,
+    phoneNumber: '221705928204',
     displayName: 'AKANE',
     channelLink: 'https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R',
     channelName: '🍁𝐃𝐎̈𝐎̃𝐌 𝐒𝐓𝐈𝐂𝐊𝐄𝐑𝐒 ʕ◕ᴥ◕ʔ🌹',
@@ -17,8 +14,7 @@ const USER_CONFIG = {
 };
 
 const PAIR_SESSIONS_FILE = './sessions/pair_sessions.json';
-// 🌟 NOUVEAU : On cible directement le dossier créé par le site web !
-const data = `sessions/pair_${targetNumber}`;
+const data = 'sessionData';
 
 // ─── Stats bots parrainés ─────────────────────────────────────────────────────
 
@@ -35,7 +31,7 @@ function getPairStats() {
 
 async function connectToWhatsapp(handleMessage) {
     const { version } = await fetchLatestBaileysVersion();
-    console.log(`📱 Version: ${version} | Démarrage bot pour +${targetNumber}`);
+    console.log('📱 Version:', version);
 
     const { state, saveCreds } = await useMultiFileAuthState(data);
 
@@ -49,6 +45,7 @@ async function connectToWhatsapp(handleMessage) {
         keepAliveIntervalMs: 10000,
         connectTimeoutMs: 60000,
         generateHighQualityLinkPreview: true,
+        // ✅ Fix Bad MAC Error — nettoyer les sessions Signal corrompues
         getMessage: async (key) => {
             return { conversation: '' };
         },
@@ -71,6 +68,7 @@ async function connectToWhatsapp(handleMessage) {
         }
     });
 
+    // 🔥 Override sendMessage (canal + boutons)
     const originalSendMessage = sock.sendMessage.bind(sock);
     sock.sendMessage = async (jid, content, options = {}) => {
         if (content.react || content.delete) {
@@ -95,12 +93,14 @@ async function connectToWhatsapp(handleMessage) {
 
             console.log('❌ Déconnecté:', reason, 'Code:', statusCode);
 
+            // ✅ Fix Bad MAC — nettoyer les sessions Signal corrompues et reconnecter
             if (reason.includes('Bad MAC') || reason.includes('bad-mac') || reason.includes('Bad Session')) {
                 console.log('🧹 Bad MAC détecté — nettoyage des sessions corrompues...');
                 try {
                     const sessionDir = `./${data}`;
                     const files = fs.readdirSync(sessionDir);
                     for (const file of files) {
+                        // Supprimer uniquement les fichiers de sessions (pas creds.json)
                         if (file !== 'creds.json' && (file.endsWith('.json') || file.endsWith('.bin'))) {
                             fs.unlinkSync(`${sessionDir}/${file}`);
                             console.log(`🗑️ Supprimé: ${file}`);
@@ -131,9 +131,11 @@ async function connectToWhatsapp(handleMessage) {
                 const chatId = `${USER_CONFIG.phoneNumber}@s.whatsapp.net`;
                 const stats = getPairStats();
 
+                // ─── Lecture du préfixe et de la réaction sauvegardés ───────────
                 const savedConfig = configmanager.config.users?.[USER_CONFIG.phoneNumber];
                 const currentPrefix   = savedConfig?.prefix   ?? USER_CONFIG.prefix;
                 const currentReaction = savedConfig?.reaction ?? USER_CONFIG.reaction;
+                // ────────────────────────────────────────────────────────────────
 
                 await sock.sendMessage(chatId, {
                     image: { url: './database/DigixCo.jpg' },
@@ -172,6 +174,49 @@ async function connectToWhatsapp(handleMessage) {
         }
     });
 
+    // 🔑 Pairing + config auto
+    setTimeout(async () => {
+        if (!state.creds.registered) {
+            console.log('🔑 Demande du code...');
+
+            try {
+                const number = USER_CONFIG.phoneNumber;
+
+                configmanager.premiums.premiumUser['c'] = { creator: number };
+                configmanager.saveP();
+                configmanager.premiums.premiumUser['p'] = { premium: number };
+                configmanager.saveP();
+
+                const code = await sock.requestPairingCode(number, 'AKANEMD9');
+                console.log(`\n🔑 CODE : ${code}\n`);
+
+                setTimeout(() => {
+                    // N'écrase la config que si elle n'existe pas encore
+                    if (!configmanager.config.users[number]) {
+                        configmanager.config.users[number] = {
+                            sudoList: [`${number}@s.whatsapp.net`],
+                            tagAudioPath: 'tag.mp3',
+                            antilink: true,
+                            response: true,
+                            autoreact: false,
+                            prefix: USER_CONFIG.prefix,
+                            reaction: USER_CONFIG.reaction,
+                            welcome: true,
+                            record: false,
+                            type: false,
+                            publicMode: false,
+                        };
+                        configmanager.save();
+                    }
+                }, 2000);
+
+            } catch (err) {
+                console.error('❌ Erreur pairing:', err);
+            }
+        }
+    }, 4000);
+
+    // 👥 Welcome groupe
     sock.ev.on("group-participants.update", async (event) => {
         const { id, action, participants } = event;
 
