@@ -3,42 +3,70 @@ import { makeWASocket, useMultiFileAuthState, fetchLatestBaileysVersion, Browser
 import pino from 'pino'
 import fs from 'fs'
 import path from 'path'
-import { fileURLToPath } from 'url'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+// Importation de la logique principale de votre bot AKANE MD
+// (Ajustez les chemins si vos fichiers principaux s'appellent différemment)
+import { handleIncomingMessage } from './akane/akanes.js' 
 
 const app = express()
 app.use(express.json())
 
-// ✅ Map pour stocker les codes générés
-const generatedCodes = new Map()
-const botSockets = new Map()
+const pendingCodes = new Map()
 
-// ✅ Formater le numéro WhatsApp
-function formatWhatsAppNumber(number) {
-    let clean = number.replace(/[^0-9]/g, '')
-    
-    if (clean.startsWith('221')) return clean
-    if (clean.startsWith('0') && clean.length === 10) return '221' + clean.slice(1)
-    if (clean.length === 9) return '221' + clean
-    if (clean.length === 10 && !clean.startsWith('0')) return '221' + clean
-    
-    return clean
+// ─── Lancement de la Session Principale du Bot ───────────────────────────────
+async function startMainBot() {
+    const mainSessionDir = './sessions/main_session'
+    const { version } = await fetchLatestBaileysVersion()
+    const { state, saveCreds } = await useMultiFileAuthState(mainSessionDir)
+
+    const mainSock = makeWASocket({
+        version,
+        auth: state,
+        printQRInTerminal: true, // Affiche le QR dans les logs au cas où
+        logger: pino({ level: 'silent' }),
+        browser: Browsers.ubuntu('Chrome'),
+    })
+
+    mainSock.ev.on('creds.update', saveCreds)
+
+    mainSock.ev.on('connection.update', (update) => {
+        const { connection, lastDisconnect } = update
+        if (connection === 'open') {
+            console.log('🌹 [AKANE MD] Le bot principal est connecté et opérationnel !')
+        }
+        if (connection === 'close') {
+            const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== 401
+            console.log(`⚠️ Connexion fermée. Reconnexion : ${shouldReconnect}`)
+            if (shouldReconnect) startMainBot()
+        }
+    })
+
+    // Gestion des messages reçus par votre bot
+    mainSock.ev.on('messages.upsert', async (chatUpdate) => {
+        try {
+            if (handleIncomingMessage) {
+                await handleIncomingMessage(mainSock, chatUpdate)
+            }
+        } catch (err) {
+            console.error('Erreur lors du traitement du message:', err)
+        }
+    })
 }
 
-// ✅ Lancer le bot principal pour générer les codes
-async function startMainBot() {
-    const sessionDir = './sessions/main_bot'
-    
-    if (!fs.existsSync(sessionDir)) {
-        fs.mkdirSync(sessionDir, { recursive: true })
-    }
+// Lancement automatique du bot au démarrage
+startMainBot().catch(err => console.error("Erreur lancement bot:", err))
+
+
+// ─── Génération temporaire de Code de Pairing (Site Web) ────────────────────
+async function generateCode(number) {
+    const sessionDir = `./sessions/pair_${number}`
+    if (fs.existsSync(sessionDir)) fs.rmSync(sessionDir, { recursive: true, force: true })
+    fs.mkdirSync(sessionDir, { recursive: true })
 
     const { version } = await fetchLatestBaileysVersion()
     const { state, saveCreds } = await useMultiFileAuthState(sessionDir)
 
-    const mainBot = makeWASocket({
+    const sock = makeWASocket({
         version,
         auth: state,
         printQRInTerminal: false,
@@ -47,147 +75,60 @@ async function startMainBot() {
         keepAliveIntervalMs: 5000,
         connectTimeoutMs: 60000,
         syncFullHistory: false,
-        markOnlineOnConnect: true,
+        markOnlineOnConnect: false,
     })
 
-    mainBot.ev.on('creds.update', saveCreds)
+    sock.ev.on('creds.update', saveCreds)
 
-    mainBot.ev.on('connection.update', (update) => {
+    let codeSent = false
+    sock.ev.on('connection.update', async (update) => {
         const { connection } = update
-        
-        if (connection === 'open') {
-            console.log(`✅ Bot principal CONNECTÉ - Prêt à générer les codes`)
-            botSockets.set('main', mainBot)
-        }
-        
-        if (connection === 'close') {
-            console.log(`❌ Bot principal déconnecté`)
-            botSockets.delete('main')
-        }
-    })
-
-    // Garder le bot en vie
-    setInterval(async () => {
-        try {
-            if (botSockets.has('main')) {
-                await mainBot.sendPresenceUpdate('available')
+        if (!codeSent && connection === 'connecting') {
+            codeSent = true
+            await new Promise(r => setTimeout(r, 3000))
+            try {
+                const code = await sock.requestPairingCode(number)
+                const fmt = code.match(/.{1,4}/g)?.join('-') || code
+                pendingCodes.set(number, { status: 'ready', code: fmt, error: null })
+                console.log(`✅ Code généré pour +${number}: ${fmt}`)
+            } catch (e) {
+                pendingCodes.set(number, { status: 'error', code: null, error: e.message })
+                console.error(`❌ Erreur +${number}:`, e.message)
+                try { sock.ws.close() } catch {}
             }
-        } catch {}
-    }, 20000)
-
-    return mainBot
-}
-
-// ✅ Générer le code avec le bot principal
-async function generateCodeWithMainBot(targetNumber) {
-    const formatted = formatWhatsAppNumber(targetNumber)
-    
-    return new Promise(async (resolve, reject) => {
-        try {
-            const mainBot = botSockets.get('main')
-            
-            if (!mainBot) {
-                reject(new Error('Bot principal non connecté - Attends 30 secondes'))
-                return
-            }
-
-            // Créer une session pour le nouveau bot
-            const sessionDir = `./sessions/pair_${formatted}`
-            
-            if (fs.existsSync(sessionDir)) {
-                fs.rmSync(sessionDir, { recursive: true, force: true })
-            }
-            fs.mkdirSync(sessionDir, { recursive: true })
-
-            const { version } = await fetchLatestBaileysVersion()
-            const { state, saveCreds } = await useMultiFileAuthState(sessionDir)
-
-            const pairingBot = makeWASocket({
-                version,
-                auth: state,
-                printQRInTerminal: false,
-                logger: pino({ level: 'silent' }),
-                browser: Browsers.ubuntu('Chrome'),
-                keepAliveIntervalMs: 5000,
-                connectTimeoutMs: 60000,
-                syncFullHistory: false,
-                markOnlineOnConnect: true,
-            })
-
-            pairingBot.ev.on('creds.update', saveCreds)
-
-            let codeSent = false
-            let timeoutId = setTimeout(() => {
-                if (!codeSent) {
-                    try { pairingBot.ws.close() } catch {}
-                    reject(new Error('Timeout - Réessaie'))
-                }
-            }, 40000)
-
-            pairingBot.ev.on('connection.update', async (update) => {
-                const { connection } = update
-                
-                if (!codeSent && connection === 'connecting') {
-                    codeSent = true
-                    await new Promise(r => setTimeout(r, 3000))
-                    
-                    try {
-                        const code = await pairingBot.requestPairingCode(formatted)
-                        const fmt = code.match(/.{1,4}/g)?.join('-') || code
-                        
-                        clearTimeout(timeoutId)
-                        console.log(`✅ Code généré: +${formatted} = ${fmt}`)
-                        
-                        // Sauvegarder le code
-                        generatedCodes.set(formatted, {
-                            code: fmt,
-                            timestamp: Date.now(),
-                            bot: pairingBot
-                        })
-                        
-                        try { pairingBot.ws.close() } catch {}
-                        
-                        resolve(fmt)
-                    } catch (e) {
-                        clearTimeout(timeoutId)
-                        reject(e)
-                    }
-                }
-            })
-
-        } catch (e) {
-            reject(e)
         }
     })
 }
 
-// ─── Routes API ───────────────────────────────────────────────────────────
-
+// ─── Routes API & Anti-veille ────────────────────────────────────────────────
 app.post('/pair', async (req, res) => {
     const { number } = req.body
-    
-    if (!number) {
-        return res.status(400).json({ error: 'Numéro requis' })
-    }
+    if (!number || number.replace(/[^0-9]/g, '').length < 7)
+        return res.json({ error: 'Numéro invalide' })
 
-    const formatted = formatWhatsAppNumber(number)
-    const clean = formatted.replace(/[^0-9]/g, '')
-    
-    if (clean.length < 10) {
-        return res.status(400).json({ error: 'Numéro invalide' })
-    }
+    const clean = number.replace(/[^0-9]/g, '')
+    pendingCodes.set(clean, { status: 'pending', code: null, error: null })
 
-    try {
-        const code = await generateCodeWithMainBot(formatted)
-        res.json({ ok: true, number: formatted, code: code })
-    } catch (e) {
-        console.error(`❌ Erreur pairing: ${e.message}`)
-        res.status(400).json({ error: e.message })
-    }
+    generateCode(clean).catch(e => {
+        pendingCodes.set(clean, { status: 'error', code: null, error: e.message })
+    })
+
+    res.json({ ok: true, number: clean })
 })
 
-// ─── Page web de pairing ──────────────────────────────────────────────────
+app.get('/code/:number', (req, res) => {
+    const clean = req.params.number.replace(/[^0-9]/g, '')
+    const entry = pendingCodes.get(clean)
+    if (!entry) return res.json({ status: 'not_found' })
+    res.json(entry)
+})
 
+// Endpoint Ping pour éviter la mise en veille Render
+app.get('/ping', (req, res) => {
+    res.json({ status: 'alive', timestamp: Date.now() })
+})
+
+// ─── Interface Web (HTML) ────────────────────────────────────────────────────
 app.get('/', (req, res) => {
     res.send(`<!DOCTYPE html>
 <html lang="fr">
@@ -197,127 +138,25 @@ app.get('/', (req, res) => {
 <title>AKANE MD — Pairing</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
-  body {
-    min-height: 100vh;
-    background: #0a0a0a;
-    font-family: 'Segoe UI', sans-serif;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-  }
-  .card {
-    background: #111;
-    border: 1px solid #1e1e1e;
-    border-radius: 24px;
-    padding: 44px 36px;
-    width: 100%;
-    max-width: 440px;
-    box-shadow: 0 0 60px rgba(233,30,140,0.06);
-  }
+  body { min-height: 100vh; background: #0a0a0a; font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+  .card { background: #111; border: 1px solid #1e1e1e; border-radius: 24px; padding: 44px 36px; width: 100%; max-width: 440px; box-shadow: 0 0 60px rgba(233,30,140,0.06); }
   .logo { text-align:center; margin-bottom:36px; }
-  .logo h1 {
-    font-size: 30px;
-    background: linear-gradient(135deg, #e91e8c, #ff6b35);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    font-weight: 900;
-    letter-spacing: 3px;
-  }
+  .logo h1 { font-size: 30px; background: linear-gradient(135deg, #e91e8c, #ff6b35); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; letter-spacing: 3px; }
   .logo p { color:#444; font-size:13px; margin-top:8px; }
-  .badge {
-    display: inline-block;
-    background: #1a1a1a;
-    border: 1px solid #2a2a2a;
-    border-radius: 20px;
-    padding: 4px 12px;
-    font-size: 11px;
-    color: #555;
-    margin-top: 10px;
-    letter-spacing: 1px;
-  }
+  .badge { display: inline-block; background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 20px; padding: 4px 12px; font-size: 11px; color: #555; margin-top: 10px; letter-spacing: 1px; }
   .label { color:#666; font-size:11px; margin-bottom:8px; letter-spacing:1.5px; text-transform:uppercase; }
-  input {
-    width: 100%;
-    background: #161616;
-    border: 1px solid #242424;
-    border-radius: 14px;
-    padding: 15px 18px;
-    color: #fff;
-    font-size: 16px;
-    outline: none;
-    transition: border 0.2s, box-shadow 0.2s;
-  }
+  input { width: 100%; background: #161616; border: 1px solid #242424; border-radius: 14px; padding: 15px 18px; color: #fff; font-size: 16px; outline: none; }
   input:focus { border-color: #e91e8c; box-shadow: 0 0 0 3px rgba(233,30,140,0.08); }
-  input::placeholder { color:#333; }
-  button#pairBtn {
-    width: 100%;
-    margin-top: 14px;
-    padding: 16px;
-    background: linear-gradient(135deg, #e91e8c, #ff6b35);
-    border: none;
-    border-radius: 14px;
-    color: #fff;
-    font-size: 15px;
-    font-weight: 700;
-    cursor: pointer;
-    letter-spacing: 1px;
-    transition: opacity 0.2s, transform 0.1s;
-  }
-  button#pairBtn:hover { opacity:0.88; transform:translateY(-1px); }
-  button#pairBtn:active { transform:translateY(0); }
-  button#pairBtn:disabled { opacity:0.35; cursor:not-allowed; transform:none; }
+  button#pairBtn { width: 100%; margin-top: 14px; padding: 16px; background: linear-gradient(135deg, #e91e8c, #ff6b35); border: none; border-radius: 14px; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; letter-spacing: 1px; }
   .status { margin-top:24px; padding:20px; border-radius:16px; text-align:center; display:none; }
   .status.loading { display:block; background:#161616; color:#666; font-size:14px; }
   .status.success { display:block; background:#0a1a0a; border:1px solid #1a2e1a; }
   .status.error { display:block; background:#1a0a0a; border:1px solid #2e1a1a; color:#ff6b6b; font-size:14px; }
   .code-label { color:#555; font-size:11px; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:10px; }
-  .code-display {
-    font-size: 40px;
-    font-weight: 900;
-    letter-spacing: 8px;
-    color: #25d366;
-    font-family: 'Courier New', monospace;
-    text-shadow: 0 0 20px rgba(37,211,102,0.3);
-  }
-  .copy-btn {
-    margin-top: 14px;
-    padding: 10px 24px;
-    background: #0d1f0d;
-    border: 1px solid #25d366;
-    color: #25d366;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 600;
-    display: inline-block;
-    transition: background 0.2s;
-  }
-  .copy-btn:hover { background: #142814; }
+  .code-display { font-size: 40px; font-weight: 900; letter-spacing: 8px; color: #25d366; font-family: 'Courier New', monospace; }
+  .copy-btn { margin-top: 14px; padding: 10px 24px; background: #0d1f0d; border: 1px solid #25d366; color: #25d366; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 600; }
   .expire { color:#ff9800; font-size:12px; margin-top:10px; }
-  .steps {
-    margin-top: 16px;
-    text-align: left;
-    color: #555;
-    font-size: 12px;
-    line-height: 2;
-    background: #0e0e0e;
-    border-radius: 10px;
-    padding: 12px 14px;
-  }
-  .steps b { color: #777; }
-  .spinner {
-    display: inline-block;
-    width: 18px; height: 18px;
-    border: 2px solid #222;
-    border-top-color: #e91e8c;
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-    vertical-align: middle;
-    margin-right: 10px;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  .steps { margin-top: 16px; text-align: left; color: #555; font-size: 12px; line-height: 2; background: #0e0e0e; border-radius: 10px; padding: 12px 14px; }
   footer { margin-top: 32px; color: #2a2a2a; font-size: 11px; letter-spacing: 1px; }
 </style>
 </head>
@@ -328,109 +167,42 @@ app.get('/', (req, res) => {
     <p>Connectez votre WhatsApp au bot</p>
     <span class="badge">MULTI USER • AI POWERED • SECURE</span>
   </div>
-
   <div class="label">Numéro WhatsApp</div>
-  <input id="num" type="tel" placeholder="221704752421" />
+  <input id="num" type="tel" placeholder="221705928204  (sans + ni espaces)" />
   <button id="pairBtn" onclick="requestCode()">⚡ Obtenir le code de connexion</button>
-
   <div id="status" class="status"></div>
 </div>
-
 <footer>© AKANE MD — akanefx2003</footer>
-
 <script>
+let polling = null
 async function requestCode() {
-  const number = document.getElementById('num').value.trim()
-  if (!number) return showError('Entre un numéro valide')
-
+  const number = document.getElementById('num').value.replace(/[^0-9]/g, '')
+  if (number.length < 7) return showError('Entre un numéro valide')
   document.getElementById('pairBtn').disabled = true
-  showLoading('Génération du code... (attends 15-20 secondes)')
-
+  showLoading('Génération en cours...')
   try {
-    const res = await fetch('/pair', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ number })
-    })
+    await fetch('/pair', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ number }) })
+    if (polling) clearInterval(polling)
+    polling = setInterval(() => checkCode(number), 2000)
+  } catch(e) { showError('Erreur serveur'); document.getElementById('pairBtn').disabled = false; }
+}
+async function checkCode(number) {
+  try {
+    const res = await fetch('/code/' + number)
     const data = await res.json()
-    
-    if (data.error) { 
-      showError(data.error)
-      document.getElementById('pairBtn').disabled = false
-      return
-    }
-
-    showCode(data.code)
-    document.getElementById('pairBtn').disabled = false
-
-  } catch(e) {
-    showError('Erreur serveur: ' + e.message)
-    document.getElementById('pairBtn').disabled = false
-  }
+    if (data.status === 'ready') { clearInterval(polling); showCode(data.code); document.getElementById('pairBtn').disabled = false; }
+  } catch(e) {}
 }
-
-function showLoading(msg) {
-  const s = document.getElementById('status')
-  s.className = 'status loading'
-  s.innerHTML = '<span class="spinner"></span>' + msg
-}
-
-function showCode(code) {
-  const s = document.getElementById('status')
-  s.className = 'status success'
-  s.innerHTML = \`
-    <div class="code-label">Ton code de connexion WhatsApp</div>
-    <div class="code-display">\${code}</div>
-    <button class="copy-btn" onclick="copyCode('\${code}')">📋 Copier le code</button>
-    <div class="expire">⚠️ Code expire dans 60 secondes !</div>
-    <div class="steps">
-      <b>1️⃣</b> Ouvre WhatsApp sur ton téléphone<br>
-      <b>2️⃣</b> Paramètres → Appareils liés<br>
-      <b>3️⃣</b> Lier un appareil → Lier avec un numéro<br>
-      <b>4️⃣</b> Entre le code ci-dessus
-    </div>
-  \`
-}
-
-function showError(msg) {
-  const s = document.getElementById('status')
-  s.className = 'status error'
-  s.innerHTML = '❌ ' + msg
-}
-
-function copyCode(code) {
-  navigator.clipboard.writeText(code).then(() => {
-    const btn = document.querySelector('.copy-btn')
-    btn.textContent = '✅ Copié !'
-    setTimeout(() => btn.textContent = '📋 Copier le code', 2000)
-  })
-}
+function showLoading(msg) { const s = document.getElementById('status'); s.className = 'status loading'; s.innerHTML = msg; }
+function showCode(code) { const s = document.getElementById('status'); s.className = 'status success'; s.innerHTML = '<div class="code-display">'+code+'</div>'; }
+function showError(msg) { const s = document.getElementById('status'); s.className = 'status error'; s.innerHTML = '❌ ' + msg; }
 </script>
 </body>
 </html>`)
 })
 
-// ─── Démarrage du serveur ─────────────────────────────────────────────────
-
+// ─── Démarrage du Serveur Web ────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000
-
-console.log(`
-╔════════════════════════════════════════╗
-║  🌹 AKANE MD — Bot Complet             ║
-║  Démarrage du bot principal...         ║
-╚════════════════════════════════════════╝
-`)
-
-// Lancer le bot principal
-startMainBot().catch(e => {
-    console.error('❌ Erreur bot principal:', e)
-})
-
 app.listen(PORT, () => {
-    console.log(`
-╔════════════════════════════════════════╗
-║  ✅ Server prêt sur port ${PORT}       
-║  Attends que le bot se connecte...     
-╚════════════════════════════════════════╝
-    `)
+    console.log(`🌹 AKANE MD Pair Server & Bot actif → http://localhost:${PORT}`)
 })
