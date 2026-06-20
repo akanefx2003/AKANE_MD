@@ -11,6 +11,8 @@ const __dirname = path.dirname(__filename)
 const app = express()
 app.use(express.json())
 
+// Utiliser une Map globale pour stocker les instances de sockets actives afin qu'elles ne soient pas coupées prématurément
+const activeSockets = new Map()
 const pendingCodes = new Map()
 
 // ✅ Formater le numéro WhatsApp
@@ -25,17 +27,23 @@ function formatWhatsAppNumber(number) {
     return clean
 }
 
-// ─── Génération du code de pairing ───────────────────────────────────────
+// ─── Génération et maintien du code de pairing ───────────────────────────
 
 async function generateCode(number) {
     const formatted = formatWhatsAppNumber(number)
     const sessionDir = `./sessions/pair_${formatted}`
     
-    // Nettoyer ancienne session
+    // Nettoyer l'ancienne session pour forcer une nouvelle demande de code propre
     if (fs.existsSync(sessionDir)) {
         fs.rmSync(sessionDir, { recursive: true, force: true })
     }
     fs.mkdirSync(sessionDir, { recursive: true })
+
+    // Fermer l'ancien socket actif pour ce numéro s'il existe
+    if (activeSockets.has(formatted)) {
+        try { activeSockets.get(formatted).ws.close() } catch {}
+        activeSockets.delete(formatted)
+    }
 
     try {
         const { version } = await fetchLatestBaileysVersion()
@@ -50,37 +58,35 @@ async function generateCode(number) {
             keepAliveIntervalMs: 5000,
             connectTimeoutMs: 60000,
             syncFullHistory: false,
-            markOnlineOnConnect: false,
+            markOnlineOnConnect: true, // Crucial pour que WhatsApp valide la liaison
         })
 
+        activeSockets.set(formatted, sock)
         sock.ev.on('creds.update', saveCreds)
 
         let codeSent = false
-        let timeoutId = null
 
         const connectionPromise = new Promise((resolve, reject) => {
-            // Timeout initial de 45 secondes pour obtenir et afficher le code
-            timeoutId = setTimeout(() => {
+            // Un unique timeout global de sécurité (2 minutes) pour éviter que le processus ne tourne à l'infini si rien ne se passe
+            const globalTimeout = setTimeout(() => {
                 try { sock.ws.close() } catch {}
-                reject(new Error('Timeout - Le code n\'a pas pu être généré à temps. Réessaie.'))
-            }, 45000)
+                activeSockets.delete(formatted)
+                reject(new Error('Timeout de liaison dépassé (2 minutes). Veuillez réessayer.'))
+            }, 120000)
 
             sock.ev.on('connection.update', async (update) => {
                 const { connection, lastDisconnect } = update
-                
-                // 1️⃣ Étape : Génération du code de pairing
+
+                // 1️⃣ Étape : Demander et intercepter le code de pairing
                 if (!codeSent && connection === 'connecting') {
                     codeSent = true
-                    await new Promise(r => setTimeout(r, 3000)) // On attend que la socket soit bien stable
+                    await new Promise(r => setTimeout(r, 3000)) // Petite pause pour stabiliser le socket avant la requête
+                    
                     try {
                         const code = await sock.requestPairingCode(formatted)
                         const fmt = code.match(/.{1,4}/g)?.join('-') || code
                         
-                        // 🌟 CRUCIAL : On annule le timeout ici ! 
-                        // Cela laisse tout le temps nécessaire à l'utilisateur pour taper le code.
-                        clearTimeout(timeoutId)
-                        
-                        console.log(`✅ Code généré pour +${formatted} : ${fmt}`)
+                        console.log(`✅ Code généré avec succès pour +${formatted} : ${fmt}`)
                         
                         pendingCodes.set(formatted, { 
                             status: 'ready', 
@@ -89,33 +95,47 @@ async function generateCode(number) {
                             number: formatted
                         })
                         
+                        // IMPORTANT : On résout la promesse pour renvoyer le code immédiatement à la page web, 
+                        // MAIS on ne ferme pas le socket, il reste actif en tâche de fond !
                         resolve(fmt)
                     } catch (e) {
-                        clearTimeout(timeoutId)
-                        console.error(`❌ Erreur lors de la demande du code:`, e.message)
+                        clearTimeout(globalTimeout)
+                        try { sock.ws.close() } catch {}
+                        activeSockets.delete(formatted)
+                        console.error(`❌ Erreur lors de la génération du code:`, e.message)
                         reject(e)
                     }
                 }
 
-                // 2️⃣ Étape : Validation après saisie sur le téléphone
+                // 2️⃣ Étape : Le téléphone a saisi le code et confirme la liaison
                 if (connection === 'open') {
-                    console.log(`🎉 Connexion réussie et validée pour +${formatted} !`)
-                    // On attend 2 secondes que les creds se sauvegardent bien, puis on ferme proprement
+                    clearTimeout(globalTimeout)
+                    console.log(`🎉 Liaison validée par l'appareil pour +${formatted} !`)
+                    
+                    pendingCodes.set(formatted, {
+                        status: 'connected',
+                        code: null,
+                        error: null,
+                        number: formatted
+                    })
+
+                    // Laisser 3 secondes aux fichiers de session/creds de s'écrire correctement avant de fermer l'instance temporaire
                     setTimeout(() => {
                         try { sock.ws.close() } catch {}
-                    }, 2000)
+                        activeSockets.delete(formatted)
+                    }, 3000)
                 }
 
                 if (connection === 'close') {
                     const reason = lastDisconnect?.error?.output?.statusCode
-                    console.log(`ℹ️ Connexion fermée (Code: ${reason})`)
+                    console.log(`ℹ️ Socket de pairing temporaire fermé pour +${formatted} (Code: ${reason})`)
                 }
             })
         })
 
         return await connectionPromise
     } catch (e) {
-        console.error(`❌ Erreur générale génération:`, e.message)
+        console.error(`❌ Erreur générale d'initialisation:`, e.message)
         throw e
     }
 }
@@ -314,10 +334,13 @@ app.get('/', (req, res) => {
 <footer>© AKANE MD — akanefx2003</footer>
 
 <script>
+let checkInterval = null;
+
 async function requestCode() {
   const number = document.getElementById('num').value.trim()
   if (!number) return showError('Entre un numéro valide')
 
+  if (checkInterval) clearInterval(checkInterval);
   document.getElementById('pairBtn').disabled = true
   showLoading('Génération du code...')
 
@@ -338,10 +361,34 @@ async function requestCode() {
     showCode(data.code)
     document.getElementById('pairBtn').disabled = false
 
+    // Suivi automatique de la liaison en arrière-plan
+    checkLiaisonStatus(data.number);
+
   } catch(e) {
     showError('Erreur serveur')
     document.getElementById('pairBtn').disabled = false
   }
+}
+
+function checkLiaisonStatus(number) {
+  checkInterval = setInterval(async () => {
+    try {
+      const res = await fetch('/code/' + number);
+      const data = await res.json();
+      
+      if (data.status === 'connected') {
+        clearInterval(checkInterval);
+        const s = document.getElementById('status');
+        s.className = 'status success';
+        s.style.background = '#0a2e0a';
+        s.style.borderColor = '#25d366';
+        s.innerHTML = '<div style="color:#25d366; font-weight:bold; font-size:16px;">🎉 Appareil connecté avec succès ! Vos sessions sont prêtes.</div>';
+      } else if (data.status === 'error') {
+        clearInterval(checkInterval);
+        showError(data.error || 'La connexion a échoué.');
+      }
+    } catch(e) {}
+  }, 3000);
 }
 
 function showLoading(msg) {
@@ -357,7 +404,7 @@ function showCode(code) {
     <div class="code-label">Ton code de connexion WhatsApp</div>
     <div class="code-display">\${code}</div>
     <button class="copy-btn" onclick="copyCode('\${code}')">📋 Copier le code</button>
-    <div class="expire">⚠️ Code expire dans 60 secondes !</div>
+    <div class="expire" id="timerText">📱 En attente de validation sur votre téléphone...</div>
     <div class="steps">
       <b>1️⃣</b> Ouvre WhatsApp sur ton téléphone<br>
       <b>2️⃣</b> Paramètres → Appareils liés<br>
