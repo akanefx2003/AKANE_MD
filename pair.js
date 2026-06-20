@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename)
 const app = express()
 app.use(express.json())
 
-// ✅ Formater le numéro WhatsApp
+// ✅ EXACTEMENT COMME PAIR.JS
 function formatWhatsAppNumber(number) {
     let clean = number.replace(/[^0-9]/g, '')
     
@@ -23,69 +23,88 @@ function formatWhatsAppNumber(number) {
     return clean
 }
 
-// ✅ Générer le code - MÊME PRINCIPE QUE PAIR.JS
-async function generateCode(number) {
+// ✅ EXACTEMENT COMME PAIR.JS - startBotSocket modifié
+async function generateCode(number, notifyFunc) {
     const formatted = formatWhatsAppNumber(number)
     const sessionDir = `./sessions/pair_${formatted}`
     
-    // Nettoyer ancienne session
     if (fs.existsSync(sessionDir)) {
         fs.rmSync(sessionDir, { recursive: true, force: true })
     }
     fs.mkdirSync(sessionDir, { recursive: true })
 
-    return new Promise(async (resolve, reject) => {
-        try {
-            const { version } = await fetchLatestBaileysVersion()
-            const { state, saveCreds } = await useMultiFileAuthState(sessionDir)
+    const { version } = await fetchLatestBaileysVersion()
+    const { state, saveCreds } = await useMultiFileAuthState(sessionDir)
 
-            const sock = makeWASocket({
-                version,
-                auth: state,
-                printQRInTerminal: false,
-                logger: pino({ level: 'silent' }),
-                browser: Browsers.ubuntu('Chrome'),
-                keepAliveIntervalMs: 5000,
-                connectTimeoutMs: 60000,
-                syncFullHistory: false,
-                markOnlineOnConnect: true,
-            })
+    const sock = makeWASocket({
+        version,
+        auth: state,
+        printQRInTerminal: false,
+        logger: pino({ level: 'silent' }),
+        browser: Browsers.ubuntu('Chrome'),
+        keepAliveIntervalMs: 5000,
+        connectTimeoutMs: 60000,
+        retryRequestDelayMs: 1000,
+        syncFullHistory: false,
+        markOnlineOnConnect: true,
+        generateHighQualityLinkPreview: true,
+        options: {
+            maxMsgRetryCount: 5,
+        },
+    })
 
-            sock.ev.on('creds.update', saveCreds)
+    return new Promise((resolve, reject) => {
+        sock.ev.on('creds.update', saveCreds)
 
-            let codeSent = false
-            let timeoutId = setTimeout(() => {
-                try { sock.ws.close() } catch {}
-                reject(new Error('Timeout - Réessaie'))
-            }, 30000)
+        let codeSent = false
+        let timeoutHandle = null
 
-            sock.ev.on('connection.update', async (update) => {
-                const { connection } = update
-                
-                if (!codeSent && connection === 'connecting') {
-                    codeSent = true
-                    await new Promise(r => setTimeout(r, 3000))
-                    
-                    try {
-                        const code = await sock.requestPairingCode(formatted)
-                        const fmt = code.match(/.{1,4}/g)?.join('-') || code
-                        
-                        clearTimeout(timeoutId)
-                        console.log(`✅ Code généré: +${formatted} = ${fmt}`)
-                        
-                        try { sock.ws.close() } catch {}
-                        
-                        resolve(fmt)
-                    } catch (e) {
-                        clearTimeout(timeoutId)
-                        reject(e)
+        sock.ev.on('connection.update', async (update) => {
+            const { connection, lastDisconnect } = update
+
+            // ── Envoyer le code de pairing (EXACTEMENT COMME PAIR.JS) ──
+            if (!codeSent && connection === 'connecting') {
+
+                codeSent = true
+                await new Promise(r => setTimeout(r, 3000))
+
+                try {
+                    const code = await sock.requestPairingCode(formatted)
+                    const fmt  = code.match(/.{1,4}/g)?.join('-') || code
+
+                    console.log(`✅ Code généré: +${formatted} = ${fmt}`)
+
+                    if (notifyFunc) {
+                        notifyFunc(fmt)
                     }
-                }
-            })
 
-        } catch (e) {
-            reject(e)
-        }
+                    // Fermer la socket après le code
+                    try { sock.ws.close() } catch {}
+
+                    resolve(fmt)
+
+                } catch (err) {
+                    console.error(`❌ Erreur génération code: ${err.message}`)
+                    try { sock.ws.close() } catch {}
+                    reject(err)
+                }
+            }
+
+            // Timeout de sécurité
+            if (!codeSent && connection === 'connecting' && !timeoutHandle) {
+                timeoutHandle = setTimeout(() => {
+                    if (!codeSent) {
+                        try { sock.ws.close() } catch {}
+                        reject(new Error('Timeout - Réessaie'))
+                    }
+                }, 40000)
+            }
+
+            if (connection === 'open') {
+                if (timeoutHandle) clearTimeout(timeoutHandle)
+                try { sock.ws.close() } catch {}
+            }
+        })
     })
 }
 
@@ -102,14 +121,14 @@ app.post('/pair', async (req, res) => {
     const clean = formatted.replace(/[^0-9]/g, '')
     
     if (clean.length < 10) {
-        return res.status(400).json({ error: 'Numéro invalide' })
+        return res.status(400).json({ error: 'Numéro invalide (minimum 10 chiffres)' })
     }
 
     try {
         const code = await generateCode(formatted)
         res.json({ ok: true, number: formatted, code: code })
     } catch (e) {
-        console.error('❌ Erreur pairing:', e.message)
+        console.error(`❌ Erreur pairing: ${e.message}`)
         res.status(400).json({ error: e.message })
     }
 })
@@ -258,7 +277,7 @@ app.get('/', (req, res) => {
   </div>
 
   <div class="label">Numéro WhatsApp</div>
-  <input id="num" type="tel" placeholder="705928204 ou 221705928204" />
+  <input id="num" type="tel" placeholder="221704752421" />
   <button id="pairBtn" onclick="requestCode()">⚡ Obtenir le code de connexion</button>
 
   <div id="status" class="status"></div>
@@ -272,7 +291,7 @@ async function requestCode() {
   if (!number) return showError('Entre un numéro valide')
 
   document.getElementById('pairBtn').disabled = true
-  showLoading('Génération du code...')
+  showLoading('Génération du code... (attends 10-15 secondes)')
 
   try {
     const res = await fetch('/pair', {
@@ -292,7 +311,7 @@ async function requestCode() {
     document.getElementById('pairBtn').disabled = false
 
   } catch(e) {
-    showError('Erreur serveur')
+    showError('Erreur serveur: ' + e.message)
     document.getElementById('pairBtn').disabled = false
   }
 }
@@ -346,7 +365,7 @@ app.listen(PORT, () => {
 ╔════════════════════════════════════════╗
 ║  🌹 AKANE MD — Pairing Server          ║
 ║  Port: ${PORT}                           
-║  Fast Pairing Mode ⚡                  
+║  Exact Pair.js Mode ✅                 
 ╚════════════════════════════════════════╝
     `)
 })
