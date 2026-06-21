@@ -159,12 +159,13 @@ async function startSocket(number, isRestore = false) {
                 console.error(`❌ Msg confirmation +${number}:`, e.message)
             }
 
-            // Écoute des messages
+            // Écoute des messages (basic auto-reply)
             sock.ev.on('messages.upsert', async (msg) => {
                 try {
-                    // Import dynamique du handler du bot principal
-                    const { default: handleIncomingMessage } = await import('./akane/akanes.js')
-                    await handleIncomingMessage(sock, msg)
+                    const m = msg.messages?.[0]
+                    if (!m || m.key.fromMe) return
+                    // Le bot sur Render répond juste aux messages basiques
+                    // Les vraies commandes sont gérées par le bot Pterodactyl
                 } catch (e) {
                     console.error('❌ Handler:', e.message)
                 }
