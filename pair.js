@@ -36,11 +36,17 @@ function removeSession(number) {
     } catch (e) {}
 }
 
-// Compte uniquement les sockets actuellement connectés (status === 'open')
+// ✅ Un socket n'est "réellement connecté" que si sock.user existe
+// (WhatsApp a confirmé l'auth) — sert à compter et à décider si on bloque
+function isReallyConnected(sock) {
+    return !!(sock && sock.user && sock.user.id)
+}
+
+// ✅ Compte UNIQUEMENT les bots réellement confirmés par WhatsApp
 function getConnectedCount() {
     let count = 0
     for (const sock of activeSockets.values()) {
-        if (sock?.ws?.socket?.readyState === 1 || sock?.user) count++
+        if (isReallyConnected(sock)) count++
     }
     return count
 }
@@ -48,23 +54,23 @@ function getConnectedCount() {
 async function startSocket(number, isRestore) {
     if (isRestore === undefined) isRestore = false
 
-    // ⚠️ Reconnexion sans casser un bot déjà actif et connecté :
-    // on ne ferme l'ancien socket QUE s'il n'est pas déjà "open"
     const existing = activeSockets.get(number)
     if (existing) {
-        const alreadyOpen = !!existing.user
-        if (alreadyOpen && !isRestore) {
-            // Le bot est déjà connecté → on ne le casse pas, on relance juste le pairing sur le même socket
-            return existing
+        // ✅ On ne bloque QUE si le bot est réellement confirmé connecté par WhatsApp.
+        // Si c'est juste un socket en attente de code / pas encore "open", on le ferme
+        // et on relance proprement — ça permet de re-générer un code autant de fois que voulu.
+        if (isReallyConnected(existing) && !isRestore) {
+            return { sock: existing, alreadyConnected: true }
         }
         try { existing.ws.close() } catch (e) {}
         activeSockets.delete(number)
-        await new Promise(function(r) { setTimeout(r, 1000) })
+        await new Promise(function(r) { setTimeout(r, 800) })
     }
 
     const sessionDir = './sessions/pair_' + number
 
     if (!isRestore) {
+        // On efface l'ancienne session pour forcer une vraie nouvelle demande de pairing
         if (fs.existsSync(sessionDir)) fs.rmSync(sessionDir, { recursive: true, force: true })
         fs.mkdirSync(sessionDir, { recursive: true })
     }
@@ -124,8 +130,9 @@ async function startSocket(number, isRestore) {
             saveSession(number)
             pendingCodes.set(number, { status: 'connected', code: null, error: null })
 
-            // ✅ MESSAGE DE CONFIRMATION envoyé au numéro connecté
-            if (!confirmationSent) {
+            // ✅ MESSAGE DE CONFIRMATION — envoyé uniquement quand WhatsApp confirme "open"
+            // et qu'on a bien sock.user (donc vraiment authentifié, pas juste socket ouvert)
+            if (!confirmationSent && isReallyConnected(sock)) {
                 confirmationSent = true
                 setTimeout(async function() {
                     try {
@@ -151,10 +158,11 @@ async function startSocket(number, isRestore) {
                                 { text: '🎥 Tutoriel YouTube',  url: YOUTUBE_LINK }
                             ]
                         })
+                        console.log('✅ Message de confirmation envoyé à +' + number)
                     } catch (e) {
-                        console.error('Erreur envoi confirmation:', e.message)
+                        console.error('❌ Erreur envoi confirmation +' + number + ':', e.message)
                     }
-                }, 2000)
+                }, 2500)
             }
 
             if (pingInterval) clearInterval(pingInterval)
@@ -207,7 +215,7 @@ async function startSocket(number, isRestore) {
         }
     })
 
-    return sock
+    return { sock, alreadyConnected: false }
 }
 
 async function restoreSessions() {
@@ -230,7 +238,8 @@ async function restoreSessions() {
     }
 }
 
-// Permet à plusieurs personnes de lancer /pair en même temps sans bloquer
+// ✅ Autorise à relancer /pair sur le même numéro autant de fois que voulu,
+// tant qu'il n'est pas RÉELLEMENT connecté (confirmé par WhatsApp)
 app.post('/pair', async function(req, res) {
     const number = req.body.number
     if (!number || number.replace(/[^0-9]/g, '').length < 7) {
@@ -239,15 +248,13 @@ app.post('/pair', async function(req, res) {
 
     const clean = number.replace(/[^0-9]/g, '')
 
-    // Si déjà connecté et actif, on informe directement
-    const existing = activeSockets.get(clean)
-    if (existing && existing.user) {
-        return res.json({ ok: true, number: clean, alreadyConnected: true })
-    }
-
     pendingCodes.set(clean, { status: 'pending', code: null, error: null })
 
-    startSocket(clean, false).catch(function(e) {
+    startSocket(clean, false).then(function(result) {
+        if (result.alreadyConnected) {
+            pendingCodes.set(clean, { status: 'connected', code: null, error: null })
+        }
+    }).catch(function(e) {
         pendingCodes.set(clean, { status: 'error', code: null, error: e.message })
     })
 
@@ -261,7 +268,7 @@ app.get('/code/:number', function(req, res) {
     res.json(entry)
 })
 
-// Endpoint pour afficher le nombre de bots connectés en live
+// ✅ Stats basées uniquement sur les connexions réellement confirmées
 app.get('/stats', function(req, res) {
     res.json({ connected: getConnectedCount() })
 })
@@ -352,13 +359,12 @@ function buildHtmlPage() {
     lines.push('  if (number.length < 7) { showError("Entre un numero valide"); return; }')
     lines.push('  document.getElementById("pairBtn").disabled = true;')
     lines.push('  showLoading("Connexion a WhatsApp...");')
+    lines.push('  if (polling) clearInterval(polling);')
     lines.push('  fetch("/pair", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ number: number }) })')
     lines.push('    .then(function(res) { return res.json(); })')
     lines.push('    .then(function(data) {')
     lines.push('      if (data.error) { showError(data.error); document.getElementById("pairBtn").disabled = false; return; }')
-    lines.push('      if (data.alreadyConnected) { showConnected(number); return; }')
     lines.push('      showLoading("Generation du code en cours...");')
-    lines.push('      if (polling) clearInterval(polling);')
     lines.push('      polling = setInterval(function() { checkCode(number); }, 1500);')
     lines.push('    })')
     lines.push('    .catch(function(e) { showError("Erreur de connexion au serveur"); document.getElementById("pairBtn").disabled = false; });')
@@ -382,6 +388,7 @@ function buildHtmlPage() {
     lines.push('function checkConnected(number) {')
     lines.push('  fetch("/code/" + number).then(function(res) { return res.json(); }).then(function(data) {')
     lines.push('    if (data.status === "connected") { clearInterval(polling); showConnected(number); updateCounter(); }')
+    lines.push('    else if (data.status === "error") { clearInterval(polling); showError(data.error || "Erreur"); document.getElementById("pairBtn").disabled = false; }')
     lines.push('  }).catch(function(e) {});')
     lines.push('}')
     lines.push('function showLoading(msg) {')
@@ -406,7 +413,7 @@ function buildHtmlPage() {
     lines.push('  var s = document.getElementById("status");')
     lines.push('  s.className = "status connected";')
     lines.push('  var html = "<div style=\\"font-size:18px;font-weight:700;\\">Bot connecte !</div>";')
-    lines.push('  html += "<div style=\\"margin-top:8px;color:#888;font-size:13px;\\">+" + number + " est maintenant actif 24h/24 7j/7.<br>Tu peux utiliser le bot sur WhatsApp.</div>";')
+    lines.push('  html += "<div style=\\"margin-top:8px;color:#888;font-size:13px;\\">+" + number + " est maintenant actif 24h/24 7j/7.<br>Verifie ton WhatsApp, un message de confirmation a ete envoye.</div>";')
     lines.push('  s.innerHTML = html;')
     lines.push('  document.getElementById("pairBtn").disabled = false;')
     lines.push('}')
@@ -434,9 +441,6 @@ app.listen(PORT, async function() {
     await restoreSessions()
 })
 
-// Export pour que la commande "pair" (depuis WhatsApp) puisse vérifier
-// si un numéro est déjà géré par le système webpair, et l'utiliser
-// au lieu de créer un conflit
 export function isWebpairManaged(number) {
     return activeSockets.has(number)
 }
@@ -445,4 +449,4 @@ export function getWebpairSocket(number) {
     return activeSockets.get(number)
 }
 
-export { startSocket as startWebpairSocket, getConnectedCount }
+export { startSocket as startWebpairSocket, getConnectedCount, isReallyConnected }
