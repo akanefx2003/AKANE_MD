@@ -293,21 +293,22 @@ function buildHtmlPage() {
   --panel:#0b120c;
   --panel2:#081008;
   --border:#163322;
-  --green:#39ff7a;
-  --green-dim:#1f9c4b;
-  --green-glow:rgba(57,255,122,0.35);
+  --accent:#39ff7a;
+  --accent-dim:#1f9c4b;
+  --accent-glow:rgba(57,255,122,0.35);
   --text-dim:#5d8268;
   --amber:#ffb454;
   --red:#ff5454;
 }
-html,body{ min-height:100vh; }
+html,body{ min-height:100vh; width:100%; }
 body{
   background:var(--bg);
-  background-image:radial-gradient(circle at 50% -10%, rgba(57,255,122,0.08), transparent 55%);
-  color:var(--green);
+  background-image:radial-gradient(circle at 50% -10%, var(--accent-glow), transparent 55%);
+  color:var(--accent);
   font-family:'JetBrains Mono','Fira Code',Consolas,monospace;
-  display:flex; align-items:center; justify-content:center;
-  padding:24px; position:relative; overflow-x:hidden;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  width:100%; padding:24px; position:relative; overflow-x:hidden;
+  transition:background-image .4s ease, color .4s ease;
 }
 body::before{
   content:''; position:fixed; inset:0; z-index:50; pointer-events:none;
@@ -321,41 +322,39 @@ body::before{
 .terminal{
   width:100%; max-width:460px; background:var(--panel);
   border:1px solid var(--border); border-radius:10px;
-  box-shadow:0 30px 80px -20px rgba(0,0,0,0.85), 0 0 50px -10px var(--green-glow);
+  box-shadow:0 30px 80px -20px rgba(0,0,0,0.85), 0 0 50px -10px var(--accent-glow);
   position:relative; z-index:1; overflow:hidden;
+  transition:box-shadow .4s ease;
 }
-.term-bar{ display:flex; align-items:center; gap:8px; padding:11px 14px; background:#081209; border-bottom:1px solid var(--border); }
+.term-bar{ display:flex; align-items:center; gap:8px; padding:12px 14px; background:#081209; border-bottom:1px solid var(--border); }
 .dot{ width:9px; height:9px; border-radius:50%; }
 .dot.r{ background:#ff5f56; }
 .dot.y{ background:#ffbd2e; }
 .dot.g{ background:#27c93f; }
-.term-path{ margin-left:8px; color:var(--text-dim); font-size:11.5px; letter-spacing:.5px; }
 .term-body{ padding:30px 26px 26px; }
-.boot{ font-size:10.5px; color:var(--text-dim); margin-bottom:14px; line-height:1.7; }
-.boot .ok{ color:var(--green-dim); }
 .title-row{ display:flex; align-items:baseline; gap:10px; margin-bottom:4px; }
-.title{ font-size:25px; font-weight:800; letter-spacing:3px; text-shadow:0 0 14px var(--green-glow); }
-.cursor{ display:inline-block; width:9px; height:18px; background:var(--green); animation:blink 1.1s steps(1) infinite; vertical-align:-3px; }
+.title{ font-size:25px; font-weight:800; letter-spacing:3px; text-shadow:0 0 14px var(--accent-glow); }
+.cursor{ display:inline-block; width:9px; height:18px; background:var(--accent); animation:blink 1.1s steps(1) infinite; vertical-align:-3px; }
 .subtitle{ color:var(--text-dim); font-size:12px; margin-bottom:16px; }
 .tags{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:22px; }
-.tag{ font-size:9.5px; letter-spacing:1.2px; text-transform:uppercase; color:var(--green-dim); border:1px solid var(--border); padding:4px 9px; border-radius:4px; }
+.tag{ font-size:9.5px; letter-spacing:1.2px; text-transform:uppercase; color:var(--accent-dim); border:1px solid var(--border); padding:4px 9px; border-radius:4px; }
 .readout{ display:flex; align-items:center; justify-content:space-between; border:1px solid var(--border); background:var(--panel2); border-radius:6px; padding:13px 16px; margin-bottom:22px; }
 .readout-left{ display:flex; align-items:center; gap:10px; }
-.pulse{ width:8px; height:8px; border-radius:50%; background:var(--green); box-shadow:0 0 10px var(--green); animation:pulse 1.6s ease-in-out infinite; }
-.readout .num{ font-size:24px; font-weight:800; color:var(--green); text-shadow:0 0 10px var(--green-glow); }
+.pulse{ width:8px; height:8px; border-radius:50%; background:var(--accent); box-shadow:0 0 10px var(--accent); animation:pulse 1.6s ease-in-out infinite; }
+.readout .num{ font-size:24px; font-weight:800; color:var(--accent); text-shadow:0 0 10px var(--accent-glow); }
 .readout .lbl{ font-size:9.5px; color:var(--text-dim); letter-spacing:1.3px; text-transform:uppercase; text-align:right; line-height:1.5; }
 .field-label{ font-size:10px; color:var(--text-dim); letter-spacing:1.4px; text-transform:uppercase; margin-bottom:8px; }
 .input-row{ display:flex; align-items:center; background:var(--panel2); border:1px solid var(--border); border-radius:6px; padding:0 14px; margin-bottom:14px; transition:border-color .2s, box-shadow .2s; }
-.input-row:focus-within{ border-color:var(--green-dim); box-shadow:0 0 0 3px rgba(57,255,122,0.08); }
-.prompt-sym{ color:var(--green-dim); margin-right:9px; font-weight:700; font-size:15px; }
-input{ flex:1; background:transparent; border:none; outline:none; color:var(--green); font-family:inherit; font-size:14.5px; padding:14px 0; letter-spacing:.5px; }
+.input-row:focus-within{ border-color:var(--accent-dim); box-shadow:0 0 0 3px var(--accent-glow); }
+.prompt-sym{ color:var(--accent-dim); margin-right:9px; font-weight:700; font-size:15px; }
+input{ flex:1; background:transparent; border:none; outline:none; color:var(--accent); font-family:inherit; font-size:14.5px; padding:14px 0; letter-spacing:.5px; width:100%; min-width:0; }
 input::placeholder{ color:#2b4a35; }
 button#pairBtn{
-  width:100%; padding:14px; background:transparent; border:1px solid var(--green-dim);
-  color:var(--green); font-family:inherit; font-size:12.5px; letter-spacing:2.5px; text-transform:uppercase;
+  width:100%; padding:14px; background:transparent; border:1px solid var(--accent-dim);
+  color:var(--accent); font-family:inherit; font-size:12.5px; letter-spacing:2.5px; text-transform:uppercase;
   border-radius:6px; cursor:pointer; position:relative; overflow:hidden; transition:color .25s;
 }
-button#pairBtn .fill{ position:absolute; inset:0; background:var(--green); transform:translateX(-101%); transition:transform .25s ease; z-index:0; }
+button#pairBtn .fill{ position:absolute; inset:0; background:var(--accent); transform:translateX(-101%); transition:transform .25s ease; z-index:0; }
 button#pairBtn span{ position:relative; z-index:1; }
 button#pairBtn:hover:not(:disabled) .fill{ transform:translateX(0); }
 button#pairBtn:hover:not(:disabled){ color:#04140a; }
@@ -365,27 +364,27 @@ button#pairBtn:disabled{ opacity:.4; cursor:not-allowed; }
 .status-head{ display:flex; align-items:center; gap:8px; padding:10px 14px; font-size:10.5px; letter-spacing:1.4px; text-transform:uppercase; border-bottom:1px solid var(--border); }
 .status-body{ padding:18px 16px 16px; }
 .status.loading .status-head{ color:var(--text-dim); background:var(--panel2); }
-.status.success .status-head{ color:var(--green); background:#08160d; }
+.status.success .status-head{ color:var(--accent); background:#08160d; }
 .status.connected .status-head{ color:#27c93f; background:#08160d; }
 .status.error .status-head{ color:var(--red); background:#1a0808; }
-.loading-msg{ font-size:13px; color:var(--green); margin-bottom:10px; }
+.loading-msg{ font-size:13px; color:var(--accent); margin-bottom:10px; }
 .progress-track{ height:6px; background:#0d1b10; border-radius:3px; overflow:hidden; margin-bottom:8px; }
-.progress-fill{ height:100%; width:0%; background:linear-gradient(90deg, var(--green-dim), var(--green)); box-shadow:0 0 8px var(--green-glow); transition:width .25s ease; }
+.progress-fill{ height:100%; width:0%; background:linear-gradient(90deg, var(--accent-dim), var(--accent)); box-shadow:0 0 8px var(--accent-glow); transition:width .25s ease; }
 .progress-pct{ font-size:10.5px; color:var(--text-dim); text-align:right; }
 .code-label{ color:var(--text-dim); font-size:10px; text-transform:uppercase; letter-spacing:1.4px; margin-bottom:10px; text-align:center; }
-.code-display{ font-size:34px; font-weight:800; letter-spacing:5px; color:var(--green); text-align:center; text-shadow:0 0 18px var(--green-glow); margin-bottom:12px; }
-.copy-btn{ display:block; margin:0 auto 14px; padding:9px 22px; background:transparent; border:1px solid var(--green-dim); color:var(--green); border-radius:6px; cursor:pointer; font-size:11.5px; letter-spacing:1px; text-transform:uppercase; font-family:inherit; transition:background .2s; }
+.code-display{ font-size:34px; font-weight:800; letter-spacing:5px; color:var(--accent); text-align:center; text-shadow:0 0 18px var(--accent-glow); margin-bottom:12px; }
+.copy-btn{ display:block; margin:0 auto 14px; padding:9px 22px; background:transparent; border:1px solid var(--accent-dim); color:var(--accent); border-radius:6px; cursor:pointer; font-size:11.5px; letter-spacing:1px; text-transform:uppercase; font-family:inherit; transition:background .2s; }
 .copy-btn:hover{ background:#0e2414; }
 .expire{ color:var(--amber); font-size:11px; text-align:center; letter-spacing:.5px; }
 .steps{ margin-top:14px; font-size:11.5px; color:var(--text-dim); line-height:2; border-top:1px dashed var(--border); padding-top:13px; }
-.steps b{ color:var(--green-dim); }
-.connected-title{ font-size:16px; font-weight:700; color:var(--green); }
+.steps b{ color:var(--accent-dim); }
+.connected-title{ font-size:16px; font-weight:700; color:var(--accent); }
 .connected-sub{ margin-top:8px; color:var(--text-dim); font-size:12.5px; line-height:1.7; }
 .error-body{ color:var(--red); font-size:13px; }
 .links{ display:flex; gap:8px; margin-top:24px; }
-.links a{ flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; padding:12px 4px; background:var(--panel2); border:1px solid var(--border); border-radius:6px; color:var(--text-dim); text-decoration:none; font-size:9.5px; letter-spacing:.8px; text-transform:uppercase; transition:border-color .2s, color .2s; }
-.links a:hover{ border-color:var(--green-dim); color:var(--green); }
-.links svg{ width:17px; height:17px; }
+.links a{ flex:1; display:flex; flex-direction:column; align-items:center; gap:7px; padding:12px 4px; background:var(--panel2); border:1px solid var(--border); border-radius:6px; color:var(--text-dim); text-decoration:none; font-size:9.5px; letter-spacing:.8px; text-transform:uppercase; transition:border-color .2s, color .2s, transform .15s; }
+.links a:hover{ border-color:var(--accent-dim); color:var(--accent); transform:translateY(-2px); }
+.links svg{ width:26px; height:26px; border-radius:7px; }
 footer{ margin-top:16px; text-align:center; color:#27452f; font-size:9.5px; letter-spacing:1.6px; text-transform:uppercase; }
 @keyframes blink{ 0%,49%{ opacity:1; } 50%,100%{ opacity:0; } }
 @keyframes pulse{ 0%,100%{ transform:scale(1); opacity:1; } 50%{ transform:scale(1.5); opacity:.35; } }
@@ -394,6 +393,25 @@ footer{ margin-top:16px; text-align:center; color:#27452f; font-size:9.5px; lett
   .title{ font-size:21px; }
   .code-display{ font-size:28px; letter-spacing:3px; }
 }
+`;
+
+    const colorScript = `
+(function() {
+  var palette = [
+    { a: "#39ff7a", d: "#1f9c4b", g: "rgba(57,255,122,0.35)" },
+    { a: "#39e6ff", d: "#1f8fa3", g: "rgba(57,230,255,0.35)" },
+    { a: "#ff3df0", d: "#a3209c", g: "rgba(255,61,240,0.35)" },
+    { a: "#ffd23f", d: "#a38a1f", g: "rgba(255,210,63,0.35)" },
+    { a: "#ff5454", d: "#a32323", g: "rgba(255,84,84,0.35)" },
+    { a: "#7c5cff", d: "#4a2fa3", g: "rgba(124,92,255,0.35)" },
+    { a: "#ff8a3d", d: "#a3551f", g: "rgba(255,138,61,0.35)" }
+  ];
+  var pick = palette[Math.floor(Math.random() * palette.length)];
+  var root = document.documentElement.style;
+  root.setProperty("--accent", pick.a);
+  root.setProperty("--accent-dim", pick.d);
+  root.setProperty("--accent-glow", pick.g);
+})();
 `;
 
     const script = `
@@ -553,16 +571,15 @@ function copyCode(code) {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
 <style>${styles}</style>
+<script>${colorScript}</script>
 </head>
 <body>
 <div class="noise"></div>
 <div class="terminal">
   <div class="term-bar">
     <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-    <span class="term-path">root@akane-md:~/pair</span>
   </div>
   <div class="term-body">
-    <div class="boot">[<span class="ok">OK</span>] baileys socket initialise<br>[<span class="ok">OK</span>] canal securise pret</div>
     <div class="title-row"><span class="title">AKANE_MD</span><span class="cursor"></span></div>
     <div class="subtitle">// connecte ton whatsapp au bot</div>
     <div class="tags"><span class="tag">multi-user</span><span class="tag">ai-powered</span><span class="tag">encrypted</span></div>
@@ -583,16 +600,16 @@ function copyCode(code) {
     <div id="status" class="status"></div>
 
     <div class="links">
-      <a href="${CHANNEL_LINK}" target="_blank">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a16 16 0 0 1 16 0"/><path d="M7 15a10 10 0 0 1 10 0"/><circle cx="12" cy="19" r="1.3" fill="currentColor" stroke="none"/></svg>
+      <a href="${CHANNEL_LINK}" target="_blank" aria-label="Chaine WhatsApp">
+        <svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#25D366"/><path fill="#fff" d="M16 7c-5 0-9 4-9 9 0 1.6.4 3.1 1.2 4.4L7 24l3.8-1.2c1.3.7 2.7 1.1 4.2 1.1 5 0 9-4 9-9s-4-9-9-9zm5.1 12.7c-.2.6-1.2 1.1-1.7 1.2-.4.1-1 .1-1.6-.1-.4-.1-.9-.3-1.5-.6-2.6-1.1-4.3-3.7-4.4-3.9-.1-.2-1-1.4-1-2.6 0-1.2.6-1.8.9-2.1.2-.2.5-.3.7-.3h.5c.2 0 .4 0 .5.4.2.4.7 1.7.7 1.8.1.1.1.3 0 .4-.4.8-.8.8-.5 1.3.6 1 1.1 1.4 1.9 2 .1.1.3.1.4 0 .2-.2.7-.8.9-1.1.2-.2.3-.2.5-.1.2.1 1.5.7 1.7.8.2.1.4.2.4.3.1.2.1.6-.1 1.2z"/></svg>
         <span>chaine</span>
       </a>
-      <a href="${GITHUB_LINK}" target="_blank">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
+      <a href="${GITHUB_LINK}" target="_blank" aria-label="Depot GitHub">
+        <svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="#161b22"/><path fill="#fff" d="M16 8c-4.4 0-8 3.6-8 8 0 3.5 2.3 6.5 5.5 7.6.4.1.5-.2.5-.4v-1.5c-2.2.5-2.7-1-2.7-1-.4-.9-.9-1.2-.9-1.2-.7-.5.1-.5.1-.5.8.1 1.2.8 1.2.8.7 1.2 1.9.9 2.3.7.1-.5.3-.9.5-1.1-1.8-.2-3.6-.9-3.6-3.9 0-.9.3-1.6.8-2.1-.1-.2-.4-1 .1-2.1 0 0 .7-.2 2.2.8.6-.2 1.3-.3 2-.3s1.4.1 2 .3c1.5-1 2.2-.8 2.2-.8.4 1.1.1 1.9.1 2.1.5.6.8 1.3.8 2.1 0 3-1.8 3.7-3.6 3.9.3.3.5.8.5 1.6v2.4c0 .2.1.5.5.4 3.2-1.1 5.5-4.1 5.5-7.6 0-4.4-3.6-8-8-8z"/></svg>
         <span>github</span>
       </a>
-      <a href="${YOUTUBE_LINK}" target="_blank">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polygon points="10 8.5 16 12 10 15.5" fill="currentColor" stroke="none"/></svg>
+      <a href="${YOUTUBE_LINK}" target="_blank" aria-label="Chaine YouTube">
+        <svg viewBox="0 0 32 32"><rect x="1" y="6" width="30" height="20" rx="6" fill="#FF0000"/><polygon points="13,11.5 22,16 13,20.5" fill="#fff"/></svg>
         <span>tutoriel</span>
       </a>
     </div>
@@ -605,7 +622,6 @@ function copyCode(code) {
 
     return body;
 }
-
 
 const PORT = process.env.PORT || 3000
 app.listen(PORT, async function() {
