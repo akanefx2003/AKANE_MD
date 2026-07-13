@@ -29,18 +29,7 @@
 **• LeonoDes : https://leonodes.xyz/login?ref=9bf436d0**
 
 **• Katabump : https://rl.katabump.fr/2def14**
-
-**•muigiwar Hosting**
-https://mugiwara.panel.twilightparadox.com/server/af2dcf67
-
-*c'est un site qui a plein de panel illimité réuni je vous donne mon compte (muigiwar hosting).*
-
-**NOM D'UTILISATEUR :** ```akane991441```
-
-**MOT DE PASSE :** ```0vMQsrXSwPtero!64```
-
-**NB : ne touchez pas au serveur jaune et ne désactiver aucun serveur ⚠️.**
-
+**VOICI LE NOUVEAU SITE DE DÉPLOIEMENT DU BOT : https://akanemd-production.up.railway.app/**
 
 ## 📱 Me contacter
 
