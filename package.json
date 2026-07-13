@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@crysnovax/baileys": "^2.6.2",
+ "baileys": "npm:baileys@latest",
     "axios": "^1.7.7",
     "axios-retry": "^3.9.1",
     "uuid": "^9.0.1",
