@@ -1,6 +1,6 @@
 // webpair.js
 import express from 'express'
-import { makeWASocket, useMultiFileAuthState, fetchLatestBaileysVersion, Browsers, DisconnectReason } from '@crysnovax/baileys'
+import { makeWASocket, useMultiFileAuthState, fetchLatestBaileysVersion, Browsers, DisconnectReason } from 'baileys'
 import pino from 'pino'
 import fs from 'fs'
 import { canalInfo } from './akane/boutons.js';
