@@ -1,4 +1,4 @@
-import { makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } from 'baileys';
+import { makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } from '@crysnovax/baileys';
 import pino from 'pino';
 import fs from 'fs';
 import path from 'path';
@@ -11,7 +11,7 @@ import { canalInfo } from '../akane/boutons.js';
 const INSTANCE_DIR = process.env.INSTANCE_DIR ? path.resolve(process.env.INSTANCE_DIR) : null;
 
 const USER_CONFIG = {
-    phoneNumber: process.env.OWNER_NUMBER || '221769825107',
+    phoneNumber: process.env.OWNER_NUMBER || '221760159013',
     displayName: 'AKANE',
     channelLink: 'https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R',
     channelName: '🍁𝐃𝐎̈𝐎̃𝐌 𝐒𝐓𝐈𝐂𝐊𝐄𝐑𝐒 ʕ◕ᴥ◕ʔ🌹',
