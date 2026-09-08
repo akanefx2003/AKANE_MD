@@ -2,7 +2,7 @@ import pkg from 'wa-sticker-formatter';
 
 const { Sticker, StickerTypes } = pkg;
 
-import { downloadContentFromMessage } from '@whiskeysockets/baileys';
+import { downloadContentFromMessage } from 'baileys';
 
 import fs from 'fs';
 
