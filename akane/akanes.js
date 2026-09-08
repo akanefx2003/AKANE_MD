@@ -6,14 +6,14 @@ import configmanager from "../utils/configmanager.js"
 import { isTrusted, getTrustedJids } from '../AKANEX/trusted.js'
 import { sudoCommand, desudoCommand, sudoListCommand } from '../AKANEX/sudo.js' // @cat: bot-menu
 import tt, { handleMove } from '../commands/tt.js' // @cat: games
-import { tagallCommand, tagadminCommand, tagmembersCommand, hidetagCommand, antitagCommand } from '../commands/tag.js'
+//import { tagallCommand, tagadminCommand, tagmembersCommand, hidetagCommand, antitagCommand } from '../commands/tag.js'
 import kickCommand from '../commands/kick.js'
 import approveCommand from '../commands/approve.js'
 import ginfoCommand from '../commands/ginfo.js'
 import { promoteCommand, demoteCommand } from '../commands/admin.js'
 import setgnameCommand from '../commands/setgname.js'
 import setgdescCommand from '../commands/setgdesc.js'
-import gstatusCommand from '../commands/gstatus.js'
+//import gstatusCommand from '../commands/gstatus.js'
 import setgppCommand from '../commands/setgpp.js'
 import groupCreateCommand from '../commands/groupcreate.js'
 import soraCommand from '../commands/sora.js'
