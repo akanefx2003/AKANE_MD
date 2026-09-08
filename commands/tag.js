@@ -2,7 +2,7 @@
 // @cat: gc-menu
 
 import fs from 'fs'
-import { downloadMediaMessage } from'@whiskeysockets/baileys',
+import { downloadMediaMessage } from'baileys',
 
 const ANTITAG_FILE = './data/antitag.json'
 
