@@ -1,7 +1,7 @@
 // commands/pair.js
 // @cat: tools
 
-import { makeWASocket, useMultiFileAuthState, fetchLatestBaileysVersion, DisconnectReason, Browsers } from '@crysnovax/baileys';
+import { makeWASocket, useMultiFileAuthState, fetchLatestBaileysVersion, DisconnectReason, Browsers } from '@whiskeysockets/baileys';
 import pino from 'pino';
 import fs from 'fs';
 import handleIncomingMessage from '../akane/akanes.js';
