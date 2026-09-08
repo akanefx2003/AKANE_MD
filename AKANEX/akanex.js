@@ -1,17 +1,11 @@
-import { makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } from '@whiskeysockets/baileys';
+import { makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } from 'baileys';
 import pino from 'pino';
 import fs from 'fs';
-import path from 'path';
 import configmanager from '../utils/configmanager.js';
 import { canalInfo } from '../akane/boutons.js';
 
-// INSTANCE_DIR / OWNER_NUMBER : fournis par webpair.js pour isoler chaque numéro appairé
-// depuis le site (un process = un numéro). Si absents (lancement solo local), on retombe
-// sur le numéro codé en dur d'origine — rétrocompatible avec l'usage historique du bot.
-const INSTANCE_DIR = process.env.INSTANCE_DIR ? path.resolve(process.env.INSTANCE_DIR) : null;
-
 const USER_CONFIG = {
-    phoneNumber: process.env.OWNER_NUMBER || '221760159013',
+    phoneNumber: '221769825107',
     displayName: 'AKANE',
     channelLink: 'https://whatsapp.com/channel/0029VbBzhyQ4NVisPH1NSe1R',
     channelName: '🍁𝐃𝐎̈𝐎̃𝐌 𝐒𝐓𝐈𝐂𝐊𝐄𝐑𝐒 ʕ◕ᴥ◕ʔ🌹',
@@ -20,8 +14,7 @@ const USER_CONFIG = {
 };
 
 const PAIR_SESSIONS_FILE = './sessions/pair_sessions.json';
-// Session isolée par numéro/instance quand lancé depuis webpair.js, sinon comportement d'origine
-const data = INSTANCE_DIR ? path.join(INSTANCE_DIR, 'sessions', 'main') : 'sessionData';
+const data = 'sessionData';
 
 // ─── Stats bots parrainés ─────────────────────────────────────────────────────
 
@@ -104,7 +97,7 @@ async function connectToWhatsapp(handleMessage) {
             if (reason.includes('Bad MAC') || reason.includes('bad-mac') || reason.includes('Bad Session')) {
                 console.log('🧹 Bad MAC détecté — nettoyage des sessions corrompues...');
                 try {
-                    const sessionDir = data; // 'data' est déjà un chemin complet (relatif ou absolu selon INSTANCE_DIR)
+                    const sessionDir = `./${data}`;
                     const files = fs.readdirSync(sessionDir);
                     for (const file of files) {
                         // Supprimer uniquement les fichiers de sessions (pas creds.json)
@@ -125,9 +118,7 @@ async function connectToWhatsapp(handleMessage) {
                 console.log('🔄 Reconnexion dans 5 secondes...');
                 setTimeout(() => connectToWhatsapp(handleMessage), 5000);
             } else {
-                console.log('🚫 Déconnecté définitivement (logout) — nettoyage de la session et arrêt du process.');
-                try { fs.rmSync(data, { recursive: true, force: true }); } catch (e) {}
-                process.exit(0);
+                console.log('🚫 Déconnecté définitivement (logout)');
             }
 
         } else if (connection === 'connecting') {
@@ -196,7 +187,7 @@ async function connectToWhatsapp(handleMessage) {
                 configmanager.premiums.premiumUser['p'] = { premium: number };
                 configmanager.saveP();
 
-                const code = await sock.requestPairingCode(number);
+                const code = await sock.requestPairingCode(number, 'AKANEMD9');
                 console.log(`\n🔑 CODE : ${code}\n`);
 
                 setTimeout(() => {
