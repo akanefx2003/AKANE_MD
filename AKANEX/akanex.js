@@ -1,7 +1,6 @@
 import { makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } from 'baileys';
 import pino from 'pino';
 import fs from 'fs';
-import zlib from 'zlib';
 import configmanager from '../utils/configmanager.js';
 import { canalInfo } from '../akane/boutons.js';
 
@@ -16,35 +15,6 @@ const USER_CONFIG = {
 
 const PAIR_SESSIONS_FILE = './sessions/pair_sessions.json';
 const data = 'sessionData';
-
-// ─── Session pré-générée par le site (SESSION_ID) ────────────────────────────
-// Si SESSION_ID (format "AKANE~...") est défini et qu'aucune session locale
-// n'existe déjà, on restaure creds.json directement dans sessionData/ avant
-// useMultiFileAuthState() : state.creds.registered vaut alors déjà true, donc
-// le bloc de pairing par numéro plus bas ne se déclenche jamais.
-function decodeSessionId(sessionId) {
-    const raw = Buffer.from(sessionId.slice('AKANE~'.length), 'base64');
-    try {
-        return JSON.parse(zlib.gunzipSync(raw).toString('utf-8'));
-    } catch (e) {
-        return JSON.parse(raw.toString('utf-8')); // ancien format non compressé
-    }
-}
-function bootstrapSessionFromEnv() {
-    const sessionId = process.env.SESSION_ID;
-    if (!sessionId || !sessionId.startsWith('AKANE~')) return;
-    const credsPath = `./${data}/creds.json`;
-    if (fs.existsSync(credsPath)) return;
-    try {
-        const creds = decodeSessionId(sessionId);
-        fs.mkdirSync(`./${data}`, { recursive: true });
-        fs.writeFileSync(credsPath, JSON.stringify(creds, null, 2));
-        console.log('🔑 Session restaurée depuis SESSION_ID — pas de code de pairing nécessaire.');
-    } catch (e) {
-        console.error('❌ SESSION_ID invalide/corrompu, retour au pairing par numéro :', e.message);
-    }
-}
-bootstrapSessionFromEnv();
 
 // ─── Stats bots parrainés ─────────────────────────────────────────────────────
 
@@ -75,16 +45,11 @@ async function connectToWhatsapp(handleMessage) {
         keepAliveIntervalMs: 10000,
         connectTimeoutMs: 60000,
         generateHighQualityLinkPreview: true,
-        // ✅ Fix Bad MAC Error — nettoyer les sessions Signal corrompues
         getMessage: async (key) => {
             return { conversation: '' };
         },
         patchMessageBeforeSending: (msg) => {
-            // interactiveMessage (native flow / interactiveButtons) doit être
-            // inclus ici, sinon WhatsApp ignore silencieusement le bouton —
-            // c'était l'oubli qui faisait que le message d'accueil n'avait
-            // jamais de bouton natif malgré interactiveButtons plus bas.
-            const requiresPatch = !!(msg.buttonsMessage || msg.listMessage || msg.templateMessage || msg.interactiveMessage);
+            const requiresPatch = !!(msg.buttonsMessage || msg.listMessage || msg.templateMessage);
             if (requiresPatch) {
                 msg = {
                     viewOnceMessage: {
@@ -127,14 +92,12 @@ async function connectToWhatsapp(handleMessage) {
 
             console.log('❌ Déconnecté:', reason, 'Code:', statusCode);
 
-            // ✅ Fix Bad MAC — nettoyer les sessions Signal corrompues et reconnecter
             if (reason.includes('Bad MAC') || reason.includes('bad-mac') || reason.includes('Bad Session')) {
                 console.log('🧹 Bad MAC détecté — nettoyage des sessions corrompues...');
                 try {
                     const sessionDir = `./${data}`;
                     const files = fs.readdirSync(sessionDir);
                     for (const file of files) {
-                        // Supprimer uniquement les fichiers de sessions (pas creds.json)
                         if (file !== 'creds.json' && (file.endsWith('.json') || file.endsWith('.bin'))) {
                             fs.unlinkSync(`${sessionDir}/${file}`);
                             console.log(`🗑️ Supprimé: ${file}`);
@@ -162,27 +125,24 @@ async function connectToWhatsapp(handleMessage) {
             console.log('✅ WhatsApp connecté !');
 
             try {
-                // sock.user.id reflète le numéro réel de la session utilisée
-                // (utile si SESSION_ID appartient à un autre numéro que celui
-                // codé en dur dans USER_CONFIG.phoneNumber).
-                const connectedNumber = sock.user.id.split(':')[0].split('@')[0];
-                const chatId = `${connectedNumber}@s.whatsapp.net`;
+                const chatId = `${USER_CONFIG.phoneNumber}@s.whatsapp.net`;
                 const stats = getPairStats();
 
-                // ─── Lecture du préfixe et de la réaction sauvegardés ───────────
-                const savedConfig = configmanager.config.users?.[connectedNumber];
+                const savedConfig = configmanager.config.users?.[USER_CONFIG.phoneNumber];
                 const currentPrefix   = savedConfig?.prefix   ?? USER_CONFIG.prefix;
                 const currentReaction = savedConfig?.reaction ?? USER_CONFIG.reaction;
-                // ────────────────────────────────────────────────────────────────
 
-                const welcomeCaption =
+                await sock.sendMessage(chatId, {
+                    image: { url: './database/DigixCo.jpg' },
+                    jpegThumbnail: null,
+                    caption:
 `╭─✧🍉━━━━━━━━━━━━━❂
 ┊
 *┊🤖 AKANE MD*
 ┊
 *┊👤 CONNECTE : ${USER_CONFIG.displayName}*
 ┊
-*┊📱 NUMERO : +${connectedNumber}*
+*┊📱 NUMERO : +${USER_CONFIG.phoneNumber}*
 ┊
 *┊⚙️ PREFIXE : ${currentPrefix}*
 ┊
@@ -196,33 +156,8 @@ async function connectToWhatsapp(handleMessage) {
 *┊📢 REJOINS MA CHAINE 🔥*
 *┊${USER_CONFIG.channelLink}*
 ┊
-╰─────────────────❂`;
-
-                try {
-                    await sock.sendMessage(chatId, {
-                        image: { url: './database/DigixCo.jpg' },
-                        jpegThumbnail: null,
-                        caption: welcomeCaption,
-                        footer: USER_CONFIG.channelName,
-                        interactiveButtons: [
-                            {
-                                name: 'cta_url',
-                                buttonParamsJson: JSON.stringify({
-                                    display_text: 'Voir la chaîne',
-                                    url: USER_CONFIG.channelLink,
-                                    merchant_url: USER_CONFIG.channelLink
-                                })
-                            }
-                        ]
-                    });
-                } catch (btnErr) {
-                    console.log('⚠️ Bouton natif non supporté, envoi sans bouton :', btnErr.message);
-                    await sock.sendMessage(chatId, {
-                        image: { url: './database/DigixCo.jpg' },
-                        jpegThumbnail: null,
-                        caption: welcomeCaption
-                    });
-                }
+╰─────────────────❂`
+                });
 
                 console.log('📩 Message envoyé !');
 
@@ -234,45 +169,72 @@ async function connectToWhatsapp(handleMessage) {
         }
     });
 
-    // 🔑 Pairing + config auto
+    // ─── Pairing uniquement si AUCUNE session n'est présente ─────────────────
     setTimeout(async () => {
-        if (!state.creds.registered) {
-            console.log('🔑 Demande du code...');
+        const credsPath = `./${data}/creds.json`;
+        const hasCredsFile = fs.existsSync(credsPath);
+        const isRegistered = state.creds.registered === true;
 
-            try {
-                const number = USER_CONFIG.phoneNumber;
+        if (isRegistered || hasCredsFile) {
+            console.log('✅ Session déjà présente — pas besoin de code de pairing.');
 
-                configmanager.premiums.premiumUser['c'] = { creator: number };
-                configmanager.saveP();
-                configmanager.premiums.premiumUser['p'] = { premium: number };
-                configmanager.saveP();
-
-                const code = await sock.requestPairingCode(number, 'AKANEMD9');
-                console.log(`\n🔑 CODE : ${code}\n`);
-
-                setTimeout(() => {
-                    // N'écrase la config que si elle n'existe pas encore
-                    if (!configmanager.config.users[number]) {
-                        configmanager.config.users[number] = {
-                            sudoList: [`${number}@s.whatsapp.net`],
-                            tagAudioPath: 'tag.mp3',
-                            antilink: true,
-                            response: true,
-                            autoreact: false,
-                            prefix: USER_CONFIG.prefix,
-                            reaction: USER_CONFIG.reaction,
-                            welcome: true,
-                            record: false,
-                            type: false,
-                            publicMode: false,
-                        };
-                        configmanager.save();
-                    }
-                }, 2000);
-
-            } catch (err) {
-                console.error('❌ Erreur pairing:', err);
+            // On s'assure quand même que la config utilisateur existe
+            const number = USER_CONFIG.phoneNumber;
+            if (!configmanager.config.users?.[number]) {
+                configmanager.config.users = configmanager.config.users || {};
+                configmanager.config.users[number] = {
+                    sudoList: [`${number}@s.whatsapp.net`],
+                    tagAudioPath: 'tag.mp3',
+                    antilink: true,
+                    response: true,
+                    autoreact: false,
+                    prefix: USER_CONFIG.prefix,
+                    reaction: USER_CONFIG.reaction,
+                    welcome: true,
+                    record: false,
+                    type: false,
+                    publicMode: false,
+                };
+                configmanager.save();
             }
+            return;
+        }
+
+        // Sinon, on demande un code de pairing
+        console.log('🔑 Aucune session trouvée — demande du code...');
+
+        try {
+            const number = USER_CONFIG.phoneNumber;
+
+            configmanager.premiums.premiumUser['c'] = { creator: number };
+            configmanager.saveP();
+            configmanager.premiums.premiumUser['p'] = { premium: number };
+            configmanager.saveP();
+
+            const code = await sock.requestPairingCode(number, 'AKANEMD9');
+            console.log(`\n🔑 CODE : ${code}\n`);
+
+            setTimeout(() => {
+                if (!configmanager.config.users[number]) {
+                    configmanager.config.users[number] = {
+                        sudoList: [`${number}@s.whatsapp.net`],
+                        tagAudioPath: 'tag.mp3',
+                        antilink: true,
+                        response: true,
+                        autoreact: false,
+                        prefix: USER_CONFIG.prefix,
+                        reaction: USER_CONFIG.reaction,
+                        welcome: true,
+                        record: false,
+                        type: false,
+                        publicMode: false,
+                    };
+                    configmanager.save();
+                }
+            }, 2000);
+
+        } catch (err) {
+            console.error('❌ Erreur pairing:', err);
         }
     }, 4000);
 
